@@ -122,6 +122,95 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
 .back-link{cursor:pointer;color:var(--text-faint);font-size:13px}
 @media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr}.dash-stats{grid-template-columns:1fr 1fr}.dash-cols{grid-template-columns:1fr}.nav-links{display:none}}
 @media(max-width:600px){.grid-3,.grid-2{grid-template-columns:1fr}.hero h1{font-size:34px}.dash-stats{grid-template-columns:1fr 1fr}.role-choice{grid-template-columns:1fr}}
+
+/* ===== Homepage marketing sections ===== */
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.section-head h2{font-size:26px}
+.icon-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.icon-cat-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:20px 16px;text-align:center;cursor:pointer;transition:.15s}
+.icon-cat-card:hover{border-color:var(--brass);transform:translateY(-2px)}
+.icon-cat-card .ic{font-size:24px;margin-bottom:10px}
+.icon-cat-card .lb{font-size:13px;color:var(--text-dim)}
+@media(max-width:900px){.icon-cat-grid{grid-template-columns:repeat(2,1fr)}}
+.steps-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+@media(max-width:900px){.steps-5{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.steps-5{grid-template-columns:1fr}}
+.step-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:18px 16px}
+.step-card .num{font-family:'Fraunces',serif;font-size:20px;color:var(--brass);margin-bottom:8px}
+.step-card p{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin:0}
+.cta-band{background:linear-gradient(135deg,var(--paper),var(--paper-2));border:1px solid var(--hair);border-radius:20px;padding:44px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-band h2{font-size:24px;margin-bottom:8px;max-width:480px}
+.cta-band p{color:var(--text-dim);font-size:14px;max-width:440px;margin:0}
+.protect-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+@media(max-width:900px){.protect-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.protect-grid{grid-template-columns:1fr}}
+.protect-item{text-align:center;padding:8px}
+.protect-item .ic{font-size:22px;margin-bottom:10px}
+.protect-item .lb{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+.split-cta{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+@media(max-width:900px){.split-cta{grid-template-columns:1fr}}
+.split-cta h2{font-size:28px;margin-bottom:14px}
+.split-cta p.lead{color:var(--text-dim);font-size:15px;line-height:1.6;max-width:460px;margin:0 0 22px}
+.split-visual{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:26px}
+.split-visual .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--hair);font-size:13px;color:var(--text-dim)}
+.split-visual .row:last-child{border-bottom:none}
+.pricing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:760px;margin:0 auto}
+@media(max-width:700px){.pricing-grid{grid-template-columns:1fr}}
+.price-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:28px;position:relative}
+.price-card.pro{border-color:var(--brass)}
+.price-card .soon{position:absolute;top:20px;right:20px;font-size:10px;padding:4px 9px;border-radius:999px;background:rgba(201,162,39,.14);color:var(--brass-soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.price-card h3{font-size:19px;margin-bottom:4px}
+.price-card .amt{font-family:'Fraunces',serif;font-size:30px;margin:10px 0 18px}
+.price-card .amt span{font-size:13px;color:var(--text-faint);font-family:'Sora',sans-serif}
+.price-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.price-card li{font-size:13px;color:var(--text-dim);display:flex;gap:8px;align-items:flex-start}
+.price-card li::before{content:'✓';color:var(--signal);flex:0 0 auto}
+footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top:40px}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:28px;margin-bottom:32px}
+@media(max-width:700px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-brand .logo{margin-bottom:10px}
+.foot-brand p{font-size:12.5px;color:var(--text-faint);line-height:1.6;max-width:260px;margin:0}
+.foot-col h5{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:0 0 14px}
+.foot-col a{display:block;font-size:13px;color:var(--text-dim);margin-bottom:10px;cursor:pointer}
+.foot-col a:hover{color:var(--text)}
+.foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-faint);border-top:1px solid var(--hair);padding-top:20px}
+
+/* ===== Specialty picker ===== */
+.spec-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.spec-chip{border:1px solid var(--hair);border-radius:999px;padding:7px 13px;font-size:12.5px;color:var(--text-dim);cursor:pointer;background:transparent}
+.spec-chip.sel{border-color:var(--brass);background:rgba(201,162,39,.12);color:var(--brass-soft)}
+.primary-select{margin-top:8px}
+.primary-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(201,162,39,.14);color:var(--brass-soft);font-weight:600;margin-bottom:8px}
+
+/* ===== Services ===== */
+.service-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.service-card .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.service-card .sh b{font-size:14.5px}
+.service-card .price{font-family:'Fraunces',serif;font-size:18px;color:var(--brass-soft);white-space:nowrap}
+.service-card p{font-size:12.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.5}
+.service-card .sm{font-size:11.5px;color:var(--text-faint)}
+.service-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding:12px 0}
+
+/* ===== Milestones ===== */
+.milestone-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.milestone-row input{flex:1}
+.milestone-row input.amt{max-width:130px}
+.ms-list .row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--hair);font-size:12.5px;color:var(--text-dim)}
+
+/* ===== Reviewer queue ===== */
+.dispute-card{background:var(--ink-2);border:1px solid var(--hair);border-radius:12px;padding:14px;margin-bottom:10px}
+.dispute-card .dh{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px}
+.dispute-card p{font-size:12.5px;color:var(--text-dim);margin:0 0 10px}
+
+/* ===== Mobile bottom nav ===== */
+.mobile-nav{display:none}
+@media(max-width:900px){
+  .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(18,19,25,.96);backdrop-filter:blur(10px);border-top:1px solid var(--hair);justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+  .mobile-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--text-faint);flex:1;padding:6px 2px}
+  .mobile-nav a.active{color:var(--brass-soft)}
+  .mobile-nav .ic{font-size:18px}
+  body.has-mobnav main{padding-bottom:64px}
+}
 </style>
 </head>
 <body>
@@ -130,7 +219,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
     <div class="logo" onclick="go('home')"><span class="dot"></span>PRODILIVE</div>
     <nav class="nav-links">
       <a onclick="go('talents')">Find Talent</a>
-      <a onclick="go('jobs')">Open Jobs</a>
+      <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('pricing')">Pricing</a>
       <a onclick="go('dashboard')" id="navDashLink" style="display:none">Dashboard</a>
       <a onclick="go('admin')" id="navAdminLink" style="display:none">Admin</a>
     </nav>
@@ -153,8 +243,38 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
 </header>
 
 <main id="app"></main>
+<nav class="mobile-nav" id="mobileNav"></nav>
 
-<footer><div class="wrap"><div>PRODILIVE · Music production marketplace</div><div class="mono">NIGERIA · ₦NGN</div></div></footer>
+<footer class="site-foot"><div class="wrap">
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <div class="logo"><span class="dot"></span>PRODILIVE</div>
+      <p>A trusted marketplace connecting clients with music producers, engineers, musicians and creative professionals — with protected files, secure payments and independent dispute review.</p>
+    </div>
+    <div class="foot-col">
+      <h5>Platform</h5>
+      <a onclick="go('talents')">Find Talent</a>
+      <a onclick="go('jobs')">Find Work</a>
+      <a onclick="state.user ? openJobModal('open') : openAuth('register')">Post a Project</a>
+      <a onclick="go('pricing')">Pricing</a>
+    </div>
+    <div class="foot-col">
+      <h5>Trust &amp; Safety</h5>
+      <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
+      <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
+      <a onclick="state.user?openAuth('login'):openAuth('register')">Become a Reviewer</a>
+    </div>
+    <div class="foot-col">
+      <h5>Account</h5>
+      <a onclick="state.user ? go('dashboard') : openAuth('login')">Sign in</a>
+      <a onclick="openAuth('register')">Join PRODILIVE</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <div>© <span id="footYear"></span> PRODILIVE. All rights reserved.</div>
+    <div class="mono">NIGERIA · ₦NGN · EXPANDING GLOBALLY</div>
+  </div>
+</div></footer>
 
 <div class="modal-bg" id="authModal"><div class="modal">
   <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
@@ -183,6 +303,11 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
     <div class="field"><label>Category</label><input id="jobCategory" placeholder="Mixing, Production, Session Musician..."></div>
     <div class="field"><label>Budget (NGN)</label><input id="jobBudget" type="number" min="1" required placeholder="150000"></div>
     <div class="field"><label>Included revisions</label><input id="jobRevisions" type="number" min="0" max="20" value="2"></div>
+    <div class="field">
+      <label>Milestones <span style="font-weight:400;color:var(--text-faint)">(optional — for your own tracking, breakdown only)</span></label>
+      <div id="msRowsBox"></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addMsRow()">+ Add milestone</button>
+    </div>
     <button class="btn btn-brass btn-block" type="submit" id="jobSubmitBtn">Publish project</button>
   </form>
 </div></div>
@@ -202,7 +327,25 @@ const state = {
   authMode: 'login',
   authRole: 'client',
   notifications: [],
+  pickedSpecs: [],
+  msRows: [],
 };
+
+/* Predefined specialty taxonomy — grouped for the multi-select picker.
+   Selecting specialties still saves to the existing users.skills array,
+   so no schema change was needed for this. */
+const SPECIALTY_GROUPS = {
+  'Production & Audio': ['Music Producer','Mixing Engineer','Mastering Engineer','Recording Engineer','Sound Designer','Beat Maker','Composer','Arranger','Music Director'],
+  'Musicians': ['Pianist/Keyboardist','Drummer','Bassist','Guitarist','Percussionist','Saxophonist','Violinist','Trumpeter','Other Instrumentalist'],
+  'Vocals': ['Lead Vocalist','Background Vocalist','Vocal Arranger','Vocal Coach','Voice-over Artist'],
+  'Visual & Creative': ['Graphic Designer','Artwork Designer','Photographer','Videographer','Video Editor','Motion Designer','Animator'],
+};
+const MOBILE_NAV_ITEMS = [
+  ['home','🏠','Home'],
+  ['talents','🔍','Explore'],
+  ['jobs','💼','Jobs'],
+  ['dashboard','👤','Profile'],
+];
 
 /* ============================ API HELPERS ============================ */
 async function api(path, opt = {}) {
@@ -240,16 +383,24 @@ function go(view, params = {}) {
   state.view = view; state.params = params;
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   render();
+  renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function needsAuth(view){ return ['dashboard','admin','jobDetail'].includes(view); }
+function renderMobileNav() {
+  const el = document.getElementById('mobileNav');
+  if (!el) return;
+  if (!state.user) { el.innerHTML = ''; document.body.classList.remove('has-mobnav'); return; }
+  document.body.classList.add('has-mobnav');
+  el.innerHTML = MOBILE_NAV_ITEMS.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
+}
 
 async function render() {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="wrap" style="padding:80px 0;text-align:center;color:var(--text-faint)">Loading…</div>';
   try {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
-      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin };
+      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing };
     app.innerHTML = await (views[state.view] || viewHome)();
   } catch (e) {
     app.innerHTML = `<div class="wrap" style="padding:80px 0"><div class="empty"><div class="n">⚠️</div><h3>Something went wrong</h3><p>${esc(e.message)}</p></div></div>`;
@@ -264,6 +415,7 @@ function updateNav() {
   document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
   document.getElementById('navAdminLink').style.display = (signedIn && state.user.role==='admin') ? 'inline' : 'none';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
+  renderMobileNav();
 }
 function openAuth(mode) {
   state.authMode = mode;
@@ -319,6 +471,7 @@ async function doLogout() {
   go('home');
 }
 async function bootstrap() {
+  const fy = document.getElementById('footYear'); if (fy) fy.textContent = new Date().getFullYear();
   if (state.token) {
     try {
       const d = await api('/me');
@@ -366,35 +519,134 @@ async function viewHome() {
   let featured = [];
   try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
   const cats = ['Mixing','Mastering','Session Musicians','Vocal Coaching','Songwriting','Recording Studios','Beat Making','Arrangement'];
+  const iconCats = [
+    ['🎚','Production',['Music Producer','Beat Making']],
+    ['🎹','Keys & Session',['Session Musicians']],
+    ['🎤','Vocals',['Vocal Coaching']],
+    ['🎧','Mixing & Mastering',['Mixing','Mastering']],
+    ['✍️','Songwriting',['Songwriting']],
+    ['🎼','Arrangement',['Arrangement']],
+    ['🎙️','Recording Studios',['Recording Studios']],
+    ['🎨','Design & Visuals',['Artwork','Cover Art']],
+  ];
   return `
   <section class="hero"><div class="wrap">
     <div class="eyebrow">MUSIC PRODUCTION MARKETPLACE · NIGERIA</div>
-    <h1>Find the right music professional for your next project.</h1>
+    <h1>Bring your ideas to life — with the right creative professional.</h1>
     <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
     <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
     <div class="hero-actions" style="margin-top:22px">
-      <button class="btn btn-brass" onclick="go('talents')">Find a Professional</button>
-      <button class="btn btn-ghost" onclick="state.user ? openJobModal('open') : openAuth('register')">Post a Project</button>
+      <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
+      <button class="btn btn-ghost" onclick="go('jobs')">Find Work</button>
     </div>
     <div class="cat-row">${cats.map(c=>`<span class="cat-pill" onclick="go('talents',{q:'${esc(c)}'})">${c}</span>`).join('')}</div>
   </div></section>
 
   <section><div class="wrap">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px">
-      <div><div class="eyebrow">FEATURED PROFESSIONALS</div><h2 style="font-size:26px">Verified talent, ready to hire</h2></div>
+    <div class="section-head"><div><div class="eyebrow">EXPLORE</div><h2>Explore creative talent</h2></div></div>
+    <div class="icon-cat-grid">
+      ${iconCats.map(([ic,label,qs])=>`
+        <div class="icon-cat-card" onclick="go('talents',{q:'${esc(qs[0])}'})"><div class="ic">${ic}</div><div class="lb">${esc(label)}</div></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap">
+    <div class="eyebrow" id="howItWorks">HOW IT WORKS</div>
+    <h2 style="font-size:26px;margin-bottom:24px">From idea to finished record</h2>
+    <div class="steps-5">
+      ${[['01','Find the right professional.'],
+         ['02','Agree on the project.'],
+         ['03','Pay securely through PRODILIVE.'],
+         ['04','Collaborate and receive your work.'],
+         ['05','Approve the delivery.']].map(([n,d])=>`
+        <div class="step-card"><div class="num">${n}</div><p>${d}</p></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="section-head">
+      <div><div class="eyebrow">FEATURED PROFESSIONALS</div><h2>Verified talent, ready to hire</h2></div>
       <button class="btn btn-ghost btn-sm" onclick="go('talents')">View all →</button>
     </div>
     ${featured.length ? `<div class="grid-3">${featured.map(talentCard).join('')}</div>` : `<div class="empty"><div class="n">🎧</div><p>No professionals listed yet — be the first to join.</p></div>`}
   </div></section>
 
-  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap">
-    <div class="eyebrow">HOW IT WORKS</div>
-    <h2 style="font-size:26px;margin-bottom:24px">From idea to finished record</h2>
-    <div class="grid-3">
-      ${[['1. Post or browse','Post a project or browse verified professionals by category and rating.'],
-         ['2. Fund & produce','Payment is held securely until the work is delivered and approved.'],
-         ['3. Approve & review','Approve the final delivery, release payment, and leave a review.']].map(([t,d])=>`
-        <div class="p-card" style="cursor:default"><h3 style="font-size:17px;margin-bottom:8px">${t}</h3><p class="desc" style="-webkit-line-clamp:3">${d}</p></div>`).join('')}
+  <section><div class="wrap">
+    <div class="cta-band">
+      <div><h2>Have something specific in mind?</h2><p>Tell the PRODILIVE community what you're creating and receive applications from professionals who can make it happen.</p></div>
+      <button class="btn btn-brass" onclick="state.user ? openJobModal('open') : openAuth('register')">Post Your Project</button>
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" id="protection">
+    <div class="eyebrow" style="justify-content:center">PROTECTION</div>
+    <h2 style="font-size:26px;text-align:center;margin-bottom:30px">Work confidently.</h2>
+    <div class="protect-grid">
+      ${[['🔒','Protected payments'],['✅','Verified transactions'],['🗂️','Project workspaces'],['⚖️','Professional dispute review'],['⭐','Verified reviews']].map(([ic,lb])=>`
+        <div class="protect-item"><div class="ic">${ic}</div><div class="lb">${lb}</div></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="split-cta">
+      <div>
+        <div class="eyebrow">FOR PROVIDERS</div>
+        <h2>Your next opportunity could come from anywhere.</h2>
+        <p class="lead">Build your profile, show your work, and find opportunities with clients on PRODILIVE. Get paid securely once your work is approved.</p>
+        <button class="btn btn-brass" onclick="state.user ? go('dashboard') : openAuth('register')">Start Earning</button>
+      </div>
+      <div class="split-visual">
+        <div class="row"><span>Open projects this week</span><span class="mono">Growing daily</span></div>
+        <div class="row"><span>Payment protection</span><span class="mono">Held until approved</span></div>
+        <div class="row"><span>Dispute support</span><span class="mono">Independent review</span></div>
+        <div class="row"><span>Payout method</span><span class="mono">Direct to bank</span></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" style="text-align:center">
+    <div class="eyebrow" style="justify-content:center">PRICING</div>
+    <h2 style="font-size:26px;margin-bottom:30px">Simple, fair pricing.</h2>
+    <button class="btn btn-ghost" onclick="go('pricing')">See full pricing →</button>
+  </div></section>
+
+  <section><div class="wrap" style="text-align:center;padding:70px 0">
+    <h2 style="font-size:30px;max-width:620px;margin:0 auto 20px">Whatever you're creating, find the people to make it happen.</h2>
+    <button class="btn btn-brass" onclick="openAuth('register')">Join PRODILIVE</button>
+  </div></section>`;
+}
+
+/* ============================ VIEW: PRICING ============================ */
+async function viewPricing() {
+  return `
+  <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+    <div class="eyebrow" style="justify-content:center">PRICING</div>
+    <h1 style="font-size:32px;margin-bottom:14px">Free to join. Fair fees only when you get paid.</h1>
+    <p class="lead" style="max-width:520px;margin:0 auto 40px">No monthly cost to start. PRODILIVE takes a small platform fee to fund payment protection, quality checks and dispute resolution.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="amt">$0<span> /month</span></div>
+        <ul>
+          <li>Client service fee applies per project</li>
+          <li>Provider commission applies per payout</li>
+          <li>Protected payments &amp; project workspace</li>
+          <li>Messaging, files &amp; delivery tracking</li>
+          <li>Access to dispute resolution</li>
+        </ul>
+      </div>
+      <div class="price-card pro">
+        <span class="soon">Coming soon</span>
+        <h3>Pro</h3>
+        <div class="amt">—<span> /month</span></div>
+        <ul>
+          <li>Reduced platform fees</li>
+          <li>Verified / Pro badge</li>
+          <li>Priority search placement</li>
+          <li>More portfolio uploads</li>
+          <li>Advanced analytics &amp; faster payouts</li>
+        </ul>
+      </div>
     </div>
   </div></section>`;
 }
@@ -445,9 +697,11 @@ async function viewTalentProfile() {
   let t = state.talentsCache[id];
   if (!t) { try { t = (await api('/talents')).talents.find(x=>x.id===id); } catch {} }
   if (!t) return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Profile not found</h3></div></div>`;
-  let reviews = [];
+  let reviews = [], services = [];
   try { reviews = (await api('/talents/'+id+'/reviews')).reviews; } catch {}
+  try { services = (await api('/talents/'+id+'/services')).services; } catch {}
   const avg = reviews.length ? (reviews.reduce((a,r)=>a+r.rating,0)/reviews.length) : null;
+  const primary = (t.skills||[])[0];
   return `
   <section style="padding-top:32px"><div class="wrap">
     <a class="back-link" onclick="go('talents')">← Back to marketplace</a>
@@ -458,6 +712,7 @@ async function viewTalentProfile() {
           <h1 style="font-size:26px">${esc(t.name)}</h1>
           ${t.reviewer_level==='CERTIFIED' ? '<span class="badge">✓ Certified</span>' : ''}
         </div>
+        ${primary ? `<div class="mono" style="font-size:12px;color:var(--brass-soft);margin-top:4px">${esc(primary.toUpperCase())}</div>` : ''}
         <div style="color:var(--text-faint);font-size:13px;margin-top:6px">${reviews.length} review${reviews.length===1?'':'s'} ${avg?('· '+stars(avg)+' '+avg.toFixed(1)):''}</div>
       </div>
     </div>
@@ -465,6 +720,19 @@ async function viewTalentProfile() {
       <div>
         <p style="color:var(--text-dim);line-height:1.7;font-size:15px">${esc(t.bio || 'This professional has not added a bio yet.')}</p>
         <div style="margin:16px 0">${(t.skills||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('') || '<span class="mono" style="color:var(--text-faint);font-size:12px">No skills listed</span>'}</div>
+
+        ${services.length ? `
+        <h3 style="font-size:17px;margin:28px 0 14px">Services</h3>
+        ${services.map(s=>`
+          <div class="service-card">
+            <div class="sh"><b>${esc(s.title)}</b><span class="price">${fmt(s.price)}</span></div>
+            <p>${esc(s.description||'')}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="sm">${s.delivery_days}-day delivery · ${s.revision_count} revisions</span>
+              <button class="btn btn-brass btn-sm" onclick="orderService('${s.id}')">Order Service</button>
+            </div>
+          </div>`).join('')}
+        ` : ''}
 
         <h3 style="font-size:17px;margin:28px 0 14px">Reviews</h3>
         ${reviews.length ? reviews.map(r=>`
@@ -517,19 +785,35 @@ function openJobModal(mode, talentId, talentName) {
   document.getElementById('jobCategory').value = '';
   document.getElementById('jobBudget').value = '';
   document.getElementById('jobRevisions').value = 2;
+  state.msRows = [];
+  renderMsRows();
   openModal('jobModal');
 }
+function renderMsRows() {
+  const box = document.getElementById('msRowsBox');
+  if (!box) return;
+  box.innerHTML = state.msRows.map((m,i)=>`
+    <div class="milestone-row">
+      <input placeholder="e.g. Arrangement" value="${esc(m.label)}" oninput="state.msRows[${i}].label=this.value">
+      <input class="amt" type="number" placeholder="₦" value="${m.amount||''}" oninput="state.msRows[${i}].amount=Number(this.value||0)">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="removeMsRow(${i})">✕</button>
+    </div>`).join('');
+}
+function addMsRow() { state.msRows.push({ label:'', amount:0 }); renderMsRows(); }
+function removeMsRow(i) { state.msRows.splice(i,1); renderMsRows(); }
 async function submitJob(e) {
   e.preventDefault();
   const btn = document.getElementById('jobSubmitBtn');
   const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
   try {
+    const milestones = state.msRows.filter(m=>m.label.trim() && m.amount>0).map(m=>({ label:m.label.trim(), amount:m.amount }));
     const payload = {
       title: document.getElementById('jobTitle').value.trim(),
       description: document.getElementById('jobDesc').value.trim(),
       category: document.getElementById('jobCategory').value.trim() || undefined,
       budget: Number(document.getElementById('jobBudget').value),
       revisionCount: Number(document.getElementById('jobRevisions').value || 2),
+      milestones,
     };
     const job = await api('/jobs', { method:'POST', body: JSON.stringify(payload) });
     if (state.jobModalMode === 'hire' && state.hireTalentId) {
@@ -682,6 +966,11 @@ async function viewJobDetail() {
           <div style="display:flex;justify-content:space-between;padding:6px 0"><span>Revisions</span><span>${job.revisions_used||0}/${job.revision_count}</span></div>
           <div style="display:flex;justify-content:space-between;padding:6px 0"><span>Created</span><span>${timeAgo(job.created_at)}</span></div>
         </div>
+        ${(job.milestones||[]).length ? `
+        <div class="ms-list" style="border-top:1px solid var(--hair);padding-top:12px;margin-top:6px">
+          <div class="mono" style="font-size:10px;color:var(--text-faint);margin-bottom:4px">MILESTONE BREAKDOWN</div>
+          ${job.milestones.map(m=>`<div class="row"><span>${esc(m.label)}</span><span>${fmt(m.amount)}</span></div>`).join('')}
+        </div>` : ''}
       </div>
     </div>
   </div></section>`;
@@ -754,11 +1043,18 @@ async function sendMessage(jobId) {
 /* ============================ VIEW: DASHBOARD ============================ */
 async function viewDashboard() {
   const u = state.user;
+  state.pickedSpecs = (u.skills || []).slice();
   let jobs = [];
   try { jobs = (await api('/jobs')).jobs; } catch(e) { toast(e.message, true); }
   const mine = jobs.filter(j => j.client_id===u.id || j.talent_id===u.id);
   const active = mine.filter(j=>['IN_PROGRESS','QA_PENDING','CLIENT_REVIEW','REVISION_REQUESTED','AWAITING_PAYMENT'].includes(j.status)).length;
   const done = mine.filter(j=>j.status==='RELEASED').length;
+
+  let services = [];
+  if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
+
+  let myDisputes = [];
+  if (u.role === 'reviewer') { try { myDisputes = (await api('/disputes')).disputes.filter(d=>d.assigned_reviewer_id===u.id && d.status==='ASSIGNED'); } catch {} }
 
   return `
   <section style="padding-top:32px"><div class="wrap">
@@ -774,16 +1070,58 @@ async function viewDashboard() {
       <div class="stat-card"><div class="l">Role</div><div class="v" style="font-size:18px">${esc(u.role)}</div></div>
     </div>
 
+    ${u.role==='reviewer' ? `
+    <div class="panel" style="margin-bottom:20px">
+      <h4>My review queue <span>${myDisputes.length} assigned</span></h4>
+      ${myDisputes.length ? myDisputes.map(d=>`
+        <div class="dispute-card">
+          <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+          <p>${esc(d.reason||'')}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
+            <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+            <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
+          </div>
+        </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
+    </div>` : ''}
+
     <div class="dash-cols">
       <div class="panel">
         <h4>My projects <span>${mine.length} total</span></h4>
         ${mine.length ? mine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
+
+        ${u.role==='talent' ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:10px">My services <span>${services.length}</span></h4>
+            <div id="servicesList">${renderServicesList(services)}</div>
+            <div style="border-top:1px solid var(--hair);margin-top:14px;padding-top:14px">
+              <div class="field"><label>Service title</label><input id="svTitle" placeholder="e.g. I'll mix and master your song"></div>
+              <div class="field"><label>Description</label><textarea id="svDesc" placeholder="What's included, turnaround, etc."></textarea></div>
+              <div style="display:flex;gap:10px">
+                <div class="field" style="flex:1"><label>Price (₦)</label><input id="svPrice" type="number" placeholder="150000"></div>
+                <div class="field" style="flex:1"><label>Delivery (days)</label><input id="svDays" type="number" value="5"></div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="addService()">+ Add service</button>
+            </div>
+          </div>` : ''}
+
+        ${(u.role==='client' || u.role==='talent') ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:8px">Become a PRODILIVE Reviewer</h4>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Verified specialists help resolve project disputes. Applications are reviewed by our team.</p>
+            <div class="field"><label>Your experience</label><textarea id="revExp" placeholder="Years active, notable credits, relevant background..."></textarea></div>
+            <div class="field"><label>Portfolio links (comma separated)</label><input id="revPortfolio" placeholder="https://..."></div>
+            <button class="btn btn-ghost btn-sm" onclick="applyReviewer()">Submit application</button>
+          </div>` : ''}
       </div>
       <div class="panel">
         <h4>Profile</h4>
         <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
         <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
-        <div class="field"><label>Skills (comma separated)</label><input id="pfSkills" value="${esc((u.skills||[]).join(', '))}"></div>
+        <div class="field">
+          <label>Specialties</label>
+          <div id="specPickerBox">${renderSpecPicker()}</div>
+        </div>
         <button class="btn btn-brass btn-sm" onclick="saveProfile()">Save profile</button>
         ${u.role==='talent' ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
@@ -796,9 +1134,65 @@ async function viewDashboard() {
     </div>
   </div></section>`;
 }
+function renderSpecPicker() {
+  const groups = Object.entries(SPECIALTY_GROUPS).map(([g,items])=>`
+    <div style="margin-bottom:10px"><div class="mono" style="font-size:10px;color:var(--text-faint);margin-bottom:6px">${esc(g.toUpperCase())}</div>
+    <div class="spec-picker">${items.map(s=>`<span class="spec-chip ${state.pickedSpecs.includes(s)?'sel':''}" onclick="toggleSpec('${esc(s).replace(/'/g,"\\'")}')">${esc(s)}</span>`).join('')}</div></div>`).join('');
+  const primary = state.pickedSpecs[0];
+  const primarySelect = state.pickedSpecs.length ? `
+    <div class="primary-select"><label style="font-size:11px;color:var(--text-faint)">Primary specialty</label>
+    <select id="primarySpecSelect" onchange="setPrimarySpec(this.value)">${state.pickedSpecs.map(s=>`<option value="${esc(s)}" ${s===primary?'selected':''}>${esc(s)}</option>`).join('')}</select></div>` : '';
+  return groups + primarySelect;
+}
+function toggleSpec(s) {
+  const i = state.pickedSpecs.indexOf(s);
+  if (i === -1) state.pickedSpecs.push(s); else state.pickedSpecs.splice(i,1);
+  document.getElementById('specPickerBox').innerHTML = renderSpecPicker();
+}
+function setPrimarySpec(s) {
+  state.pickedSpecs = [s, ...state.pickedSpecs.filter(x=>x!==s)];
+  document.getElementById('specPickerBox').innerHTML = renderSpecPicker();
+}
+function renderServicesList(services) {
+  if (!services.length) return `<p style="color:var(--text-faint);font-size:12.5px">No services listed yet.</p>`;
+  return services.map(s=>`
+    <div class="service-row">
+      <div><b style="font-size:13px">${esc(s.title)}</b><div class="sm">${fmt(s.price)} · ${s.delivery_days}-day delivery ${s.active?'':'· <span style=\"color:var(--danger)\">inactive</span>'}</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleServiceActive('${s.id}',${!s.active})">${s.active?'Deactivate':'Activate'}</button>
+    </div>`).join('');
+}
+async function addService() {
+  try {
+    const payload = {
+      title: document.getElementById('svTitle').value.trim(),
+      description: document.getElementById('svDesc').value.trim(),
+      price: Number(document.getElementById('svPrice').value),
+      deliveryDays: Number(document.getElementById('svDays').value || 5),
+    };
+    if (!payload.title || !payload.price) { toast('Title and price are required.', true); return; }
+    await api('/services', { method:'POST', body: JSON.stringify(payload) });
+    toast('Service added.'); reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function toggleServiceActive(id, active) {
+  try { await api('/services/'+id, { method:'PUT', body: JSON.stringify({ active }) }); toast(active?'Service activated.':'Service deactivated.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function applyReviewer() {
+  try {
+    const portfolio = document.getElementById('revPortfolio').value.split(',').map(s=>s.trim()).filter(Boolean);
+    await api('/reviewer/apply', { method:'POST', body: JSON.stringify({ specialties: state.pickedSpecs, experience: document.getElementById('revExp').value.trim(), portfolio }) });
+    toast('Application submitted — our team will review it.');
+  } catch(e) { toast(e.message, true); }
+}
+async function orderService(id) {
+  if (!state.user) { openAuth('register'); return; }
+  try { const job = await api('/services/'+id+'/order', { method:'POST' }); toast('Order created — fund it to get started.'); go('jobDetail',{id:job.id}); }
+  catch(e) { toast(e.message, true); }
+}
 async function saveProfile() {
   try {
-    const skills = document.getElementById('pfSkills').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const skills = state.pickedSpecs.length ? state.pickedSpecs : document.getElementById('pfSkills') ? document.getElementById('pfSkills').value.split(',').map(s=>s.trim()).filter(Boolean) : [];
     const d = await api('/me', { method:'PUT', body: JSON.stringify({ name: document.getElementById('pfName').value.trim(), bio: document.getElementById('pfBio').value, skills }) });
     state.user = d.user; updateNav(); toast('Profile saved.');
   } catch(e) { toast(e.message, true); }
@@ -814,16 +1208,17 @@ async function savePayout() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], payments = [], apps = [];
+  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [];
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='users') users = (await api('/admin/users')).users;
     if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
     if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
+    if (tab==='disputes') { disputes = (await api('/disputes')).disputes; reviewerUsers = (await api('/admin/users')).users.filter(u=>u.role==='reviewer'); }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['reviewers','Reviewer Apps']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['reviewers','Reviewer Apps'],['disputes','Disputes']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -847,10 +1242,29 @@ async function viewAdmin() {
       </table></div>`;
   } else if (tab==='reviewers') {
     body = `<div class="panel">${apps.length ? apps.map(a=>`
-      <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}</div></div>
-        ${a.status==='PENDING' ? `<button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve</button>` : ''}
+        ${a.status==='PENDING' ? `<button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>` : ''}
+        ${a.status==='QUALIFICATION' ? `
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="qScore_${a.user_id}" type="number" min="0" max="100" placeholder="Score 0-100" style="width:110px">
+            <button class="btn btn-ghost btn-sm" onclick="adminSetQualification('${a.user_id}')">Set score</button>
+          </div>` : ''}
       </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No applications.</p>`}</div>`;
+  } else if (tab==='disputes') {
+    body = `<div class="panel">${disputes.length ? disputes.map(d=>`
+      <div style="border-top:1px solid var(--hair);padding:12px 0">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div><b style="font-size:13.5px">${esc(d.title)}</b><div style="font-size:12px;color:var(--text-faint)">${fmt(d.budget)} · ${esc(d.status)}</div></div>
+          <a class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</a>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0">${esc(d.reason||'')}</p>
+        ${d.status==='OPEN' ? `
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="assignSel_${d.id}"><option value="">Assign to reviewer…</option>${reviewerUsers.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select>
+            <button class="btn btn-ghost btn-sm" onclick="adminAssignDispute('${d.id}')">Assign</button>
+          </div>` : d.status==='ASSIGNED' ? `<span class="mono" style="font-size:11px;color:var(--text-faint)">Assigned — awaiting reviewer decision</span>` : ''}
+      </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No disputes.</p>`}</div>`;
   }
 
   return `
@@ -863,6 +1277,19 @@ async function viewAdmin() {
 async function adminSuspend(id) { try { await api('/admin/users/'+id+'/suspend', { method:'POST' }); toast('User suspended.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminReactivate(id) { try { await api('/admin/users/'+id+'/reactivate', { method:'POST' }); toast('User reactivated.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminDecideReviewer(id, approved) { try { await api('/admin/reviewer-applications/'+id+'/decision', { method:'POST', body: JSON.stringify({ approved }) }); toast('Decision recorded.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminSetQualification(userId) {
+  const el = document.getElementById('qScore_'+userId);
+  const score = Number(el.value);
+  if (!el.value || score<0 || score>100) { toast('Enter a score between 0 and 100.', true); return; }
+  try { await api('/admin/reviewers/'+userId+'/qualification', { method:'POST', body: JSON.stringify({ score }) }); toast('Qualification recorded.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminAssignDispute(id) {
+  const sel = document.getElementById('assignSel_'+id);
+  if (!sel.value) { toast('Choose a reviewer first.', true); return; }
+  try { await api('/admin/disputes/'+id+'/assign', { method:'POST', body: JSON.stringify({ reviewerId: sel.value }) }); toast('Dispute assigned.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
 
 /* ============================ INIT ============================ */
 bootstrap();
