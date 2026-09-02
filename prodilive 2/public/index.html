@@ -1,0 +1,1787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="PRODILIVE — trusted marketplace for music and creative production services">
+<title>PRODILIVE — Music Production Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#121319;--ink-2:#191b23;--paper:#1e202b;--paper-2:#262838;--hair:#33354a;--brass:#c9a227;--brass-soft:#e8cf7a;--signal:#4fd1a5;--danger:#e0637c;--text:#f2f0e9;--text-dim:#a7a4b3;--text-faint:#6f6c7d;--radius:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--text);font-family:'Sora',sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em;margin:0}
+.mono{font-family:'IBM Plex Mono',monospace}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+header.nav{position:sticky;top:0;z-index:50;background:rgba(18,19,25,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--hair)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:15px 0;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:19px;cursor:pointer}
+.logo .dot{width:9px;height:9px;border-radius:50%;background:var(--brass);box-shadow:0 0 10px var(--brass)}
+.nav-links{display:flex;align-items:center;gap:22px;font-size:13.5px;color:var(--text-dim)}
+.nav-links a{cursor:pointer}
+.nav-links a:hover,.nav-links a.active{color:var(--text)}
+.nav-cta{display:flex;gap:10px;align-items:center;position:relative}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:999px;border:1px solid transparent;font-size:13.5px;font-weight:600;transition:.15s;white-space:nowrap}
+.btn-brass{background:var(--brass);color:#1a1508}
+.btn-brass:hover{background:var(--brass-soft)}
+.btn-ghost{background:transparent;border-color:var(--hair);color:var(--text)}
+.btn-ghost:hover{border-color:var(--text-dim)}
+.btn-danger{background:transparent;border-color:#5a3037;color:var(--danger)}
+.btn-sm{padding:7px 13px;font-size:12.5px}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+main{min-height:70vh}
+section{padding:52px 0}
+.eyebrow{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:14px;color:var(--brass-soft);margin-bottom:10px;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
+.eyebrow::before{content:'';width:16px;height:1px;background:var(--brass);opacity:.6}
+.hero{padding:80px 0 60px}
+.hero-grid{display:grid;grid-template-columns:1fr 360px;gap:40px;align-items:center}
+.hero h1{font-size:48px;line-height:1.06;max-width:680px;margin-bottom:18px}
+.hero p.lead{color:var(--text-dim);font-size:16.5px;line-height:1.6;max-width:520px;margin:0 0 28px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px}
+.hero-visual{position:relative;height:340px;display:flex;align-items:center;justify-content:center}
+.hero-visual svg{width:100%;height:100%}
+.wave-bar{fill:var(--brass);opacity:.85;transform-box:fill-box;transform-origin:center bottom;animation:wavepulse 2.4s ease-in-out infinite}
+@keyframes wavepulse{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.wave-bar{animation:none}}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-visual{display:none}}
+.searchbar{display:flex;gap:8px;background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:8px;max-width:480px}
+.searchbar input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;padding:9px 11px;font-family:inherit}
+.searchbar input::placeholder{color:var(--text-faint)}
+.cat-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.cat-pill{background:var(--paper);border:1px solid var(--hair);border-radius:999px;padding:9px 16px;font-size:13px;color:var(--text-dim)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.p-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:20px;transition:.15s;cursor:pointer}
+.p-card:hover{border-color:var(--brass);transform:translateY(-2px)}
+.p-card-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.avatar{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brass),#8a6b12);display:flex;align-items:center;justify-content:center;font-weight:700;color:#1a1508;font-size:14px;flex:0 0 auto}
+.avatar.lg{width:80px;height:80px;border-radius:16px;font-size:28px}
+.p-card-top .meta b{display:block;font-size:15px}
+.p-card-top .meta .role{font-size:12px;color:var(--brass-soft);margin-top:2px}
+.badge{font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(79,209,165,.14);color:var(--signal);font-weight:600}
+.tag{font-size:11px;background:var(--paper-2);border:1px solid var(--hair);padding:4px 9px;border-radius:999px;color:var(--text-dim);display:inline-block;margin:0 5px 5px 0}
+.p-card p.desc{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.p-card-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding-top:12px;font-size:12px;color:var(--text-faint)}
+.stars{color:var(--brass)}
+.empty{text-align:center;padding:50px 20px;color:var(--text-faint)}
+.empty .n{font-size:28px;margin-bottom:8px}
+.status{font-size:10px;padding:4px 9px;border-radius:999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.status.st-open,.status.st-active{background:rgba(79,209,165,.15);color:var(--signal)}
+.status.st-pending,.status.st-wait{background:rgba(201,162,39,.15);color:var(--brass-soft)}
+.status.st-done{background:rgba(167,164,179,.15);color:var(--text-dim)}
+.status.st-bad{background:rgba(224,99,124,.15);color:var(--danger)}
+.job-row{background:var(--paper);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.job-row:hover{border-color:var(--brass)}
+.job-row .jh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.job-row .jh b{font-size:14.5px}
+.job-row .jm{font-size:12px;color:var(--text-faint)}
+.panel{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:22px}
+.panel h4{margin:0 0 14px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.panel h4 span{font-size:11px;color:var(--text-faint);font-weight:400}
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.stat-card{background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:18px}
+.stat-card .l{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.stat-card .v{font-family:'Fraunces',serif;font-size:24px}
+.dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--ink-2);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:13.5px;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brass)}
+.field textarea{resize:vertical;min-height:80px}
+.modal-bg{position:fixed;inset:0;background:rgba(10,10,14,.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+.modal-bg.open{display:flex}
+.modal{background:var(--paper);border:1px solid var(--hair);border-radius:18px;width:100%;max-width:460px;padding:30px 28px 28px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:modalrise .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes modalrise{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.modal{animation:none}}
+.modal::before{content:'';position:absolute;top:0;left:28px;right:28px;height:2px;background:linear-gradient(90deg,var(--brass),transparent 70%);border-radius:2px}
+.modal.wide{max-width:620px}
+.modal.wide::before{left:28px;right:28px}
+.modal h3{font-size:20px;margin-bottom:4px}
+.modal .sub{color:var(--text-faint);font-size:12.5px;margin-bottom:18px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:20px}
+.role-choice{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.role-opt{border:1px solid var(--hair);border-radius:12px;padding:12px;text-align:center;cursor:pointer;font-size:13px}
+.role-opt.sel{border-color:var(--brass);background:rgba(201,162,39,.08)}
+.tabs-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:8px 15px;border-radius:999px;border:1px solid var(--hair);background:transparent;color:var(--text-dim);font-size:12.5px}
+.tab-btn.active{background:var(--brass);color:#1a1508;border-color:var(--brass);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:0 8px 10px 0;font-weight:500}
+td{padding:10px 8px 10px 0;border-top:1px solid var(--hair);color:var(--text-dim)}
+tr:first-child td{border-top:none}
+.msg{background:var(--paper-2);border-radius:10px;padding:10px 13px;margin-bottom:8px;font-size:13px}
+.msg b{font-size:11.5px;color:var(--brass-soft);display:block;margin-bottom:3px}
+
+/* ===== Chat bubbles (project messages + support widget) ===== */
+.chat-scroll{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px;margin-bottom:10px}
+.chat-bubble{max-width:82%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;position:relative}
+.chat-bubble .who{font-size:10.5px;color:var(--text-faint);margin-bottom:2px;display:block}
+.chat-bubble.own{align-self:flex-end;background:var(--brass);color:#1a1508;border-bottom-right-radius:4px}
+.chat-bubble.own .who{color:#3a2f10}
+.chat-bubble.other{align-self:flex-start;background:var(--paper-2);border-bottom-left-radius:4px}
+.chat-bubble.admin-msg{align-self:flex-start;background:var(--signal);color:#0a1f14;border-bottom-left-radius:4px}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end}
+.chat-input-row textarea{flex:1;min-height:38px;max-height:100px;resize:none;padding:9px 12px}
+
+/* ===== Support chat widget ===== */
+#supportBubbleBtn{position:fixed;bottom:22px;right:22px;z-index:150;width:54px;height:54px;border-radius:50%;background:var(--brass);color:#1a1508;border:none;font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:pointer;display:flex;align-items:center;justify-content:center}
+@media(max-width:900px){#supportBubbleBtn{bottom:78px}}
+#supportPanel{position:fixed;bottom:86px;right:22px;z-index:150;width:330px;max-width:calc(100vw - 32px);background:var(--ink-2);border:1px solid var(--hair);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+@media(max-width:900px){#supportPanel{bottom:142px}}
+#supportPanel.open{display:flex}
+#supportPanel .sp-head{padding:14px 16px;border-bottom:1px solid var(--hair);display:flex;justify-content:space-between;align-items:center}
+#supportPanel .sp-head h5{margin:0;font-size:14px}
+#supportPanel .sp-close{background:none;border:none;color:var(--text-faint);font-size:16px;cursor:pointer}
+#supportPanel .sp-body{padding:14px 16px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+#supportPanel .sp-foot{padding:12px 14px;border-top:1px solid var(--hair)}
+#supportPanel .sp-foot input, #supportPanel .sp-foot textarea{width:100%;margin-bottom:8px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--brass);color:#1a1508;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--danger);color:#2a0d13}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#1a1508;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.notif-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid var(--ink)}
+.notif-drop{position:absolute;top:calc(100% + 10px);right:0;width:320px;background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:8px;max-height:400px;overflow-y:auto;display:none;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.notif-drop.open{display:block}
+.notif-item{padding:10px 12px;border-radius:10px;font-size:12.5px}
+.notif-item:hover{background:var(--paper-2)}
+.notif-item b{display:block;font-size:12.5px;margin-bottom:2px}
+.notif-item span{color:var(--text-faint);font-size:11.5px}
+footer{border-top:1px solid var(--hair);padding:32px 0;margin-top:40px}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-faint)}
+.back-link{cursor:pointer;color:var(--text-faint);font-size:13px}
+@media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr}.dash-stats{grid-template-columns:1fr 1fr}.dash-cols{grid-template-columns:1fr}.nav-links{display:none}}
+@media(max-width:600px){.grid-3,.grid-2{grid-template-columns:1fr}.hero h1{font-size:34px}.dash-stats{grid-template-columns:1fr 1fr}.role-choice{grid-template-columns:1fr}}
+
+/* ===== Homepage marketing sections ===== */
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.section-head h2{font-size:26px}
+.icon-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.icon-cat-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:20px 16px;text-align:center;cursor:pointer;transition:.15s}
+.icon-cat-card:hover{border-color:var(--brass);transform:translateY(-2px)}
+.icon-cat-card .ic{font-size:24px;margin-bottom:10px}
+.icon-cat-card .lb{font-size:13px;color:var(--text-dim)}
+@media(max-width:900px){.icon-cat-grid{grid-template-columns:repeat(2,1fr)}}
+.steps-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+@media(max-width:900px){.steps-5{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.steps-5{grid-template-columns:1fr}}
+.step-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:18px 16px}
+.step-card .num{font-family:'Fraunces',serif;font-size:20px;color:var(--brass);margin-bottom:8px}
+.step-card p{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin:0}
+.cta-band{background:linear-gradient(135deg,var(--paper),var(--paper-2));border:1px solid var(--hair);border-radius:20px;padding:44px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.cta-band h2{font-size:24px;margin-bottom:8px;max-width:480px}
+.cta-band p{color:var(--text-dim);font-size:14px;max-width:440px;margin:0}
+.protect-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+@media(max-width:900px){.protect-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.protect-grid{grid-template-columns:1fr}}
+.protect-item{text-align:center;padding:8px}
+.protect-item .ic{font-size:22px;margin-bottom:10px}
+.protect-item .lb{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+.split-cta{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+@media(max-width:900px){.split-cta{grid-template-columns:1fr}}
+.split-cta h2{font-size:28px;margin-bottom:14px}
+.split-cta p.lead{color:var(--text-dim);font-size:15px;line-height:1.6;max-width:460px;margin:0 0 22px}
+.split-visual{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:26px}
+.split-visual .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--hair);font-size:13px;color:var(--text-dim)}
+.split-visual .row:last-child{border-bottom:none}
+.pricing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:760px;margin:0 auto}
+@media(max-width:700px){.pricing-grid{grid-template-columns:1fr}}
+.price-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:28px;position:relative}
+.price-card.pro{border-color:var(--brass)}
+.price-card .soon{position:absolute;top:20px;right:20px;font-size:10px;padding:4px 9px;border-radius:999px;background:rgba(201,162,39,.14);color:var(--brass-soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.price-card h3{font-size:19px;margin-bottom:4px}
+.price-card .amt{font-family:'Fraunces',serif;font-size:30px;margin:10px 0 18px}
+.price-card .amt span{font-size:13px;color:var(--text-faint);font-family:'Sora',sans-serif}
+.price-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.price-card li{font-size:13px;color:var(--text-dim);display:flex;gap:8px;align-items:flex-start}
+.price-card li::before{content:'✓';color:var(--signal);flex:0 0 auto}
+footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top:40px}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:28px;margin-bottom:32px}
+@media(max-width:700px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-brand .logo{margin-bottom:10px}
+.foot-brand p{font-size:12.5px;color:var(--text-faint);line-height:1.6;max-width:260px;margin:0}
+.foot-col h5{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:0 0 14px}
+.foot-col a{display:block;font-size:13px;color:var(--text-dim);margin-bottom:10px;cursor:pointer}
+.foot-col a:hover{color:var(--text)}
+.foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-faint);border-top:1px solid var(--hair);padding-top:20px}
+
+/* ===== Specialty picker ===== */
+.spec-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.spec-chip{border:1px solid var(--hair);border-radius:999px;padding:7px 13px;font-size:12.5px;color:var(--text-dim);cursor:pointer;background:transparent}
+.spec-chip.sel{border-color:var(--brass);background:rgba(201,162,39,.12);color:var(--brass-soft)}
+.primary-select{margin-top:8px}
+.primary-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(201,162,39,.14);color:var(--brass-soft);font-weight:600;margin-bottom:8px}
+
+/* ===== Services ===== */
+.service-card{background:var(--paper);border:1px solid var(--hair);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.service-card .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.service-card .sh b{font-size:14.5px}
+.service-card .price{font-family:'Fraunces',serif;font-size:18px;color:var(--brass-soft);white-space:nowrap}
+.service-card p{font-size:12.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.5}
+.service-card .sm{font-size:11.5px;color:var(--text-faint)}
+.service-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding:12px 0}
+
+/* ===== Milestones ===== */
+.milestone-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.milestone-row input{flex:1}
+.milestone-row input.amt{max-width:130px}
+.ms-list .row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--hair);font-size:12.5px;color:var(--text-dim)}
+
+/* ===== Reviewer queue ===== */
+.dispute-card{background:var(--ink-2);border:1px solid var(--hair);border-radius:12px;padding:14px;margin-bottom:10px}
+.dispute-card .dh{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px}
+.dispute-card p{font-size:12.5px;color:var(--text-dim);margin:0 0 10px}
+
+/* ===== Mobile bottom nav ===== */
+.mobile-nav{display:none}
+@media(max-width:900px){
+  .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(18,19,25,.96);backdrop-filter:blur(10px);border-top:1px solid var(--hair);justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+  .mobile-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--text-faint);flex:1;padding:6px 2px}
+  .mobile-nav a.active{color:var(--brass-soft)}
+  .mobile-nav .ic{font-size:18px}
+  body.has-mobnav main{padding-bottom:64px}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="logo" onclick="go('home')"><span class="dot"></span>PRODILIVE</div>
+    <nav class="nav-links">
+      <a onclick="go('talents')">Find Talent</a>
+      <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('marketplace')">Beats &amp; Templates</a>
+      <a onclick="go('pricing')">Pricing</a>
+      <a onclick="go('reviewerApply')" id="navReviewerLink">Become a Reviewer</a>
+      <a onclick="go(state.user && state.user.role==='reviewer' ? 'reviewerHub' : 'dashboard')" id="navDashLink" style="display:none">Dashboard</a>
+      <a onclick="go('admin')" id="navAdminLink" style="display:none">Admin</a>
+    </nav>
+    <div class="nav-cta">
+      <div id="signedOutBtns">
+        <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Sign in</button>
+        <button class="btn btn-brass btn-sm" onclick="openAuth('register')">Join PRODILIVE</button>
+      </div>
+      <div id="signedInBtns" style="display:none;align-items:center;gap:10px">
+        <div style="position:relative">
+          <button class="btn btn-ghost btn-sm" onclick="toggleNotif()" style="position:relative">🔔<span id="notifDot" class="notif-dot" style="display:none"></span></button>
+          <div class="notif-drop" id="notifDrop"></div>
+        </div>
+        <span class="mono" id="navUserName" style="font-size:12px;color:var(--text-faint)"></span>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="app"></main>
+<nav class="mobile-nav" id="mobileNav"></nav>
+
+<footer class="site-foot"><div class="wrap">
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <div class="logo"><span class="dot"></span>PRODILIVE</div>
+      <p>A trusted marketplace for musicians and creators — hire talent, sell beats, tracks and templates — with protected files, secure payments and independent dispute review.</p>
+    </div>
+    <div class="foot-col">
+      <h5>Platform</h5>
+      <a onclick="go('talents')">Find Talent</a>
+      <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('marketplace')">Beats &amp; Templates</a>
+      <a onclick="state.user ? openJobModal('open') : openAuth('register')">Post a Project</a>
+      <a onclick="go('pricing')">Pricing</a>
+    </div>
+    <div class="foot-col">
+      <h5>Trust &amp; Safety</h5>
+      <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
+      <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
+      <a onclick="go('reviewerApply')">Become a Reviewer</a>
+    </div>
+    <div class="foot-col">
+      <h5>Account</h5>
+      <a onclick="state.user ? go('dashboard') : openAuth('login')">Sign in</a>
+      <a onclick="openAuth('register')">Join PRODILIVE</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <div>© <span id="footYear"></span> PRODILIVE. All rights reserved.</div>
+    <div class="mono">NIGERIA · ₦NGN · EXPANDING GLOBALLY</div>
+  </div>
+</div></footer>
+
+<div class="modal-bg" id="authModal"><div class="modal">
+  <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+  <h3 id="authTitle">Welcome back</h3>
+  <div class="sub" id="authSub">Sign in to manage your bookings and messages.</div>
+  <form id="authForm" onsubmit="submitAuth(event)">
+    <div class="field" id="nameField" style="display:none"><label>Full name</label><input id="authName" placeholder="e.g. Ebi Noel"></div>
+    <div class="role-choice" id="roleChoice" style="display:none">
+      <div class="role-opt sel" id="roleClientOpt" onclick="selectRole('client')">🎤 I'm a Client</div>
+      <div class="role-opt" id="roleTalentOpt" onclick="selectRole('talent')">🎛️ I'm a Provider</div>
+    </div>
+    <div class="field"><label>Email address</label><input id="authEmail" type="email" placeholder="you@email.com" required></div>
+    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="••••••••" minlength="8" required></div>
+    <button class="btn btn-brass btn-block" type="submit" id="authSubmitBtn">Sign in</button>
+  </form>
+  <div style="text-align:center;font-size:12.5px;color:var(--text-faint);margin-top:14px" id="authSwitch"></div>
+</div></div>
+
+<div class="modal-bg" id="jobModal"><div class="modal wide">
+  <button class="modal-close" onclick="closeModal('jobModal')">&times;</button>
+  <h3 id="jobModalTitle">Post a project</h3>
+  <div class="sub" id="jobModalSub">Describe what you need — talents can apply, or you can hire directly.</div>
+  <form onsubmit="submitJob(event)">
+    <div class="field"><label>Project title</label><input id="jobTitle" required placeholder="e.g. Mix and master my new single"></div>
+    <div class="field"><label>Description</label><textarea id="jobDesc" required minlength="10" placeholder="Genre, references, stems, turnaround..."></textarea></div>
+    <div class="field"><label>Category</label><input id="jobCategory" placeholder="Mixing, Production, Session Musician..."></div>
+    <div class="field"><label>Budget (NGN)</label><input id="jobBudget" type="number" min="1" required placeholder="150000"></div>
+    <div class="field"><label>Included revisions</label><input id="jobRevisions" type="number" min="0" max="20" value="2"></div>
+    <div class="field" id="instantClaimField" style="display:flex;align-items:center;gap:8px">
+      <input id="jobInstantClaim" type="checkbox" style="width:auto">
+      <label style="margin:0" for="jobInstantClaim">First come, first served — any provider can claim this instantly (no proposal review)</label>
+    </div>
+    <div class="field">
+      <label>Milestones <span style="font-weight:400;color:var(--text-faint)">(optional — for your own tracking, breakdown only)</span></label>
+      <div id="msRowsBox"></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addMsRow()">+ Add milestone</button>
+    </div>
+    <button class="btn btn-brass btn-block" type="submit" id="jobSubmitBtn">Publish project</button>
+  </form>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<!-- Site-wide support chat widget -->
+<button id="supportBubbleBtn" onclick="toggleSupportPanel()" aria-label="Chat with support">💬</button>
+<div id="supportPanel">
+  <div class="sp-head">
+    <h5>PRODILIVE Support</h5>
+    <button class="sp-close" onclick="toggleSupportPanel(false)">✕</button>
+  </div>
+  <div class="sp-body" id="supportBody"></div>
+  <div class="sp-foot" id="supportFoot"></div>
+</div>
+
+<script>
+/* ============================ STATE ============================ */
+const state = {
+  token: localStorage.getItem('prodilive_token') || null,
+  user: null,
+  view: 'home',
+  params: {},
+  talentsCache: {},
+  jobModalMode: 'open', // 'open' | 'hire'
+  hireTalentId: null,
+  authMode: 'login',
+  authRole: 'client',
+  notifications: [],
+  pickedSpecs: [],
+  msRows: [],
+};
+
+/* Predefined specialty taxonomy — grouped for the multi-select picker.
+   Selecting specialties still saves to the existing users.skills array,
+   so no schema change was needed for this. */
+const SPECIALTY_GROUPS = {
+  'Production & Audio': ['Music Producer','Mixing Engineer','Mastering Engineer','Recording Engineer','Sound Designer','Beat Maker','Composer','Arranger','Music Director'],
+  'Musicians': ['Pianist/Keyboardist','Drummer','Bassist','Guitarist','Percussionist','Saxophonist','Violinist','Trumpeter','Other Instrumentalist'],
+  'Vocals': ['Lead Vocalist','Background Vocalist','Vocal Arranger','Vocal Coach','Voice-over Artist'],
+  'Visual & Creative': ['Graphic Designer','Artwork Designer','Photographer','Videographer','Video Editor','Motion Designer','Animator'],
+};
+const MOBILE_NAV_ITEMS = [
+  ['home','🏠','Home'],
+  ['talents','🔍','Explore'],
+  ['jobs','💼','Jobs'],
+  ['marketplace','🎵','Market'],
+  ['dashboard','👤','Profile'],
+];
+
+/* ============================ API HELPERS ============================ */
+async function api(path, opt = {}) {
+  const headers = { ...(opt.headers || {}) };
+  if (!(opt.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  const res = await fetch('/api' + path, { ...opt, headers });
+  let body = {};
+  try { body = await res.json(); } catch {}
+  if (!res.ok) throw new Error(body.error || ('Request failed (' + res.status + ')'));
+  return body;
+}
+function esc(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function fmt(n){ return '₦' + Number(n||0).toLocaleString('en-NG'); }
+function stars(n){ n = Math.round(Number(n)||0); return '★'.repeat(n) + '☆'.repeat(5-n); }
+function timeAgo(iso){ if(!iso) return ''; const d=(Date.now()-new Date(iso))/1000; if(d<60) return 'just now'; if(d<3600) return Math.floor(d/60)+'m ago'; if(d<86400) return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago'; }
+function statusClass(s){
+  const m = { OPEN:'st-open', IN_PROGRESS:'st-active', RELEASED:'st-open', APPROVED:'st-active',
+    AWAITING_PAYMENT:'st-wait', QA_PENDING:'st-wait', CLIENT_REVIEW:'st-wait', REVISION_REQUESTED:'st-wait',
+    CANCELLED:'st-done', DISPUTED:'st-bad', RESOLVED_RELEASE:'st-active' };
+  return m[s] || 'st-done';
+}
+function statusLabel(s){ return String(s||'').replace(/_/g,' '); }
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(()=> t.classList.remove('show'), 3200);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+
+/* ============================ ROUTER ============================ */
+function go(view, params = {}) {
+  if (needsAuth(view) && !state.user) { openAuth('login'); toast('Sign in to continue'); return; }
+  stopJobChatPolling();
+  state.view = view; state.params = params;
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  render();
+  renderMobileNav();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub'].includes(view); }
+
+/* ============================ REAL-TIME LIVE FEED ============================ */
+let _socket = null;
+function initLiveFeed() {
+  if (_socket || typeof io === 'undefined') return;
+  _socket = io();
+  _socket.on('feed:job', (d) => {
+    if (state.view === 'jobs' || state.view === 'home') {
+      const list = document.getElementById('liveJobsList');
+      if (list && d.job.status === 'OPEN') { list.insertAdjacentHTML('afterbegin', jobRow(d.job)); }
+    }
+    toast('New project posted: ' + d.job.title);
+  });
+  _socket.on('feed:product', (d) => {
+    if (state.view === 'marketplace') {
+      const list = document.getElementById('liveProductsList');
+      if (list) list.insertAdjacentHTML('afterbegin', productCard(d.product));
+    }
+    toast('New listing: ' + d.product.title);
+  });
+  _socket.on('feed:jobClaimed', (d) => {
+    const btn = document.querySelector(`#jobrow_${d.jobId} button`);
+    if (btn) { btn.disabled = true; btn.textContent = 'Claimed by ' + d.talentName; }
+  });
+}
+function renderMobileNav() {
+  const el = document.getElementById('mobileNav');
+  if (!el) return;
+  if (!state.user) { el.innerHTML = ''; document.body.classList.remove('has-mobnav'); return; }
+  document.body.classList.add('has-mobnav');
+  el.innerHTML = MOBILE_NAV_ITEMS.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
+}
+
+async function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="wrap" style="padding:80px 0;text-align:center;color:var(--text-faint)">Loading…</div>';
+  try {
+    const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
+      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing,
+      reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
+      marketplace:viewMarketplace, productDetail:viewProductDetail };
+    app.innerHTML = await (views[state.view] || viewHome)();
+    if (state.view === 'jobDetail' && document.getElementById('messageList')) {
+      const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
+      startJobChatPolling(state.params.id);
+    }
+  } catch (e) {
+    app.innerHTML = `<div class="wrap" style="padding:80px 0"><div class="empty"><div class="n">⚠️</div><h3>Something went wrong</h3><p>${esc(e.message)}</p></div></div>`;
+  }
+}
+
+/* ============================ AUTH ============================ */
+function updateNav() {
+  const signedIn = !!state.user;
+  document.getElementById('signedOutBtns').style.display = signedIn ? 'none' : 'block';
+  document.getElementById('signedInBtns').style.display = signedIn ? 'flex' : 'none';
+  document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
+  document.getElementById('navDashLink').textContent = (signedIn && state.user.role==='reviewer') ? 'Reviewer Hub' : 'Dashboard';
+  document.getElementById('navAdminLink').style.display = (signedIn && state.user.role==='admin') ? 'inline' : 'none';
+  document.getElementById('navReviewerLink').style.display = (signedIn && state.user.role==='reviewer') ? 'none' : 'inline';
+  if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
+  renderMobileNav();
+}
+function openAuth(mode) {
+  state.authMode = mode;
+  document.getElementById('authTitle').textContent = mode==='login' ? 'Welcome back' : 'Create your account';
+  document.getElementById('authSub').textContent = mode==='login' ? 'Sign in to manage your bookings and messages.' : 'Join as a client looking to hire, or a provider offering services.';
+  document.getElementById('nameField').style.display = mode==='login' ? 'none' : 'block';
+  document.getElementById('roleChoice').style.display = mode==='login' ? 'none' : 'grid';
+  document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Sign in' : 'Create account';
+  document.getElementById('authSwitch').innerHTML = mode==='login'
+    ? `New to Prodilive? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('register')">Create an account</a>`
+    : `Already have an account? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('login')">Sign in</a>`;
+  openModal('authModal');
+}
+function selectRole(role) {
+  state.authRole = role;
+  document.getElementById('roleClientOpt').classList.toggle('sel', role==='client');
+  document.getElementById('roleTalentOpt').classList.toggle('sel', role==='talent');
+}
+async function submitAuth(e) {
+  e.preventDefault();
+  const btn = document.getElementById('authSubmitBtn');
+  const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    let data;
+    if (state.authMode === 'login') {
+      data = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
+    } else {
+      const name = document.getElementById('authName').value.trim();
+      if (!name) throw new Error('Please enter your full name');
+      data = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password, role: state.authRole }) });
+    }
+    state.token = data.token; state.user = data.user;
+    localStorage.setItem('prodilive_token', data.token);
+    closeModal('authModal');
+    updateNav();
+    loadNotifications();
+    toast(state.authMode==='login' ? 'Signed in.' : 'Account created — welcome to PRODILIVE.');
+    go('dashboard');
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+async function doLogout() {
+  try { await api('/auth/logout', { method:'POST' }); } catch {}
+  state.token = null; state.user = null;
+  localStorage.removeItem('prodilive_token');
+  updateNav();
+  toast('Signed out.');
+  go('home');
+}
+async function bootstrap() {
+  const fy = document.getElementById('footYear'); if (fy) fy.textContent = new Date().getFullYear();
+  if (state.token) {
+    try {
+      const d = await api('/me');
+      state.user = d.user;
+      loadNotifications();
+    } catch { state.token = null; state.user = null; localStorage.removeItem('prodilive_token'); }
+  }
+  updateNav();
+  render();
+  initLiveFeed();
+}
+
+/* ============================ NOTIFICATIONS ============================ */
+async function loadNotifications() {
+  try {
+    const d = await api('/notifications');
+    state.notifications = d.notifications;
+    const unread = d.notifications.filter(n=>!n.read_at).length;
+    document.getElementById('notifDot').style.display = unread ? 'block' : 'none';
+  } catch {}
+}
+function toggleNotif() {
+  const el = document.getElementById('notifDrop');
+  const opening = !el.classList.contains('open');
+  el.classList.toggle('open');
+  if (opening) {
+    el.innerHTML = state.notifications.length
+      ? state.notifications.slice(0,20).map(n=>`
+        <div class="notif-item" onclick="readNotif('${n.id}')">
+          <b>${esc(n.title)}</b><span>${esc(n.body||'')}</span>
+          <div class="mono" style="font-size:10px;color:var(--text-faint);margin-top:3px">${timeAgo(n.created_at)}</div>
+        </div>`).join('')
+      : `<div class="notif-item"><span>No notifications yet.</span></div>`;
+  }
+}
+async function readNotif(id) {
+  try { await api('/notifications/'+id+'/read', { method:'POST' }); loadNotifications(); } catch {}
+}
+document.addEventListener('click', (e)=>{
+  const drop = document.getElementById('notifDrop');
+  if (drop.classList.contains('open') && !e.target.closest('.nav-cta')) drop.classList.remove('open');
+});
+
+/* ============================ VIEW: HOME ============================ */
+function heroWaveformSvg() {
+  const n = 26;
+  let bars = '';
+  for (let i = 0; i < n; i++) {
+    const seed = Math.sin(i * 12.9898) * 43758.5453;
+    const h = 30 + Math.abs((seed - Math.floor(seed))) * 130;
+    const x = i * 14 + 6;
+    const delay = (i % 7) * 0.18;
+    const soft = i % 3 === 0;
+    bars += `<rect class="wave-bar" x="${x}" y="${310 - h}" width="8" rx="4" height="${h}" style="animation-delay:${delay}s" fill="${soft ? 'var(--brass-soft)' : 'var(--brass)'}"></rect>`;
+  }
+  return `<svg viewBox="0 0 ${n*14+12} 340" preserveAspectRatio="xMidYMid meet"><g transform="translate(0,0)">${bars}</g></svg>`;
+}
+async function viewHome() {
+  let featured = [];
+  try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
+  const cats = ['Mixing','Mastering','Session Musicians','Vocal Coaching','Songwriting','Recording Studios','Beat Making','Arrangement'];
+  const iconCats = [
+    ['🎚','Production',['Music Producer','Beat Making']],
+    ['🎹','Keys & Session',['Session Musicians']],
+    ['🎤','Vocals',['Vocal Coaching']],
+    ['🎧','Mixing & Mastering',['Mixing','Mastering']],
+    ['✍️','Songwriting',['Songwriting']],
+    ['🎼','Arrangement',['Arrangement']],
+    ['🎙️','Recording Studios',['Recording Studios']],
+    ['🎨','Design & Visuals',['Artwork','Cover Art']],
+  ];
+  return `
+  <section class="hero"><div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Music production marketplace · Nigeria</div>
+        <h1>Bring your ideas to life — with the right creative professional.</h1>
+        <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
+        <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
+        <div class="hero-actions" style="margin-top:22px">
+          <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
+          <button class="btn btn-ghost" onclick="go('jobs')">Find Work</button>
+          <button class="btn btn-ghost" onclick="go('marketplace')">Browse Beats &amp; Templates</button>
+        </div>
+      </div>
+      <div class="hero-visual">${heroWaveformSvg()}</div>
+    </div>
+    <div class="cat-row">${cats.map(c=>`<span class="cat-pill" onclick="go('talents',{q:'${esc(c)}'})">${c}</span>`).join('')}</div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="section-head"><div><div class="eyebrow">Explore</div><h2>Explore creative talent</h2></div></div>
+    <div class="icon-cat-grid">
+      ${iconCats.map(([ic,label,qs])=>`
+        <div class="icon-cat-card" onclick="go('talents',{q:'${esc(qs[0])}'})"><div class="ic">${ic}</div><div class="lb">${esc(label)}</div></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap">
+    <div class="eyebrow" id="howItWorks">How it works</div>
+    <h2 style="font-size:26px;margin-bottom:24px">From idea to finished record</h2>
+    <div class="steps-5">
+      ${[['01','Find the right professional.'],
+         ['02','Agree on the project.'],
+         ['03','Pay securely through PRODILIVE.'],
+         ['04','Collaborate and receive your work.'],
+         ['05','Approve the delivery.']].map(([n,d])=>`
+        <div class="step-card"><div class="num">${n}</div><p>${d}</p></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="section-head">
+      <div><div class="eyebrow">Featured professionals</div><h2>Verified talent, ready to hire</h2></div>
+      <button class="btn btn-ghost btn-sm" onclick="go('talents')">View all →</button>
+    </div>
+    ${featured.length ? `<div class="grid-3">${featured.map(talentCard).join('')}</div>` : `<div class="empty"><div class="n">🎧</div><p>No professionals listed yet — be the first to join.</p></div>`}
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="cta-band">
+      <div><h2>Have something specific in mind?</h2><p>Tell the PRODILIVE community what you're creating and receive applications from professionals who can make it happen.</p></div>
+      <button class="btn btn-brass" onclick="state.user ? openJobModal('open') : openAuth('register')">Post Your Project</button>
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" id="protection">
+    <div class="eyebrow" style="justify-content:center">Protection</div>
+    <h2 style="font-size:26px;text-align:center;margin-bottom:30px">Work confidently.</h2>
+    <div class="protect-grid">
+      ${[['🔒','Protected payments'],['✅','Verified transactions'],['🗂️','Project workspaces'],['⚖️','Professional dispute review'],['⭐','Verified reviews']].map(([ic,lb])=>`
+        <div class="protect-item"><div class="ic">${ic}</div><div class="lb">${lb}</div></div>`).join('')}
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="split-cta">
+      <div>
+        <div class="eyebrow">For providers</div>
+        <h2>Your next opportunity could come from anywhere.</h2>
+        <p class="lead">Build your profile, show your work, and find opportunities with clients on PRODILIVE. Get paid securely once your work is approved.</p>
+        <button class="btn btn-brass" onclick="state.user ? go('dashboard') : openAuth('register')">Start Earning</button>
+      </div>
+      <div class="split-visual">
+        <div class="row"><span>Open projects this week</span><span class="mono">Growing daily</span></div>
+        <div class="row"><span>Payment protection</span><span class="mono">Held until approved</span></div>
+        <div class="row"><span>Dispute support</span><span class="mono">Independent review</span></div>
+        <div class="row"><span>Payout method</span><span class="mono">Direct to bank</span></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" style="text-align:center">
+    <div class="eyebrow" style="justify-content:center">Pricing</div>
+    <h2 style="font-size:26px;margin-bottom:30px">Simple, fair pricing.</h2>
+    <button class="btn btn-ghost" onclick="go('pricing')">See full pricing →</button>
+  </div></section>
+
+  <section><div class="wrap" style="text-align:center;padding:70px 0">
+    <h2 style="font-size:30px;max-width:620px;margin:0 auto 20px">Whatever you're creating, find the people to make it happen.</h2>
+    <button class="btn btn-brass" onclick="openAuth('register')">Join PRODILIVE</button>
+  </div></section>`;
+}
+
+/* ============================ VIEW: PRICING ============================ */
+async function viewPricing() {
+  return `
+  <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+    <div class="eyebrow" style="justify-content:center">Pricing</div>
+    <h1 style="font-size:32px;margin-bottom:14px">Free to join. Fair fees only when you get paid.</h1>
+    <p class="lead" style="max-width:520px;margin:0 auto 40px">No monthly cost to start. PRODILIVE takes a small platform fee to fund payment protection, quality checks and dispute resolution.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="amt">$0<span> /month</span></div>
+        <ul>
+          <li>Client service fee applies per project</li>
+          <li>Provider commission applies per payout</li>
+          <li>Protected payments &amp; project workspace</li>
+          <li>Messaging, files &amp; delivery tracking</li>
+          <li>Access to dispute resolution</li>
+        </ul>
+      </div>
+      <div class="price-card pro">
+        <span class="soon">Coming soon</span>
+        <h3>Pro</h3>
+        <div class="amt">—<span> /month</span></div>
+        <ul>
+          <li>Reduced platform fees</li>
+          <li>Verified / Pro badge</li>
+          <li>Priority search placement</li>
+          <li>More portfolio uploads</li>
+          <li>Advanced analytics &amp; faster payouts</li>
+        </ul>
+      </div>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ VIEW: REVIEWER APPLY (public) ============================ */
+async function viewReviewerApply() {
+  let myApp = null;
+  if (state.user) { try { myApp = (await api('/reviewer/my-application')).application; } catch {} }
+  if (state.user) state.pickedSpecs = state.pickedSpecs && state.pickedSpecs.length ? state.pickedSpecs : (state.user.skills || []).slice();
+
+  const intro = `
+    <div class="eyebrow" style="justify-content:center">Trust &amp; safety</div>
+    <h1 style="font-size:32px;margin-bottom:14px">Become a PRODILIVE Reviewer</h1>
+    <p class="lead" style="max-width:560px;margin:0 auto 30px">Reviewers are verified specialists who independently resolve project disputes — reviewing deliverables, listening to both sides and deciding fund releases. It's a paid, trust-critical role separate from client and provider accounts.</p>
+    <div class="dash-stats" style="max-width:640px;margin:0 auto 40px">
+      <div class="stat-card"><div class="l">Step 1</div><div class="v" style="font-size:15px">Apply</div></div>
+      <div class="stat-card"><div class="l">Step 2</div><div class="v" style="font-size:15px">Qualification test</div></div>
+      <div class="stat-card"><div class="l">Step 3</div><div class="v" style="font-size:15px">Certified reviewer</div></div>
+    </div>`;
+
+  if (!state.user) {
+    return `
+    <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+      ${intro}
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">You'll need a PRODILIVE account before applying — it takes a minute.</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-brass btn-sm" onclick="openAuth('register')">Create an account</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Sign in</button>
+      </div>
+    </div></section>`;
+  }
+
+  if (myApp && ['PENDING','QUALIFICATION','APPROVED'].includes(myApp.status)) {
+    const stage = { PENDING:'Your application is awaiting review by our team.', QUALIFICATION:'Approved — you have been sent a qualification test. Watch your notifications.', APPROVED:'Approved and certified.' }[myApp.status];
+    return `
+    <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+      ${intro}
+      <div class="panel" style="max-width:480px;margin:0 auto;text-align:left">
+        <h4>Application status: <span class="badge">${esc(myApp.status)}</span></h4>
+        <p style="font-size:13px;color:var(--text-dim)">${stage}</p>
+      </div>
+    </div></section>`;
+  }
+
+  const rejected = myApp && myApp.status === 'REJECTED';
+  return `
+  <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+    ${intro}
+    <div class="panel" style="max-width:480px;margin:0 auto;text-align:left">
+      ${rejected ? `<p style="font-size:12.5px;color:var(--text-faint);margin-bottom:14px">Your previous application wasn't approved. You're welcome to reapply below.</p>` : ''}
+      <h4 style="margin-bottom:10px">Your specialties</h4>
+      <div id="specPickerBox">${renderSpecPicker()}</div>
+      <div class="field"><label>Your experience</label><textarea id="revExp" placeholder="Years active, notable credits, relevant background..."></textarea></div>
+      <div class="field"><label>Portfolio links (comma separated)</label><input id="revPortfolio" placeholder="https://..."></div>
+      <button class="btn btn-brass btn-sm" onclick="applyReviewer()">Submit application</button>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ VIEW: REVIEWER HUB ============================ */
+async function viewReviewerHub() {
+  const u = state.user;
+  if (!u || u.role !== 'reviewer') { go('dashboard'); return ''; }
+  let disputes = [];
+  try { disputes = (await api('/disputes')).disputes; } catch(e) { toast(e.message, true); }
+  const assigned = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'ASSIGNED');
+  const decided = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'DECIDED');
+
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">Reviewer hub</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
+      <span class="badge">${u.reviewerLevel === 'CERTIFIED' ? '✓ Certified' : esc(u.reviewerLevel || 'TRAINEE')}</span>
+    </div>
+
+    <div class="dash-stats">
+      <div class="stat-card"><div class="l">Assigned cases</div><div class="v" style="color:var(--brass-soft)">${assigned.length}</div></div>
+      <div class="stat-card"><div class="l">Resolved cases</div><div class="v" style="color:var(--signal)">${decided.length}</div></div>
+      <div class="stat-card"><div class="l">Qualification score</div><div class="v" style="font-size:18px">${u.reviewerScore ?? '—'}</div></div>
+      <div class="stat-card"><div class="l">Status</div><div class="v" style="font-size:18px">${esc(u.status)}</div></div>
+    </div>
+
+    <div class="dash-cols">
+      <div class="panel">
+        <h4>My review queue <span>${assigned.length} assigned</span></h4>
+        ${assigned.length ? assigned.map(d=>`
+          <div class="dispute-card">
+            <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+            <p>${esc(d.reason||'')}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
+              <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+              <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
+            </div>
+          </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
+
+        <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+          <h4 style="margin-bottom:10px">Case history <span>${decided.length}</span></h4>
+          ${decided.length ? decided.map(d=>`
+            <div class="dispute-card">
+              <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+              <p style="color:var(--text-faint)">Resolved · ${esc((d.decision||{}).outcome || '')}</p>
+            </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No resolved cases yet.</p>`}
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4>Profile</h4>
+        <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
+        <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
+        <button class="btn btn-ghost btn-sm" onclick="saveProfile()">Save profile</button>
+      </div>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ TALENT CARD ============================ */
+function talentCard(t) {
+  state.talentsCache[t.id] = t;
+  const skills = (t.skills||[]).slice(0,3);
+  return `
+  <div class="p-card" onclick="go('talentProfile',{id:'${t.id}'})">
+    <div class="p-card-top">
+      <div class="avatar">${esc((t.name||'?').slice(0,2).toUpperCase())}</div>
+      <div class="meta" style="flex:1"><b>${esc(t.name)}</b><div class="role">${esc((skills[0])||'Music Professional')}</div></div>
+      ${t.reviewer_level==='CERTIFIED' ? '<span class="badge">✓ Certified</span>' : ''}
+    </div>
+    <p class="desc">${esc(t.bio || 'Music professional on PRODILIVE.')}</p>
+    <div>${skills.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div>
+    <div class="p-card-foot"><span>Joined ${timeAgo(t.created_at)}</span><span class="mono">On PRODILIVE</span></div>
+  </div>`;
+}
+
+/* ============================ VIEW: TALENTS BROWSE ============================ */
+async function viewTalents() {
+  const q = state.params.q || '';
+  let talents = [];
+  try { talents = (await api('/talents?search=' + encodeURIComponent(q))).talents; } catch(e) { toast(e.message, true); }
+  return `
+  <section style="padding-top:36px"><div class="wrap">
+    <div class="eyebrow">Marketplace</div>
+    <h1 style="font-size:28px;margin-bottom:20px">Browse music professionals</h1>
+    <div class="searchbar" style="max-width:100%;margin-bottom:26px">
+      <input id="talentSearch" value="${esc(q)}" placeholder="Search name, skill or bio..." oninput="debounceSearch(this.value)">
+    </div>
+    <div class="mono" style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${talents.length} PROFESSIONALS FOUND</div>
+    ${talents.length ? `<div class="grid-3">${talents.map(talentCard).join('')}</div>` :
+      `<div class="empty"><div class="n">🔍</div><h3>No matches</h3><p>Try a different search term.</p></div>`}
+  </div></section>`;
+}
+let searchTimer;
+function debounceSearch(v) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=> go('talents', {q:v}), 350);
+}
+
+/* ============================ VIEW: MARKETPLACE (beats/tracks/templates) ============================ */
+async function viewMarketplace() {
+  const cat = state.params.cat || '';
+  const q = state.params.q || '';
+  let products = [];
+  try { products = (await api('/products' + (cat||q ? '?'+new URLSearchParams({...(cat?{category:cat}:{}) ,...(q?{q}:{})}) : ''))).products; } catch(e) { toast(e.message, true); }
+  const cats = [['','All'],['BEAT','Beats'],['TRACK','Tracks'],['TEMPLATE','Templates'],['SAMPLE_PACK','Sample Packs']];
+  return `
+  <section style="padding-top:36px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">Marketplace</div><h1 style="font-size:28px">Beats, tracks &amp; templates</h1></div>
+      ${state.user ? `<button class="btn btn-brass" onclick="openSellModal()">+ Sell your work</button>` : ''}
+    </div>
+    <div class="searchbar" style="max-width:100%;margin-bottom:14px">
+      <input value="${esc(q)}" placeholder="Search beats, tracks, templates..." oninput="debounceMarketSearch(this.value)">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+      ${cats.map(([k,l])=>`<button class="btn ${cat===k?'btn-brass':'btn-ghost'} btn-sm" onclick="go('marketplace',{cat:'${k}'})">${l}</button>`).join('')}
+    </div>
+    <div class="mono" style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${products.length} LISTINGS</div>
+    ${products.length ? `<div class="grid-3" id="liveProductsList">${products.map(productCard).join('')}</div>` :
+      `<div class="empty"><div class="n">🎧</div><h3>Nothing listed yet</h3><p>Be the first to sell a beat, track or template.</p></div>`}
+  </div></section>
+  ${sellModalHtml()}`;
+}
+let marketSearchTimer;
+function debounceMarketSearch(v) { clearTimeout(marketSearchTimer); marketSearchTimer = setTimeout(()=> go('marketplace', {...state.params, q:v}), 350); }
+
+function productCard(p) {
+  const catLabel = {BEAT:'Beat',TRACK:'Track',TEMPLATE:'Template',SAMPLE_PACK:'Sample Pack',OTHER:'Other'}[p.category] || p.category;
+  return `
+  <div class="p-card" onclick="go('productDetail',{id:'${p.id}'})" style="cursor:pointer">
+    <div style="height:110px;border-radius:10px;background:linear-gradient(135deg,var(--paper-2),var(--ink-2));display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px">🎵</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <b style="font-size:14.5px">${esc(p.title)}</b>
+      <span class="badge">${esc(catLabel)}</span>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-faint);margin:4px 0 8px">by ${esc(p.sellerName)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="mono" style="color:var(--brass-soft);font-weight:600">${fmt(p.price)}</span>
+      <span style="font-size:11.5px;color:var(--text-faint)">${p.salesCount} sold</span>
+    </div>
+  </div>`;
+}
+
+/* ============================ VIEW: PRODUCT DETAIL ============================ */
+async function viewProductDetail() {
+  const id = state.params.id;
+  let d;
+  try { d = await api('/products/' + id); } catch(e) { return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Listing not found</h3></div></div>`; }
+  const p = d.product;
+  const catLabel = {BEAT:'Beat',TRACK:'Track',TEMPLATE:'Template',SAMPLE_PACK:'Sample Pack',OTHER:'Other'}[p.category] || p.category;
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <a class="back-link" onclick="go('marketplace')">← Back to marketplace</a>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:30px;align-items:start;margin-top:20px">
+      <div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <h1 style="font-size:26px">${esc(p.title)}</h1>
+          <span class="badge">${esc(catLabel)}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-faint);margin-bottom:18px">by ${esc(p.sellerName)} · ${p.salesCount} sold</div>
+        <p style="color:var(--text-dim);line-height:1.7;font-size:15px;white-space:pre-wrap">${esc(p.description || 'No description provided.')}</p>
+        ${p.hasPreview ? `<div style="margin-top:20px"><h4 style="margin-bottom:8px">Preview</h4><audio src="/api/products/${p.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:400px;height:36px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block;margin-top:4px">Watermarked preview — full quality unlocked after purchase</span></div>` : ''}
+        <div class="panel" style="margin-top:22px"><h4>License terms</h4><p style="font-size:13px;color:var(--text-dim);white-space:pre-wrap">${esc(p.licenseTerms)}</p></div>
+      </div>
+      <div class="panel" style="position:sticky;top:90px">
+        <div class="mono" style="font-size:26px;color:var(--brass-soft);font-weight:700;margin-bottom:14px">${fmt(p.price)}</div>
+        ${d.owned ? `<a class="btn btn-brass btn-block" href="/api/products/${p.id}/download" target="_blank">Download files</a>` :
+          `<button class="btn btn-brass btn-block" onclick="purchaseProduct('${p.id}')">Buy now</button>`}
+        <p style="font-size:11.5px;color:var(--text-faint);margin-top:10px">Instant delivery after payment. Non-refundable digital goods.</p>
+      </div>
+    </div>
+  </div></section>`;
+}
+async function purchaseProduct(id) {
+  if (!state.user) { openAuth('login'); return; }
+  try {
+    const d = await api('/products/'+id+'/purchase', { method:'POST' });
+    const w = window.open(d.authorization_url, '_blank');
+    toast('Complete payment in the new tab, then come back and refresh.');
+  } catch(e) { toast(e.message, true); }
+}
+
+/* ============================ SELL A PRODUCT MODAL ============================ */
+function sellModalHtml() {
+  return `
+  <div class="modal-bg" id="sellModal"><div class="modal wide">
+    <button class="modal-close" onclick="closeModal('sellModal')">&times;</button>
+    <h3>Sell your work</h3>
+    <div class="sub">List a beat, track, sample pack or production template for sale.</div>
+    <form onsubmit="submitProduct(event)">
+      <div class="field"><label>Title</label><input id="prodTitle" required placeholder="e.g. Afrobeat Type Beat — 'Lagos Nights'"></div>
+      <div class="field"><label>Description</label><textarea id="prodDesc" placeholder="BPM, key, mood, what's included..."></textarea></div>
+      <div class="field"><label>Category</label>
+        <select id="prodCategory"><option value="BEAT">Beat</option><option value="TRACK">Track</option><option value="TEMPLATE">Production Template</option><option value="SAMPLE_PACK">Sample Pack</option><option value="OTHER">Other</option></select>
+      </div>
+      <div class="field"><label>Price (NGN)</label><input id="prodPrice" type="number" min="1" required placeholder="15000"></div>
+      <div class="field"><label>License terms</label><textarea id="prodLicense" placeholder="e.g. Non-exclusive, for use in one commercial release...">Standard non-exclusive license</textarea></div>
+      <div class="field"><label>Master file <span style="font-weight:400;color:var(--text-faint)">(audio, zip, or project file — buyers only get this after purchase)</span></label><input id="prodMaster" type="file" required></div>
+      <button class="btn btn-brass btn-block" type="submit" id="prodSubmitBtn">List for sale</button>
+    </form>
+  </div></div>`;
+}
+function openSellModal() {
+  if (!state.user) { openAuth('register'); return; }
+  openModal('sellModal');
+}
+async function submitProduct(e) {
+  e.preventDefault();
+  const btn = document.getElementById('prodSubmitBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const fd = new FormData();
+    fd.append('title', document.getElementById('prodTitle').value.trim());
+    fd.append('description', document.getElementById('prodDesc').value.trim());
+    fd.append('category', document.getElementById('prodCategory').value);
+    fd.append('price', document.getElementById('prodPrice').value);
+    fd.append('licenseTerms', document.getElementById('prodLicense').value.trim());
+    const f = document.getElementById('prodMaster').files[0];
+    if (!f) throw new Error('Please choose a file to upload');
+    fd.append('master', f);
+    const headers = {}; if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    const res = await fetch('/api/products', { method:'POST', headers, body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not list product');
+    toast('Listed! Buyers can find it in the marketplace now.');
+    closeModal('sellModal');
+    go('productDetail', { id: data.id });
+  } catch(e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.textContent = 'List for sale'; }
+}
+
+/* ============================ VIEW: TALENT PROFILE ============================ */
+async function viewTalentProfile() {
+  const id = state.params.id;
+  let t = state.talentsCache[id];
+  if (!t) { try { t = (await api('/talents')).talents.find(x=>x.id===id); } catch {} }
+  if (!t) return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Profile not found</h3></div></div>`;
+  let reviews = [], services = [];
+  try { reviews = (await api('/talents/'+id+'/reviews')).reviews; } catch {}
+  try { services = (await api('/talents/'+id+'/services')).services; } catch {}
+  const avg = reviews.length ? (reviews.reduce((a,r)=>a+r.rating,0)/reviews.length) : null;
+  const primary = (t.skills||[])[0];
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <a class="back-link" onclick="go('talents')">← Back to marketplace</a>
+    <div style="display:flex;gap:20px;align-items:flex-start;margin:20px 0 26px">
+      <div class="avatar lg">${esc((t.name||'?').slice(0,2).toUpperCase())}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h1 style="font-size:26px">${esc(t.name)}</h1>
+          ${t.reviewer_level==='CERTIFIED' ? '<span class="badge">✓ Certified</span>' : ''}
+        </div>
+        ${primary ? `<div class="mono" style="font-size:12px;color:var(--brass-soft);margin-top:4px">${esc(primary.toUpperCase())}</div>` : ''}
+        <div style="color:var(--text-faint);font-size:13px;margin-top:6px">${reviews.length} review${reviews.length===1?'':'s'} ${avg?('· '+stars(avg)+' '+avg.toFixed(1)):''}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:30px;align-items:start">
+      <div>
+        <p style="color:var(--text-dim);line-height:1.7;font-size:15px">${esc(t.bio || 'This professional has not added a bio yet.')}</p>
+        <div style="margin:16px 0">${(t.skills||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('') || '<span class="mono" style="color:var(--text-faint);font-size:12px">No skills listed</span>'}</div>
+
+        ${services.length ? `
+        <h3 style="font-size:17px;margin:28px 0 14px">Services</h3>
+        ${services.map(s=>`
+          <div class="service-card">
+            <div class="sh"><b>${esc(s.title)}</b><span class="price">${fmt(s.price)}</span></div>
+            <p>${esc(s.description||'')}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="sm">${s.delivery_days}-day delivery · ${s.revision_count} revisions</span>
+              <button class="btn btn-brass btn-sm" onclick="orderService('${s.id}')">Order Service</button>
+            </div>
+          </div>`).join('')}
+        ` : ''}
+
+        <h3 style="font-size:17px;margin:28px 0 14px">Reviews</h3>
+        ${reviews.length ? reviews.map(r=>`
+          <div class="panel" style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><b style="font-size:13px">${esc(r.reviewer_name)}</b><span class="stars" style="font-size:12px">${stars(r.rating)}</span></div>
+            <p style="font-size:13px;color:var(--text-dim);margin:0">${esc(r.comment||'')}</p>
+          </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No reviews yet.</p>`}
+      </div>
+      <div class="panel" style="position:sticky;top:88px">
+        <div class="eyebrow" style="margin-bottom:10px">Hire this professional</div>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Post a project brief and assign it directly to ${esc(t.name.split(' ')[0])} — payment stays protected until you approve delivery.</p>
+        <button class="btn btn-brass btn-block" onclick="openJobModal('hire','${id}','${esc(t.name).replace(/'/g,"\\'")}')">Hire ${esc(t.name.split(' ')[0])}</button>
+      </div>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ VIEW: OPEN JOBS MARKETPLACE ============================ */
+async function viewJobsOpen() {
+  let jobs = [];
+  try { jobs = (await api('/jobs?status=OPEN')).jobs; } catch(e) { toast(e.message, true); }
+  return `
+  <section style="padding-top:36px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">Open projects</div><h1 style="font-size:28px">Projects looking for talent</h1></div>
+      ${state.user ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
+    </div>
+    ${jobs.length ? `<div id="liveJobsList">${jobs.map(jobRow).join('')}</div>` : `<div class="empty"><div class="n">📭</div><h3>No open projects right now</h3><p>Check back soon, or post one yourself.</p></div>`}
+  </div></section>`;
+}
+function jobRow(j) {
+  const canClaim = j.instant_claim && j.status === 'OPEN' && state.user && ['talent','reviewer'].includes(state.user.role);
+  return `
+  <div class="job-row" id="jobrow_${j.id}">
+    <div onclick="go('jobDetail',{id:'${j.id}'})" style="cursor:pointer">
+      <div class="jh"><b>${esc(j.title)}</b><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span> ${j.instant_claim && j.status==='OPEN' ? '<span class="badge" style="margin-left:6px">⚡ FIRST TO CLAIM</span>' : ''}</div>
+      <div class="jm">${esc(j.category||'General')} · ${fmt(j.budget)} · posted by ${esc(j.clientName||'—')} ${j.talentName?('· assigned to '+esc(j.talentName)):''}</div>
+    </div>
+    ${canClaim ? `<button class="btn btn-brass btn-sm" style="margin-top:8px" onclick="event.stopPropagation();claimJob('${j.id}')">Claim this job</button>` : ''}
+  </div>`;
+}
+async function claimJob(jobId) {
+  try { await api('/jobs/'+jobId+'/claim', { method:'POST' }); toast('Claimed! Waiting for client to fund it.'); reload(); }
+  catch(e) { toast(e.message, true); reload(); }
+}
+
+/* ============================ POST / HIRE JOB MODAL ============================ */
+function openJobModal(mode, talentId, talentName) {
+  if (!state.user) { openAuth('register'); return; }
+  state.jobModalMode = mode;
+  state.hireTalentId = talentId || null;
+  document.getElementById('jobModalTitle').textContent = mode==='hire' ? `Hire ${talentName}` : 'Post a project';
+  document.getElementById('jobModalSub').textContent = mode==='hire'
+    ? `This project will be assigned directly to ${talentName}. You'll fund it once they accept.`
+    : 'Talents can apply — you choose who to hire.';
+  document.getElementById('jobTitle').value = '';
+  document.getElementById('jobDesc').value = '';
+  document.getElementById('jobCategory').value = '';
+  document.getElementById('jobBudget').value = '';
+  document.getElementById('jobRevisions').value = 2;
+  document.getElementById('jobInstantClaim').checked = false;
+  document.getElementById('instantClaimField').style.display = mode==='hire' ? 'none' : 'flex';
+  state.msRows = [];
+  renderMsRows();
+  openModal('jobModal');
+}
+function renderMsRows() {
+  const box = document.getElementById('msRowsBox');
+  if (!box) return;
+  box.innerHTML = state.msRows.map((m,i)=>`
+    <div class="milestone-row">
+      <input placeholder="e.g. Arrangement" value="${esc(m.label)}" oninput="state.msRows[${i}].label=this.value">
+      <input class="amt" type="number" placeholder="₦" value="${m.amount||''}" oninput="state.msRows[${i}].amount=Number(this.value||0)">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="removeMsRow(${i})">✕</button>
+    </div>`).join('');
+}
+function addMsRow() { state.msRows.push({ label:'', amount:0 }); renderMsRows(); }
+function removeMsRow(i) { state.msRows.splice(i,1); renderMsRows(); }
+async function submitJob(e) {
+  e.preventDefault();
+  const btn = document.getElementById('jobSubmitBtn');
+  const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const milestones = state.msRows.filter(m=>m.label.trim() && m.amount>0).map(m=>({ label:m.label.trim(), amount:m.amount }));
+    const payload = {
+      title: document.getElementById('jobTitle').value.trim(),
+      description: document.getElementById('jobDesc').value.trim(),
+      category: document.getElementById('jobCategory').value.trim() || undefined,
+      budget: Number(document.getElementById('jobBudget').value),
+      revisionCount: Number(document.getElementById('jobRevisions').value || 2),
+      instantClaim: state.jobModalMode !== 'hire' && document.getElementById('jobInstantClaim').checked,
+      milestones,
+    };
+    const job = await api('/jobs', { method:'POST', body: JSON.stringify(payload) });
+    if (state.jobModalMode === 'hire' && state.hireTalentId) {
+      await api('/jobs/'+job.id+'/assign', { method:'POST', body: JSON.stringify({ talentId: state.hireTalentId }) });
+      toast('Project sent — fund it to get started.');
+    } else {
+      toast('Project published to the open marketplace.');
+    }
+    closeModal('jobModal');
+    go('jobDetail', { id: job.id });
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+/* ============================ VIEW: JOB DETAIL ============================ */
+async function viewJobDetail() {
+  const id = state.params.id;
+  let job, files = [], proposals = [], messages = [], reviews = [];
+  try {
+    const d = await api('/jobs/' + id);
+    job = d.job; files = d.files || [];
+  } catch(e) { return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Project not found</h3><p>${esc(e.message)}</p></div></div>`; }
+
+  const isClient = state.user && job.client_id === state.user.id;
+  const isTalent = state.user && job.talent_id === state.user.id;
+  const isStaff = state.user && ['admin','reviewer'].includes(state.user.role);
+
+  if (isClient && job.status === 'OPEN') { try { proposals = (await api('/jobs/'+id+'/proposals')).proposals; } catch {} }
+  if (isClient || isTalent || isStaff) { try { messages = (await api('/messages/'+id)).messages; } catch {} }
+  if (job.status === 'RELEASED') { try { reviews = (await api('/talents/'+job.talent_id+'/reviews')).reviews; } catch {} }
+  const alreadyReviewed = isClient && reviews.some(r=>r.reviewer_id === state.user.id);
+
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <a class="back-link" onclick="go('jobs')">← Back to projects</a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin:18px 0 6px;flex-wrap:wrap">
+      <h1 style="font-size:24px">${esc(job.title)}</h1>
+      <span class="status ${statusClass(job.status)}">${statusLabel(job.status)}</span>
+    </div>
+    <div style="color:var(--text-faint);font-size:13px;margin-bottom:24px">${esc(job.category||'General')} · ${fmt(job.budget)} · Client: ${esc(job.clientName||'—')} ${job.talentName ? '· Talent: '+esc(job.talentName) : ''}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start">
+      <div>
+        <div class="panel" style="margin-bottom:18px">
+          <h4>Brief</h4>
+          <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;white-space:pre-wrap">${esc(job.description)}</p>
+        </div>
+
+        ${job.status==='OPEN' && isClient ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Proposals <span>${proposals.length} received</span></h4>
+            ${proposals.length ? proposals.map(p=>`
+              <div style="border-top:1px solid var(--hair);padding:12px 0">
+                <div style="display:flex;justify-content:space-between"><b style="font-size:13.5px">${esc(p.name)}</b>${p.quote?`<span class="mono">${fmt(p.quote)}</span>`:''}</div>
+                <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0">${esc(p.message||'')}</p>
+                <button class="btn btn-brass btn-sm" onclick="acceptProposal('${p.id}')">Accept &amp; assign</button>
+              </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No proposals yet.</p>`}
+          </div>` : ''}
+
+        ${job.status==='OPEN' && state.user && state.user.role==='talent' && !isClient ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Apply to this project</h4>
+            <div class="field"><textarea id="applyMsg" placeholder="Tell the client why you're a fit..."></textarea></div>
+            <div class="field"><input id="applyQuote" type="number" placeholder="Your quote in NGN (optional)"></div>
+            <button class="btn btn-brass btn-block" onclick="applyToJob('${job.id}')">Submit proposal</button>
+          </div>` : ''}
+
+        ${job.status==='AWAITING_PAYMENT' && isClient ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Fund this project</h4>
+            <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Payment of ${fmt(job.budget)} is held securely and only released once you approve the finished work.</p>
+            <button class="btn btn-brass btn-block" onclick="fundJob('${job.id}')">Fund via Paystack</button>
+          </div>` : ''}
+
+        ${['IN_PROGRESS','REVISION_REQUESTED'].includes(job.status) && isTalent ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Deliver files</h4>
+            ${job.revision_reason ? `<p style="font-size:12.5px;color:var(--danger);margin-bottom:10px">Revision requested: ${esc(job.revision_reason)}</p>` : ''}
+            <div class="field"><input id="deliverFiles" type="file" multiple></div>
+            <button class="btn btn-brass btn-block" onclick="deliverJob('${job.id}')">Submit delivery</button>
+          </div>` : ''}
+
+        ${job.status==='QA_PENDING' && isStaff ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Technical QA</h4>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-brass" onclick="submitQa('${job.id}','PASS')">Pass QA</button>
+              <button class="btn btn-danger" onclick="submitQa('${job.id}','FAIL')">Fail QA</button>
+            </div>
+          </div>` : ''}
+
+        ${job.status==='CLIENT_REVIEW' && isClient ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Review delivery</h4>
+            <p style="font-size:12.5px;color:var(--text-faint);margin-bottom:12px">Revisions used: ${job.revisions_used||0} / ${job.revision_count}</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-brass" onclick="approveJob('${job.id}')">Approve &amp; release</button>
+              <button class="btn btn-ghost" onclick="requestRevision('${job.id}')">Request revision</button>
+              <button class="btn btn-danger" onclick="openDispute('${job.id}')">Open dispute</button>
+            </div>
+          </div>` : ''}
+
+        ${files.length ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Files <span>${files.length}</span></h4>
+            ${files.map(f=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding:10px 0;font-size:13px">
+                <span>${esc(f.original_name)}</span>
+                <div style="display:flex;gap:8px">
+                  ${f.preview_name ? `<div style="margin:4px 0"><audio src="/api/files/${f.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : ''}
+                  ${job.status==='RELEASED' && isClient ? `<a class="btn btn-brass btn-sm" href="/api/files/${f.id}/master" target="_blank">Download master</a>` : ''}
+                </div>
+              </div>`).join('')}
+          </div>` : ''}
+
+        ${job.status==='RELEASED' && isClient && !alreadyReviewed ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Leave a review</h4>
+            <div class="field"><select id="reviewRating"><option value="5">★★★★★ Excellent</option><option value="4">★★★★ Good</option><option value="3">★★★ Average</option><option value="2">★★ Poor</option><option value="1">★ Very poor</option></select></div>
+            <div class="field"><textarea id="reviewComment" placeholder="How was the experience?"></textarea></div>
+            <button class="btn btn-brass btn-block" onclick="submitReview('${job.id}')">Submit review</button>
+          </div>` : ''}
+
+        ${isStaff && job.status==='DISPUTED' ? `
+          <div class="panel" style="margin-bottom:18px">
+            <h4>Resolve dispute</h4>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-brass btn-sm" onclick="decideDispute('${job.id}','RELEASE_TALENT')">Release to talent</button>
+              <button class="btn btn-ghost btn-sm" onclick="decideDispute('${job.id}','REFUND_CLIENT')">Refund client</button>
+            </div>
+          </div>` : ''}
+
+        ${isClient || isTalent || isStaff ? `
+          <div class="panel">
+            <h4>Messages</h4>
+            <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
+            <div class="chat-input-row">
+              <textarea id="msgBody" placeholder="Write a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
+              <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
+            </div>
+          </div>` : ''}
+      </div>
+
+      <div class="panel" style="position:sticky;top:88px">
+        <div class="eyebrow" style="margin-bottom:10px">Project summary</div>
+        <div class="mono" style="font-size:24px;margin-bottom:4px">${fmt(job.budget)}</div>
+        <div style="font-size:12px;color:var(--text-faint);margin-bottom:16px">Payment status: ${statusLabel(job.payment_status || 'UNFUNDED')}</div>
+        <div style="border-top:1px solid var(--hair);padding-top:12px;font-size:12.5px;color:var(--text-dim)">
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span>Revisions</span><span>${job.revisions_used||0}/${job.revision_count}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0"><span>Created</span><span>${timeAgo(job.created_at)}</span></div>
+        </div>
+        ${(job.milestones||[]).length ? `
+        <div class="ms-list" style="border-top:1px solid var(--hair);padding-top:12px;margin-top:6px">
+          <div class="mono" style="font-size:10px;color:var(--text-faint);margin-bottom:4px">MILESTONE BREAKDOWN</div>
+          ${job.milestones.map(m=>`<div class="row"><span>${esc(m.label)}</span><span>${fmt(m.amount)}</span></div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ JOB ACTIONS ============================ */
+async function reload() { await render(); }
+async function applyToJob(id) {
+  try {
+    await api('/jobs/'+id+'/apply', { method:'POST', body: JSON.stringify({ message: document.getElementById('applyMsg').value, quote: document.getElementById('applyQuote').value || undefined }) });
+    toast('Proposal submitted.'); reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function acceptProposal(pid) {
+  try { await api('/proposals/'+pid+'/accept', { method:'POST' }); toast('Talent assigned.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function fundJob(id) {
+  try {
+    const d = await api('/payments/initialize', { method:'POST', body: JSON.stringify({ jobId:id }) });
+    toast('Redirecting to Paystack…');
+    window.location.href = d.authorization_url;
+  } catch(e) { toast(e.message, true); }
+}
+async function deliverJob(id) {
+  const input = document.getElementById('deliverFiles');
+  if (!input.files.length) { toast('Choose at least one file.', true); return; }
+  const fd = new FormData();
+  for (const f of input.files) fd.append('files', f);
+  try { await api('/jobs/'+id+'/deliver', { method:'POST', body: fd }); toast('Delivery submitted.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function submitQa(id, result) {
+  try { await api('/jobs/'+id+'/qa', { method:'POST', body: JSON.stringify({ technical: result, notes: [] }) }); toast('QA recorded.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function approveJob(id) {
+  try { await api('/jobs/'+id+'/approve', { method:'POST' }); toast('Delivery approved — payout pending.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function requestRevision(id) {
+  const reason = prompt('What needs to change?');
+  if (reason === null) return;
+  try { await api('/jobs/'+id+'/revision', { method:'POST', body: JSON.stringify({ reason }) }); toast('Revision requested.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function openDispute(id) {
+  const reason = prompt('Describe the issue for our review team:');
+  if (reason === null) return;
+  try { await api('/jobs/'+id+'/dispute', { method:'POST', body: JSON.stringify({ reason }) }); toast('Dispute opened — a reviewer will step in.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function decideDispute(id, outcome) {
+  try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome }) }); toast('Dispute resolved.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function submitReview(id) {
+  try {
+    await api('/jobs/'+id+'/review', { method:'POST', body: JSON.stringify({ rating: Number(document.getElementById('reviewRating').value), comment: document.getElementById('reviewComment').value }) });
+    toast('Review submitted. Thank you!'); reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function sendMessage(jobId) {
+  const body = document.getElementById('msgBody').value.trim();
+  if (!body) return;
+  try {
+    await api('/messages/'+jobId, { method:'POST', body: JSON.stringify({ body }) });
+    document.getElementById('msgBody').value='';
+    await refreshJobChat(jobId);
+  }
+  catch(e) { toast(e.message, true); }
+}
+function renderJobChat(messages, currentUser) {
+  if (!messages.length) return `<p style="color:var(--text-faint);font-size:13px">No messages yet — say hello.</p>`;
+  return messages.map(m => {
+    const own = currentUser && m.sender_id === currentUser.id;
+    return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${esc(m.sender_name)} · ${timeAgo(m.created_at)}</span>${esc(m.body)}</div>`;
+  }).join('');
+}
+async function refreshJobChat(jobId) {
+  const el = document.getElementById('messageList');
+  if (!el) return;
+  try {
+    const d = await api('/messages/'+jobId);
+    el.innerHTML = renderJobChat(d.messages, state.user);
+    el.scrollTop = el.scrollHeight;
+  } catch {}
+}
+function startJobChatPolling(jobId) {
+  stopJobChatPolling();
+  state.chatPollTimer = setInterval(() => refreshJobChat(jobId), 6000);
+}
+function stopJobChatPolling() {
+  if (state.chatPollTimer) { clearInterval(state.chatPollTimer); state.chatPollTimer = null; }
+}
+
+/* ============================ SUPPORT CHAT WIDGET ============================ */
+function getGuestToken() {
+  let t = localStorage.getItem('prodilive_guest_token');
+  if (!t) { t = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); localStorage.setItem('prodilive_guest_token', t); }
+  return t;
+}
+function renderSupportMsgs(messages) {
+  if (!messages || !messages.length) return `<p style="color:var(--text-faint);font-size:12.5px">Send us a message and our team will get back to you here.</p>`;
+  return messages.map(m => `<div class="chat-bubble ${m.senderType==='admin'?'admin-msg':(m.senderType==='visitor'?'own':'other')}"><span class="who">${esc(m.senderName)} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`).join('');
+}
+function renderSupportFoot() {
+  const needsContact = !state.user;
+  return `
+    ${needsContact ? `<input id="spName" placeholder="Your name" style="margin-bottom:6px">
+    <input id="spEmail" type="email" placeholder="Your email" style="margin-bottom:6px">` : ''}
+    <textarea id="spBody" placeholder="Type a message..." style="min-height:44px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportMessage()}"></textarea>
+    <button class="btn btn-brass btn-sm btn-block" onclick="sendSupportMessage()">Send</button>`;
+}
+async function toggleSupportPanel(force) {
+  const panel = document.getElementById('supportPanel');
+  const open = force !== undefined ? force : !panel.classList.contains('open');
+  panel.classList.toggle('open', open);
+  if (open) {
+    document.getElementById('supportFoot').innerHTML = renderSupportFoot();
+    await loadSupportThread();
+    startSupportPolling();
+  } else {
+    stopSupportPolling();
+  }
+}
+async function loadSupportThread() {
+  const body = document.getElementById('supportBody');
+  const threadId = state.supportThreadId || localStorage.getItem('prodilive_support_thread');
+  if (!threadId) { body.innerHTML = renderSupportMsgs([]); return; }
+  try {
+    const qs = state.user ? '' : ('?guestToken=' + encodeURIComponent(getGuestToken()));
+    const d = await api('/support/thread/' + threadId + qs);
+    state.supportThreadId = d.thread.id;
+    body.innerHTML = renderSupportMsgs(d.messages);
+    body.scrollTop = body.scrollHeight;
+  } catch { body.innerHTML = renderSupportMsgs([]); }
+}
+async function sendSupportMessage() {
+  const bodyInput = document.getElementById('spBody');
+  const text = bodyInput.value.trim();
+  if (!text) return;
+  const payload = { body: text, threadId: state.supportThreadId || localStorage.getItem('prodilive_support_thread') || undefined };
+  if (!state.user) {
+    payload.guestToken = getGuestToken();
+    const nameEl = document.getElementById('spName'), emailEl = document.getElementById('spEmail');
+    if (nameEl) payload.name = nameEl.value.trim();
+    if (emailEl) payload.email = emailEl.value.trim();
+  }
+  try {
+    const d = await api('/support/message', { method:'POST', body: JSON.stringify(payload) });
+    state.supportThreadId = d.thread.id;
+    localStorage.setItem('prodilive_support_thread', d.thread.id);
+    bodyInput.value = '';
+    const body = document.getElementById('supportBody');
+    body.innerHTML = renderSupportMsgs(d.messages);
+    body.scrollTop = body.scrollHeight;
+  } catch(e) { toast(e.message, true); }
+}
+function startSupportPolling() {
+  stopSupportPolling();
+  state.supportPollTimer = setInterval(loadSupportThread, 8000);
+}
+function stopSupportPolling() {
+  if (state.supportPollTimer) { clearInterval(state.supportPollTimer); state.supportPollTimer = null; }
+}
+
+/* ============================ VIEW: DASHBOARD ============================ */
+async function viewDashboard() {
+  const u = state.user;
+  state.pickedSpecs = (u.skills || []).slice();
+  let jobs = [];
+  try { jobs = (await api('/jobs')).jobs; } catch(e) { toast(e.message, true); }
+  const mine = jobs.filter(j => j.client_id===u.id || j.talent_id===u.id);
+  const active = mine.filter(j=>['IN_PROGRESS','QA_PENDING','CLIENT_REVIEW','REVISION_REQUESTED','AWAITING_PAYMENT'].includes(j.status)).length;
+  const done = mine.filter(j=>j.status==='RELEASED').length;
+
+  let services = [];
+  if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
+
+  if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
+
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    ${!u.emailVerified ? `<div class="panel" style="background:rgba(230,180,80,.1);border-color:rgba(230,180,80,.4);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <span style="font-size:13px">⚠️ Your email isn't verified yet. Some actions (posting jobs, applying, messaging, payments) are blocked until you verify.</span>
+      <button class="btn btn-ghost btn-sm" onclick="resendVerification()">Resend verification email</button>
+    </div>` : ''}
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">${esc(u.role.charAt(0).toUpperCase()+u.role.slice(1))} dashboard</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
+      ${u.role==='client' ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
+    </div>
+
+    <div class="dash-stats">
+      <div class="stat-card"><div class="l">Total projects</div><div class="v">${mine.length}</div></div>
+      <div class="stat-card"><div class="l">Active</div><div class="v" style="color:var(--brass-soft)">${active}</div></div>
+      <div class="stat-card"><div class="l">Completed</div><div class="v" style="color:var(--signal)">${done}</div></div>
+      <div class="stat-card"><div class="l">Role</div><div class="v" style="font-size:18px">${esc(u.role)}</div></div>
+    </div>
+
+    <div class="dash-cols">
+      <div class="panel">
+        <h4>My projects <span>${mine.length} total</span></h4>
+        ${mine.length ? mine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
+
+        ${u.role==='talent' ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:10px">My services <span>${services.length}</span></h4>
+            <div id="servicesList">${renderServicesList(services)}</div>
+            <div style="border-top:1px solid var(--hair);margin-top:14px;padding-top:14px">
+              <div class="field"><label>Service title</label><input id="svTitle" placeholder="e.g. I'll mix and master your song"></div>
+              <div class="field"><label>Description</label><textarea id="svDesc" placeholder="What's included, turnaround, etc."></textarea></div>
+              <div style="display:flex;gap:10px">
+                <div class="field" style="flex:1"><label>Price (₦)</label><input id="svPrice" type="number" placeholder="150000"></div>
+                <div class="field" style="flex:1"><label>Delivery (days)</label><input id="svDays" type="number" value="5"></div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="addService()">+ Add service</button>
+            </div>
+          </div>` : ''}
+
+        ${(u.role==='client' || u.role==='talent') ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:8px">Become a PRODILIVE Reviewer</h4>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Verified specialists help resolve project disputes and earn recognition on the platform.</p>
+            <button class="btn btn-ghost btn-sm" onclick="go('reviewerApply')">Learn more &amp; apply →</button>
+          </div>` : ''}
+      </div>
+      <div class="panel">
+        <h4>Profile</h4>
+        <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
+        <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
+        <div class="field">
+          <label>Specialties</label>
+          <div id="specPickerBox">${renderSpecPicker()}</div>
+        </div>
+        <button class="btn btn-brass btn-sm" onclick="saveProfile()">Save profile</button>
+        ${u.role==='talent' ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:10px">Payout details</h4>
+            <div class="field"><label>Bank code (3 digits)</label><input id="pfBankCode" placeholder="058"></div>
+            <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" placeholder="0123456789"></div>
+            <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
+          </div>` : ''}
+      </div>
+    </div>
+  </div></section>`;
+}
+function renderSpecPicker() {
+  const groups = Object.entries(SPECIALTY_GROUPS).map(([g,items])=>`
+    <div style="margin-bottom:10px"><div class="mono" style="font-size:10px;color:var(--text-faint);margin-bottom:6px">${esc(g.toUpperCase())}</div>
+    <div class="spec-picker">${items.map(s=>`<span class="spec-chip ${state.pickedSpecs.includes(s)?'sel':''}" onclick="toggleSpec('${esc(s).replace(/'/g,"\\'")}')">${esc(s)}</span>`).join('')}</div></div>`).join('');
+  const primary = state.pickedSpecs[0];
+  const primarySelect = state.pickedSpecs.length ? `
+    <div class="primary-select"><label style="font-size:11px;color:var(--text-faint)">Primary specialty</label>
+    <select id="primarySpecSelect" onchange="setPrimarySpec(this.value)">${state.pickedSpecs.map(s=>`<option value="${esc(s)}" ${s===primary?'selected':''}>${esc(s)}</option>`).join('')}</select></div>` : '';
+  return groups + primarySelect;
+}
+function toggleSpec(s) {
+  const i = state.pickedSpecs.indexOf(s);
+  if (i === -1) state.pickedSpecs.push(s); else state.pickedSpecs.splice(i,1);
+  document.getElementById('specPickerBox').innerHTML = renderSpecPicker();
+}
+function setPrimarySpec(s) {
+  state.pickedSpecs = [s, ...state.pickedSpecs.filter(x=>x!==s)];
+  document.getElementById('specPickerBox').innerHTML = renderSpecPicker();
+}
+function renderServicesList(services) {
+  if (!services.length) return `<p style="color:var(--text-faint);font-size:12.5px">No services listed yet.</p>`;
+  return services.map(s=>`
+    <div class="service-row">
+      <div><b style="font-size:13px">${esc(s.title)}</b><div class="sm">${fmt(s.price)} · ${s.delivery_days}-day delivery ${s.active?'':'· <span style=\"color:var(--danger)\">inactive</span>'}</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleServiceActive('${s.id}',${!s.active})">${s.active?'Deactivate':'Activate'}</button>
+    </div>`).join('');
+}
+async function addService() {
+  try {
+    const payload = {
+      title: document.getElementById('svTitle').value.trim(),
+      description: document.getElementById('svDesc').value.trim(),
+      price: Number(document.getElementById('svPrice').value),
+      deliveryDays: Number(document.getElementById('svDays').value || 5),
+    };
+    if (!payload.title || !payload.price) { toast('Title and price are required.', true); return; }
+    await api('/services', { method:'POST', body: JSON.stringify(payload) });
+    toast('Service added.'); reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function toggleServiceActive(id, active) {
+  try { await api('/services/'+id, { method:'PUT', body: JSON.stringify({ active }) }); toast(active?'Service activated.':'Service deactivated.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function resendVerification() {
+  try { const d = await api('/auth/resend-verification', { method:'POST' }); toast(d.alreadyVerified ? 'Already verified.' : 'Verification email sent — check your inbox.'); }
+  catch(e) { toast(e.message, true); }
+}
+async function applyReviewer() {
+  try {
+    const portfolio = document.getElementById('revPortfolio').value.split(',').map(s=>s.trim()).filter(Boolean);
+    await api('/reviewer/apply', { method:'POST', body: JSON.stringify({ specialties: state.pickedSpecs, experience: document.getElementById('revExp').value.trim(), portfolio }) });
+    toast('Application submitted — our team will review it.');
+    reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function orderService(id) {
+  if (!state.user) { openAuth('register'); return; }
+  try { const job = await api('/services/'+id+'/order', { method:'POST' }); toast('Order created — fund it to get started.'); go('jobDetail',{id:job.id}); }
+  catch(e) { toast(e.message, true); }
+}
+async function saveProfile() {
+  try {
+    const skills = state.pickedSpecs.length ? state.pickedSpecs : document.getElementById('pfSkills') ? document.getElementById('pfSkills').value.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    const d = await api('/me', { method:'PUT', body: JSON.stringify({ name: document.getElementById('pfName').value.trim(), bio: document.getElementById('pfBio').value, skills }) });
+    state.user = d.user; updateNav(); toast('Profile saved.');
+  } catch(e) { toast(e.message, true); }
+}
+async function savePayout() {
+  try {
+    await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode: document.getElementById('pfBankCode').value.trim(), accountNumber: document.getElementById('pfAccount').value.trim() }) });
+    toast('Payout details saved.');
+  } catch(e) { toast(e.message, true); }
+}
+
+/* ============================ VIEW: ADMIN ============================ */
+async function viewAdmin() {
+  if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
+  const tab = state.params.tab || 'overview';
+  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null;
+  try {
+    if (tab==='overview') overview = await api('/admin/overview');
+    if (tab==='users') users = (await api('/admin/users')).users;
+    if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
+    if (tab==='payments') payments = (await api('/admin/payments')).payments;
+    if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
+    if (tab==='disputes') { disputes = (await api('/disputes')).disputes; reviewerUsers = (await api('/admin/users')).users.filter(u=>u.role==='reviewer'); }
+    if (tab==='support') {
+      supportThreads = (await api('/admin/support')).threads;
+      if (state.params.threadId) { const d = await api('/admin/support/' + state.params.threadId); supportThread = d; }
+    }
+  } catch(e) { toast(e.message, true); }
+
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat']];
+  let body = '';
+  if (tab==='overview') {
+    body = `<div class="dash-stats">
+      <div class="stat-card"><div class="l">Total users</div><div class="v">${overview.users??'—'}</div></div>
+      <div class="stat-card"><div class="l">Total jobs</div><div class="v">${overview.jobs??'—'}</div></div>
+      <div class="stat-card"><div class="l">Revenue held/released</div><div class="v mono" style="font-size:19px">${fmt(overview.revenue||0)}</div></div>
+      <div class="stat-card"><div class="l">Open disputes</div><div class="v" style="color:var(--danger)">${overview.openDisputes??'—'}</div></div>
+    </div>`;
+  } else if (tab==='users') {
+    body = `<div class="panel"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+      ${users.map(u=>`<tr><td style="color:var(--text)">${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.status)}</td>
+        <td>${u.status==='SUSPENDED' ? `<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${u.id}')">Reactivate</button>` : `<button class="btn btn-danger btn-sm" onclick="adminSuspend('${u.id}')">Suspend</button>`}</td></tr>`).join('')}
+      </table></div>`;
+  } else if (tab==='jobs') {
+    body = `<div class="panel"><table><tr><th>Title</th><th>Client</th><th>Talent</th><th>Budget</th><th>Status</th></tr>
+      ${jobs.map(j=>`<tr><td style="color:var(--text)">${esc(j.title)}</td><td>${esc(j.clientName||'—')}</td><td>${esc(j.talentName||'—')}</td><td>${fmt(j.budget)}</td><td><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span></td></tr>`).join('')}
+      </table></div>`;
+  } else if (tab==='payments') {
+    body = `<div class="panel"><table><tr><th>Job</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
+      ${payments.map(p=>`<tr><td style="color:var(--text)">${esc(p.job_title)}</td><td>${fmt(p.amount)}</td><td>${esc(p.status)}</td><td class="mono" style="font-size:11px">${esc(p.reference)}</td></tr>`).join('')}
+      </table></div>`;
+  } else if (tab==='reviewers') {
+    body = `<div class="panel">${apps.length ? apps.map(a=>`
+      <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}</div></div>
+        ${a.status==='PENDING' ? `<button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>` : ''}
+        ${a.status==='QUALIFICATION' ? `
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="qScore_${a.user_id}" type="number" min="0" max="100" placeholder="Score 0-100" style="width:110px">
+            <button class="btn btn-ghost btn-sm" onclick="adminSetQualification('${a.user_id}')">Set score</button>
+          </div>` : ''}
+      </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No applications.</p>`}</div>`;
+  } else if (tab==='disputes') {
+    body = `<div class="panel">${disputes.length ? disputes.map(d=>`
+      <div style="border-top:1px solid var(--hair);padding:12px 0">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div><b style="font-size:13.5px">${esc(d.title)}</b><div style="font-size:12px;color:var(--text-faint)">${fmt(d.budget)} · ${esc(d.status)}</div></div>
+          <a class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</a>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0">${esc(d.reason||'')}</p>
+        ${d.status==='OPEN' ? `
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="assignSel_${d.id}"><option value="">Assign to reviewer…</option>${reviewerUsers.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select>
+            <button class="btn btn-ghost btn-sm" onclick="adminAssignDispute('${d.id}')">Assign</button>
+          </div>` : d.status==='ASSIGNED' ? `<span class="mono" style="font-size:11px;color:var(--text-faint)">Assigned — awaiting reviewer decision</span>` : ''}
+      </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No disputes.</p>`}</div>`;
+  } else if (tab==='support') {
+    if (supportThread) {
+      body = `<div class="panel">
+        <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="go('admin',{tab:'support'})">← All conversations</button>
+        <h4>${esc(supportThread.thread.name || 'Guest')} ${supportThread.thread.email ? '· ' + esc(supportThread.thread.email) : ''}</h4>
+        <div class="chat-scroll" id="adminSupportMsgs" style="max-height:400px">${supportThread.messages.map(m=>`<div class="chat-bubble ${m.senderType==='admin'?'own':'other'}"><span class="who">${esc(m.senderName)} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`).join('') || '<p style="color:var(--text-faint);font-size:13px">No messages.</p>'}</div>
+        <div class="chat-input-row">
+          <textarea id="adminReplyBody" placeholder="Reply..."></textarea>
+          <button class="btn btn-brass btn-sm" onclick="adminSupportReply('${supportThread.thread.id}')">Send</button>
+        </div>
+        ${supportThread.thread.status==='OPEN' ? `<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="adminSupportClose('${supportThread.thread.id}')">Close conversation</button>` : `<p style="font-size:12px;color:var(--text-faint);margin-top:10px">Closed</p>`}
+      </div>`;
+    } else {
+      body = `<div class="panel">${supportThreads.length ? supportThreads.map(t=>`
+        <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer" onclick="go('admin',{tab:'support',threadId:'${t.id}'})">
+          <div style="min-width:0"><b style="font-size:13.5px">${esc(t.name||'Guest')}</b><div style="font-size:12px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px">${esc(t.lastBody||'')}</div></div>
+          <span class="badge">${esc(t.status)}</span>
+        </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No support conversations yet.</p>`}</div>`;
+    }
+  }
+
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <div class="eyebrow">Admin</div><h1 style="font-size:26px;margin-bottom:20px">Platform overview</h1>
+    <div class="tabs-row">${tabs.map(([k,l])=>`<button class="tab-btn ${tab===k?'active':''}" onclick="go('admin',{tab:'${k}'})">${l}</button>`).join('')}</div>
+    ${body}
+  </div></section>`;
+}
+async function adminSuspend(id) { try { await api('/admin/users/'+id+'/suspend', { method:'POST' }); toast('User suspended.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminReactivate(id) { try { await api('/admin/users/'+id+'/reactivate', { method:'POST' }); toast('User reactivated.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminDecideReviewer(id, approved) { try { await api('/admin/reviewer-applications/'+id+'/decision', { method:'POST', body: JSON.stringify({ approved }) }); toast('Decision recorded.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminSupportReply(threadId) {
+  const el = document.getElementById('adminReplyBody');
+  const body = el.value.trim();
+  if (!body) return;
+  try { await api('/admin/support/'+threadId+'/reply', { method:'POST', body: JSON.stringify({ body }) }); el.value=''; go('admin',{tab:'support',threadId}); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminSupportClose(threadId) {
+  try { await api('/admin/support/'+threadId+'/close', { method:'POST' }); toast('Conversation closed.'); go('admin',{tab:'support'}); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminSetQualification(userId) {
+  const el = document.getElementById('qScore_'+userId);
+  const score = Number(el.value);
+  if (!el.value || score<0 || score>100) { toast('Enter a score between 0 and 100.', true); return; }
+  try { await api('/admin/reviewers/'+userId+'/qualification', { method:'POST', body: JSON.stringify({ score }) }); toast('Qualification recorded.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminAssignDispute(id) {
+  const sel = document.getElementById('assignSel_'+id);
+  if (!sel.value) { toast('Choose a reviewer first.', true); return; }
+  try { await api('/admin/disputes/'+id+'/assign', { method:'POST', body: JSON.stringify({ reviewerId: sel.value }) }); toast('Dispute assigned.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+
+/* ============================ INIT ============================ */
+bootstrap();
+</script>
+</body>
+</html>
