@@ -1,6 +1,6 @@
 {
   "name": "prodilive-marketplace",
-  "version": "5.0.0",
+  "version": "5.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -24,6 +24,7 @@
     "nodemailer": "^7.0.5",
     "pg": "^8.16.3",
     "zod": "^3.25.76",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "socket.io": "^4.8.1"
   }
 }

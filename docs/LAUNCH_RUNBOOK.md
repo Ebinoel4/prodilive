@@ -38,6 +38,14 @@ Existing v4.1 database:
 psql "$DATABASE_URL" -f migrations/002_production_hardening.sql
 ```
 
+Existing v5.0 database, upgrading to the marketplace-v2 frontend (specialties, services, milestones):
+```bash
+psql "$DATABASE_URL" -f migrations/003_marketplace_v2.sql
+```
+This migration only adds a new `services` table and a `milestones` column on `jobs`
+with a safe default — it does not modify or drop anything existing, and does not
+touch payment logic. It's safe to run on a live database.
+
 ## 4. Paystack webhook
 
 Set the webhook URL in the Paystack dashboard to:

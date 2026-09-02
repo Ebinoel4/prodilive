@@ -36,12 +36,19 @@ header.nav{position:sticky;top:0;z-index:50;background:rgba(18,19,25,.9);backdro
 .btn[disabled]{opacity:.4;cursor:not-allowed}
 main{min-height:70vh}
 section{padding:52px 0}
-.eyebrow{font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.13em;font-size:11px;color:var(--brass);margin-bottom:12px;display:flex;align-items:center;gap:9px}
-.eyebrow::before{content:'';width:20px;height:1px;background:var(--brass)}
+.eyebrow{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:14px;color:var(--brass-soft);margin-bottom:10px;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
+.eyebrow::before{content:'';width:16px;height:1px;background:var(--brass);opacity:.6}
 .hero{padding:80px 0 60px}
+.hero-grid{display:grid;grid-template-columns:1fr 360px;gap:40px;align-items:center}
 .hero h1{font-size:48px;line-height:1.06;max-width:680px;margin-bottom:18px}
 .hero p.lead{color:var(--text-dim);font-size:16.5px;line-height:1.6;max-width:520px;margin:0 0 28px}
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px}
+.hero-visual{position:relative;height:340px;display:flex;align-items:center;justify-content:center}
+.hero-visual svg{width:100%;height:100%}
+.wave-bar{fill:var(--brass);opacity:.85;transform-box:fill-box;transform-origin:center bottom;animation:wavepulse 2.4s ease-in-out infinite}
+@keyframes wavepulse{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.wave-bar{animation:none}}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-visual{display:none}}
 .searchbar{display:flex;gap:8px;background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:8px;max-width:480px}
 .searchbar input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;padding:9px 11px;font-family:inherit}
 .searchbar input::placeholder{color:var(--text-faint)}
@@ -88,8 +95,12 @@ section{padding:52px 0}
 .field textarea{resize:vertical;min-height:80px}
 .modal-bg{position:fixed;inset:0;background:rgba(10,10,14,.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
 .modal-bg.open{display:flex}
-.modal{background:var(--paper);border:1px solid var(--hair);border-radius:18px;width:100%;max-width:460px;padding:28px;max-height:88vh;overflow-y:auto;position:relative}
+.modal{background:var(--paper);border:1px solid var(--hair);border-radius:18px;width:100%;max-width:460px;padding:30px 28px 28px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:modalrise .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes modalrise{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.modal{animation:none}}
+.modal::before{content:'';position:absolute;top:0;left:28px;right:28px;height:2px;background:linear-gradient(90deg,var(--brass),transparent 70%);border-radius:2px}
 .modal.wide{max-width:620px}
+.modal.wide::before{left:28px;right:28px}
 .modal h3{font-size:20px;margin-bottom:4px}
 .modal .sub{color:var(--text-faint);font-size:12.5px;margin-bottom:18px}
 .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:20px}
@@ -105,6 +116,30 @@ td{padding:10px 8px 10px 0;border-top:1px solid var(--hair);color:var(--text-dim
 tr:first-child td{border-top:none}
 .msg{background:var(--paper-2);border-radius:10px;padding:10px 13px;margin-bottom:8px;font-size:13px}
 .msg b{font-size:11.5px;color:var(--brass-soft);display:block;margin-bottom:3px}
+
+/* ===== Chat bubbles (project messages + support widget) ===== */
+.chat-scroll{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px;margin-bottom:10px}
+.chat-bubble{max-width:82%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;position:relative}
+.chat-bubble .who{font-size:10.5px;color:var(--text-faint);margin-bottom:2px;display:block}
+.chat-bubble.own{align-self:flex-end;background:var(--brass);color:#1a1508;border-bottom-right-radius:4px}
+.chat-bubble.own .who{color:#3a2f10}
+.chat-bubble.other{align-self:flex-start;background:var(--paper-2);border-bottom-left-radius:4px}
+.chat-bubble.admin-msg{align-self:flex-start;background:var(--signal);color:#0a1f14;border-bottom-left-radius:4px}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end}
+.chat-input-row textarea{flex:1;min-height:38px;max-height:100px;resize:none;padding:9px 12px}
+
+/* ===== Support chat widget ===== */
+#supportBubbleBtn{position:fixed;bottom:22px;right:22px;z-index:150;width:54px;height:54px;border-radius:50%;background:var(--brass);color:#1a1508;border:none;font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:pointer;display:flex;align-items:center;justify-content:center}
+@media(max-width:900px){#supportBubbleBtn{bottom:78px}}
+#supportPanel{position:fixed;bottom:86px;right:22px;z-index:150;width:330px;max-width:calc(100vw - 32px);background:var(--ink-2);border:1px solid var(--hair);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+@media(max-width:900px){#supportPanel{bottom:142px}}
+#supportPanel.open{display:flex}
+#supportPanel .sp-head{padding:14px 16px;border-bottom:1px solid var(--hair);display:flex;justify-content:space-between;align-items:center}
+#supportPanel .sp-head h5{margin:0;font-size:14px}
+#supportPanel .sp-close{background:none;border:none;color:var(--text-faint);font-size:16px;cursor:pointer}
+#supportPanel .sp-body{padding:14px 16px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+#supportPanel .sp-foot{padding:12px 14px;border-top:1px solid var(--hair)}
+#supportPanel .sp-foot input, #supportPanel .sp-foot textarea{width:100%;margin-bottom:8px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--brass);color:#1a1508;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--danger);color:#2a0d13}
@@ -220,8 +255,10 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
     <nav class="nav-links">
       <a onclick="go('talents')">Find Talent</a>
       <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('marketplace')">Beats &amp; Templates</a>
       <a onclick="go('pricing')">Pricing</a>
-      <a onclick="go('dashboard')" id="navDashLink" style="display:none">Dashboard</a>
+      <a onclick="go('reviewerApply')" id="navReviewerLink">Become a Reviewer</a>
+      <a onclick="go(state.user && state.user.role==='reviewer' ? 'reviewerHub' : 'dashboard')" id="navDashLink" style="display:none">Dashboard</a>
       <a onclick="go('admin')" id="navAdminLink" style="display:none">Admin</a>
     </nav>
     <div class="nav-cta">
@@ -236,7 +273,6 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
         </div>
         <span class="mono" id="navUserName" style="font-size:12px;color:var(--text-faint)"></span>
         <button class="btn btn-ghost btn-sm" onclick="doLogout()">Log out</button>
-      
       </div>
     </div>
   </div>
@@ -249,12 +285,13 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <div class="foot-grid">
     <div class="foot-brand">
       <div class="logo"><span class="dot"></span>PRODILIVE</div>
-      <p>A trusted marketplace connecting clients with music producers, engineers, musicians and creative professionals — with protected files, secure payments and independent dispute review.</p>
+      <p>A trusted marketplace for musicians and creators — hire talent, sell beats, tracks and templates — with protected files, secure payments and independent dispute review.</p>
     </div>
     <div class="foot-col">
       <h5>Platform</h5>
       <a onclick="go('talents')">Find Talent</a>
       <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('marketplace')">Beats &amp; Templates</a>
       <a onclick="state.user ? openJobModal('open') : openAuth('register')">Post a Project</a>
       <a onclick="go('pricing')">Pricing</a>
     </div>
@@ -262,7 +299,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <h5>Trust &amp; Safety</h5>
       <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
       <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
-      <a onclick="state.user?openAuth('login'):openAuth('register')">Become a Reviewer</a>
+      <a onclick="go('reviewerApply')">Become a Reviewer</a>
     </div>
     <div class="foot-col">
       <h5>Account</h5>
@@ -303,6 +340,10 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
     <div class="field"><label>Category</label><input id="jobCategory" placeholder="Mixing, Production, Session Musician..."></div>
     <div class="field"><label>Budget (NGN)</label><input id="jobBudget" type="number" min="1" required placeholder="150000"></div>
     <div class="field"><label>Included revisions</label><input id="jobRevisions" type="number" min="0" max="20" value="2"></div>
+    <div class="field" id="instantClaimField" style="display:flex;align-items:center;gap:8px">
+      <input id="jobInstantClaim" type="checkbox" style="width:auto">
+      <label style="margin:0" for="jobInstantClaim">First come, first served — any provider can claim this instantly (no proposal review)</label>
+    </div>
     <div class="field">
       <label>Milestones <span style="font-weight:400;color:var(--text-faint)">(optional — for your own tracking, breakdown only)</span></label>
       <div id="msRowsBox"></div>
@@ -313,6 +354,18 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
 </div></div>
 
 <div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<!-- Site-wide support chat widget -->
+<button id="supportBubbleBtn" onclick="toggleSupportPanel()" aria-label="Chat with support">💬</button>
+<div id="supportPanel">
+  <div class="sp-head">
+    <h5>PRODILIVE Support</h5>
+    <button class="sp-close" onclick="toggleSupportPanel(false)">✕</button>
+  </div>
+  <div class="sp-body" id="supportBody"></div>
+  <div class="sp-foot" id="supportFoot"></div>
+</div>
 
 <script>
 /* ============================ STATE ============================ */
@@ -344,6 +397,7 @@ const MOBILE_NAV_ITEMS = [
   ['home','🏠','Home'],
   ['talents','🔍','Explore'],
   ['jobs','💼','Jobs'],
+  ['marketplace','🎵','Market'],
   ['dashboard','👤','Profile'],
 ];
 
@@ -380,13 +434,39 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 /* ============================ ROUTER ============================ */
 function go(view, params = {}) {
   if (needsAuth(view) && !state.user) { openAuth('login'); toast('Sign in to continue'); return; }
+  stopJobChatPolling();
   state.view = view; state.params = params;
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   render();
   renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function needsAuth(view){ return ['dashboard','admin','jobDetail'].includes(view); }
+function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub'].includes(view); }
+
+/* ============================ REAL-TIME LIVE FEED ============================ */
+let _socket = null;
+function initLiveFeed() {
+  if (_socket || typeof io === 'undefined') return;
+  _socket = io();
+  _socket.on('feed:job', (d) => {
+    if (state.view === 'jobs' || state.view === 'home') {
+      const list = document.getElementById('liveJobsList');
+      if (list && d.job.status === 'OPEN') { list.insertAdjacentHTML('afterbegin', jobRow(d.job)); }
+    }
+    toast('New project posted: ' + d.job.title);
+  });
+  _socket.on('feed:product', (d) => {
+    if (state.view === 'marketplace') {
+      const list = document.getElementById('liveProductsList');
+      if (list) list.insertAdjacentHTML('afterbegin', productCard(d.product));
+    }
+    toast('New listing: ' + d.product.title);
+  });
+  _socket.on('feed:jobClaimed', (d) => {
+    const btn = document.querySelector(`#jobrow_${d.jobId} button`);
+    if (btn) { btn.disabled = true; btn.textContent = 'Claimed by ' + d.talentName; }
+  });
+}
 function renderMobileNav() {
   const el = document.getElementById('mobileNav');
   if (!el) return;
@@ -400,8 +480,14 @@ async function render() {
   app.innerHTML = '<div class="wrap" style="padding:80px 0;text-align:center;color:var(--text-faint)">Loading…</div>';
   try {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
-      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing };
+      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing,
+      reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
+      marketplace:viewMarketplace, productDetail:viewProductDetail };
     app.innerHTML = await (views[state.view] || viewHome)();
+    if (state.view === 'jobDetail' && document.getElementById('messageList')) {
+      const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
+      startJobChatPolling(state.params.id);
+    }
   } catch (e) {
     app.innerHTML = `<div class="wrap" style="padding:80px 0"><div class="empty"><div class="n">⚠️</div><h3>Something went wrong</h3><p>${esc(e.message)}</p></div></div>`;
   }
@@ -413,7 +499,9 @@ function updateNav() {
   document.getElementById('signedOutBtns').style.display = signedIn ? 'none' : 'block';
   document.getElementById('signedInBtns').style.display = signedIn ? 'flex' : 'none';
   document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
+  document.getElementById('navDashLink').textContent = (signedIn && state.user.role==='reviewer') ? 'Reviewer Hub' : 'Dashboard';
   document.getElementById('navAdminLink').style.display = (signedIn && state.user.role==='admin') ? 'inline' : 'none';
+  document.getElementById('navReviewerLink').style.display = (signedIn && state.user.role==='reviewer') ? 'none' : 'inline';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
   renderMobileNav();
 }
@@ -481,6 +569,7 @@ async function bootstrap() {
   }
   updateNav();
   render();
+  initLiveFeed();
 }
 
 /* ============================ NOTIFICATIONS ============================ */
@@ -515,6 +604,19 @@ document.addEventListener('click', (e)=>{
 });
 
 /* ============================ VIEW: HOME ============================ */
+function heroWaveformSvg() {
+  const n = 26;
+  let bars = '';
+  for (let i = 0; i < n; i++) {
+    const seed = Math.sin(i * 12.9898) * 43758.5453;
+    const h = 30 + Math.abs((seed - Math.floor(seed))) * 130;
+    const x = i * 14 + 6;
+    const delay = (i % 7) * 0.18;
+    const soft = i % 3 === 0;
+    bars += `<rect class="wave-bar" x="${x}" y="${310 - h}" width="8" rx="4" height="${h}" style="animation-delay:${delay}s" fill="${soft ? 'var(--brass-soft)' : 'var(--brass)'}"></rect>`;
+  }
+  return `<svg viewBox="0 0 ${n*14+12} 340" preserveAspectRatio="xMidYMid meet"><g transform="translate(0,0)">${bars}</g></svg>`;
+}
 async function viewHome() {
   let featured = [];
   try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
@@ -531,19 +633,25 @@ async function viewHome() {
   ];
   return `
   <section class="hero"><div class="wrap">
-    <div class="eyebrow">MUSIC PRODUCTION MARKETPLACE · NIGERIA</div>
-    <h1>Bring your ideas to life — with the right creative professional.</h1>
-    <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
-    <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
-    <div class="hero-actions" style="margin-top:22px">
-      <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
-      <button class="btn btn-ghost" onclick="go('jobs')">Find Work</button>
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Music production marketplace · Nigeria</div>
+        <h1>Bring your ideas to life — with the right creative professional.</h1>
+        <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
+        <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
+        <div class="hero-actions" style="margin-top:22px">
+          <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
+          <button class="btn btn-ghost" onclick="go('jobs')">Find Work</button>
+          <button class="btn btn-ghost" onclick="go('marketplace')">Browse Beats &amp; Templates</button>
+        </div>
+      </div>
+      <div class="hero-visual">${heroWaveformSvg()}</div>
     </div>
     <div class="cat-row">${cats.map(c=>`<span class="cat-pill" onclick="go('talents',{q:'${esc(c)}'})">${c}</span>`).join('')}</div>
   </div></section>
 
   <section><div class="wrap">
-    <div class="section-head"><div><div class="eyebrow">EXPLORE</div><h2>Explore creative talent</h2></div></div>
+    <div class="section-head"><div><div class="eyebrow">Explore</div><h2>Explore creative talent</h2></div></div>
     <div class="icon-cat-grid">
       ${iconCats.map(([ic,label,qs])=>`
         <div class="icon-cat-card" onclick="go('talents',{q:'${esc(qs[0])}'})"><div class="ic">${ic}</div><div class="lb">${esc(label)}</div></div>`).join('')}
@@ -551,7 +659,7 @@ async function viewHome() {
   </div></section>
 
   <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap">
-    <div class="eyebrow" id="howItWorks">HOW IT WORKS</div>
+    <div class="eyebrow" id="howItWorks">How it works</div>
     <h2 style="font-size:26px;margin-bottom:24px">From idea to finished record</h2>
     <div class="steps-5">
       ${[['01','Find the right professional.'],
@@ -565,7 +673,7 @@ async function viewHome() {
 
   <section><div class="wrap">
     <div class="section-head">
-      <div><div class="eyebrow">FEATURED PROFESSIONALS</div><h2>Verified talent, ready to hire</h2></div>
+      <div><div class="eyebrow">Featured professionals</div><h2>Verified talent, ready to hire</h2></div>
       <button class="btn btn-ghost btn-sm" onclick="go('talents')">View all →</button>
     </div>
     ${featured.length ? `<div class="grid-3">${featured.map(talentCard).join('')}</div>` : `<div class="empty"><div class="n">🎧</div><p>No professionals listed yet — be the first to join.</p></div>`}
@@ -579,7 +687,7 @@ async function viewHome() {
   </div></section>
 
   <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" id="protection">
-    <div class="eyebrow" style="justify-content:center">PROTECTION</div>
+    <div class="eyebrow" style="justify-content:center">Protection</div>
     <h2 style="font-size:26px;text-align:center;margin-bottom:30px">Work confidently.</h2>
     <div class="protect-grid">
       ${[['🔒','Protected payments'],['✅','Verified transactions'],['🗂️','Project workspaces'],['⚖️','Professional dispute review'],['⭐','Verified reviews']].map(([ic,lb])=>`
@@ -590,7 +698,7 @@ async function viewHome() {
   <section><div class="wrap">
     <div class="split-cta">
       <div>
-        <div class="eyebrow">FOR PROVIDERS</div>
+        <div class="eyebrow">For providers</div>
         <h2>Your next opportunity could come from anywhere.</h2>
         <p class="lead">Build your profile, show your work, and find opportunities with clients on PRODILIVE. Get paid securely once your work is approved.</p>
         <button class="btn btn-brass" onclick="state.user ? go('dashboard') : openAuth('register')">Start Earning</button>
@@ -605,7 +713,7 @@ async function viewHome() {
   </div></section>
 
   <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap" style="text-align:center">
-    <div class="eyebrow" style="justify-content:center">PRICING</div>
+    <div class="eyebrow" style="justify-content:center">Pricing</div>
     <h2 style="font-size:26px;margin-bottom:30px">Simple, fair pricing.</h2>
     <button class="btn btn-ghost" onclick="go('pricing')">See full pricing →</button>
   </div></section>
@@ -620,7 +728,7 @@ async function viewHome() {
 async function viewPricing() {
   return `
   <section style="padding-top:50px"><div class="wrap" style="text-align:center">
-    <div class="eyebrow" style="justify-content:center">PRICING</div>
+    <div class="eyebrow" style="justify-content:center">Pricing</div>
     <h1 style="font-size:32px;margin-bottom:14px">Free to join. Fair fees only when you get paid.</h1>
     <p class="lead" style="max-width:520px;margin:0 auto 40px">No monthly cost to start. PRODILIVE takes a small platform fee to fund payment protection, quality checks and dispute resolution.</p>
     <div class="pricing-grid">
@@ -651,6 +759,118 @@ async function viewPricing() {
   </div></section>`;
 }
 
+/* ============================ VIEW: REVIEWER APPLY (public) ============================ */
+async function viewReviewerApply() {
+  let myApp = null;
+  if (state.user) { try { myApp = (await api('/reviewer/my-application')).application; } catch {} }
+  if (state.user) state.pickedSpecs = state.pickedSpecs && state.pickedSpecs.length ? state.pickedSpecs : (state.user.skills || []).slice();
+
+  const intro = `
+    <div class="eyebrow" style="justify-content:center">Trust &amp; safety</div>
+    <h1 style="font-size:32px;margin-bottom:14px">Become a PRODILIVE Reviewer</h1>
+    <p class="lead" style="max-width:560px;margin:0 auto 30px">Reviewers are verified specialists who independently resolve project disputes — reviewing deliverables, listening to both sides and deciding fund releases. It's a paid, trust-critical role separate from client and provider accounts.</p>
+    <div class="dash-stats" style="max-width:640px;margin:0 auto 40px">
+      <div class="stat-card"><div class="l">Step 1</div><div class="v" style="font-size:15px">Apply</div></div>
+      <div class="stat-card"><div class="l">Step 2</div><div class="v" style="font-size:15px">Qualification test</div></div>
+      <div class="stat-card"><div class="l">Step 3</div><div class="v" style="font-size:15px">Certified reviewer</div></div>
+    </div>`;
+
+  if (!state.user) {
+    return `
+    <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+      ${intro}
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">You'll need a PRODILIVE account before applying — it takes a minute.</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-brass btn-sm" onclick="openAuth('register')">Create an account</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Sign in</button>
+      </div>
+    </div></section>`;
+  }
+
+  if (myApp && ['PENDING','QUALIFICATION','APPROVED'].includes(myApp.status)) {
+    const stage = { PENDING:'Your application is awaiting review by our team.', QUALIFICATION:'Approved — you have been sent a qualification test. Watch your notifications.', APPROVED:'Approved and certified.' }[myApp.status];
+    return `
+    <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+      ${intro}
+      <div class="panel" style="max-width:480px;margin:0 auto;text-align:left">
+        <h4>Application status: <span class="badge">${esc(myApp.status)}</span></h4>
+        <p style="font-size:13px;color:var(--text-dim)">${stage}</p>
+      </div>
+    </div></section>`;
+  }
+
+  const rejected = myApp && myApp.status === 'REJECTED';
+  return `
+  <section style="padding-top:50px"><div class="wrap" style="text-align:center">
+    ${intro}
+    <div class="panel" style="max-width:480px;margin:0 auto;text-align:left">
+      ${rejected ? `<p style="font-size:12.5px;color:var(--text-faint);margin-bottom:14px">Your previous application wasn't approved. You're welcome to reapply below.</p>` : ''}
+      <h4 style="margin-bottom:10px">Your specialties</h4>
+      <div id="specPickerBox">${renderSpecPicker()}</div>
+      <div class="field"><label>Your experience</label><textarea id="revExp" placeholder="Years active, notable credits, relevant background..."></textarea></div>
+      <div class="field"><label>Portfolio links (comma separated)</label><input id="revPortfolio" placeholder="https://..."></div>
+      <button class="btn btn-brass btn-sm" onclick="applyReviewer()">Submit application</button>
+    </div>
+  </div></section>`;
+}
+
+/* ============================ VIEW: REVIEWER HUB ============================ */
+async function viewReviewerHub() {
+  const u = state.user;
+  if (!u || u.role !== 'reviewer') { go('dashboard'); return ''; }
+  let disputes = [];
+  try { disputes = (await api('/disputes')).disputes; } catch(e) { toast(e.message, true); }
+  const assigned = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'ASSIGNED');
+  const decided = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'DECIDED');
+
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">Reviewer hub</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
+      <span class="badge">${u.reviewerLevel === 'CERTIFIED' ? '✓ Certified' : esc(u.reviewerLevel || 'TRAINEE')}</span>
+    </div>
+
+    <div class="dash-stats">
+      <div class="stat-card"><div class="l">Assigned cases</div><div class="v" style="color:var(--brass-soft)">${assigned.length}</div></div>
+      <div class="stat-card"><div class="l">Resolved cases</div><div class="v" style="color:var(--signal)">${decided.length}</div></div>
+      <div class="stat-card"><div class="l">Qualification score</div><div class="v" style="font-size:18px">${u.reviewerScore ?? '—'}</div></div>
+      <div class="stat-card"><div class="l">Status</div><div class="v" style="font-size:18px">${esc(u.status)}</div></div>
+    </div>
+
+    <div class="dash-cols">
+      <div class="panel">
+        <h4>My review queue <span>${assigned.length} assigned</span></h4>
+        ${assigned.length ? assigned.map(d=>`
+          <div class="dispute-card">
+            <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+            <p>${esc(d.reason||'')}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
+              <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+              <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
+            </div>
+          </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
+
+        <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+          <h4 style="margin-bottom:10px">Case history <span>${decided.length}</span></h4>
+          ${decided.length ? decided.map(d=>`
+            <div class="dispute-card">
+              <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+              <p style="color:var(--text-faint)">Resolved · ${esc((d.decision||{}).outcome || '')}</p>
+            </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No resolved cases yet.</p>`}
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4>Profile</h4>
+        <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
+        <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
+        <button class="btn btn-ghost btn-sm" onclick="saveProfile()">Save profile</button>
+      </div>
+    </div>
+  </div></section>`;
+}
+
 /* ============================ TALENT CARD ============================ */
 function talentCard(t) {
   state.talentsCache[t.id] = t;
@@ -675,7 +895,7 @@ async function viewTalents() {
   try { talents = (await api('/talents?search=' + encodeURIComponent(q))).talents; } catch(e) { toast(e.message, true); }
   return `
   <section style="padding-top:36px"><div class="wrap">
-    <div class="eyebrow">MARKETPLACE</div>
+    <div class="eyebrow">Marketplace</div>
     <h1 style="font-size:28px;margin-bottom:20px">Browse music professionals</h1>
     <div class="searchbar" style="max-width:100%;margin-bottom:26px">
       <input id="talentSearch" value="${esc(q)}" placeholder="Search name, skill or bio..." oninput="debounceSearch(this.value)">
@@ -689,6 +909,139 @@ let searchTimer;
 function debounceSearch(v) {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(()=> go('talents', {q:v}), 350);
+}
+
+/* ============================ VIEW: MARKETPLACE (beats/tracks/templates) ============================ */
+async function viewMarketplace() {
+  const cat = state.params.cat || '';
+  const q = state.params.q || '';
+  let products = [];
+  try { products = (await api('/products' + (cat||q ? '?'+new URLSearchParams({...(cat?{category:cat}:{}) ,...(q?{q}:{})}) : ''))).products; } catch(e) { toast(e.message, true); }
+  const cats = [['','All'],['BEAT','Beats'],['TRACK','Tracks'],['TEMPLATE','Templates'],['SAMPLE_PACK','Sample Packs']];
+  return `
+  <section style="padding-top:36px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div><div class="eyebrow">Marketplace</div><h1 style="font-size:28px">Beats, tracks &amp; templates</h1></div>
+      ${state.user ? `<button class="btn btn-brass" onclick="openSellModal()">+ Sell your work</button>` : ''}
+    </div>
+    <div class="searchbar" style="max-width:100%;margin-bottom:14px">
+      <input value="${esc(q)}" placeholder="Search beats, tracks, templates..." oninput="debounceMarketSearch(this.value)">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+      ${cats.map(([k,l])=>`<button class="btn ${cat===k?'btn-brass':'btn-ghost'} btn-sm" onclick="go('marketplace',{cat:'${k}'})">${l}</button>`).join('')}
+    </div>
+    <div class="mono" style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${products.length} LISTINGS</div>
+    ${products.length ? `<div class="grid-3" id="liveProductsList">${products.map(productCard).join('')}</div>` :
+      `<div class="empty"><div class="n">🎧</div><h3>Nothing listed yet</h3><p>Be the first to sell a beat, track or template.</p></div>`}
+  </div></section>
+  ${sellModalHtml()}`;
+}
+let marketSearchTimer;
+function debounceMarketSearch(v) { clearTimeout(marketSearchTimer); marketSearchTimer = setTimeout(()=> go('marketplace', {...state.params, q:v}), 350); }
+
+function productCard(p) {
+  const catLabel = {BEAT:'Beat',TRACK:'Track',TEMPLATE:'Template',SAMPLE_PACK:'Sample Pack',OTHER:'Other'}[p.category] || p.category;
+  return `
+  <div class="p-card" onclick="go('productDetail',{id:'${p.id}'})" style="cursor:pointer">
+    <div style="height:110px;border-radius:10px;background:linear-gradient(135deg,var(--paper-2),var(--ink-2));display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px">🎵</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <b style="font-size:14.5px">${esc(p.title)}</b>
+      <span class="badge">${esc(catLabel)}</span>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-faint);margin:4px 0 8px">by ${esc(p.sellerName)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="mono" style="color:var(--brass-soft);font-weight:600">${fmt(p.price)}</span>
+      <span style="font-size:11.5px;color:var(--text-faint)">${p.salesCount} sold</span>
+    </div>
+  </div>`;
+}
+
+/* ============================ VIEW: PRODUCT DETAIL ============================ */
+async function viewProductDetail() {
+  const id = state.params.id;
+  let d;
+  try { d = await api('/products/' + id); } catch(e) { return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Listing not found</h3></div></div>`; }
+  const p = d.product;
+  const catLabel = {BEAT:'Beat',TRACK:'Track',TEMPLATE:'Template',SAMPLE_PACK:'Sample Pack',OTHER:'Other'}[p.category] || p.category;
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <a class="back-link" onclick="go('marketplace')">← Back to marketplace</a>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:30px;align-items:start;margin-top:20px">
+      <div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <h1 style="font-size:26px">${esc(p.title)}</h1>
+          <span class="badge">${esc(catLabel)}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-faint);margin-bottom:18px">by ${esc(p.sellerName)} · ${p.salesCount} sold</div>
+        <p style="color:var(--text-dim);line-height:1.7;font-size:15px;white-space:pre-wrap">${esc(p.description || 'No description provided.')}</p>
+        ${p.hasPreview ? `<div style="margin-top:20px"><h4 style="margin-bottom:8px">Preview</h4><audio src="/api/products/${p.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:400px;height:36px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block;margin-top:4px">Watermarked preview — full quality unlocked after purchase</span></div>` : ''}
+        <div class="panel" style="margin-top:22px"><h4>License terms</h4><p style="font-size:13px;color:var(--text-dim);white-space:pre-wrap">${esc(p.licenseTerms)}</p></div>
+      </div>
+      <div class="panel" style="position:sticky;top:90px">
+        <div class="mono" style="font-size:26px;color:var(--brass-soft);font-weight:700;margin-bottom:14px">${fmt(p.price)}</div>
+        ${d.owned ? `<a class="btn btn-brass btn-block" href="/api/products/${p.id}/download" target="_blank">Download files</a>` :
+          `<button class="btn btn-brass btn-block" onclick="purchaseProduct('${p.id}')">Buy now</button>`}
+        <p style="font-size:11.5px;color:var(--text-faint);margin-top:10px">Instant delivery after payment. Non-refundable digital goods.</p>
+      </div>
+    </div>
+  </div></section>`;
+}
+async function purchaseProduct(id) {
+  if (!state.user) { openAuth('login'); return; }
+  try {
+    const d = await api('/products/'+id+'/purchase', { method:'POST' });
+    const w = window.open(d.authorization_url, '_blank');
+    toast('Complete payment in the new tab, then come back and refresh.');
+  } catch(e) { toast(e.message, true); }
+}
+
+/* ============================ SELL A PRODUCT MODAL ============================ */
+function sellModalHtml() {
+  return `
+  <div class="modal-bg" id="sellModal"><div class="modal wide">
+    <button class="modal-close" onclick="closeModal('sellModal')">&times;</button>
+    <h3>Sell your work</h3>
+    <div class="sub">List a beat, track, sample pack or production template for sale.</div>
+    <form onsubmit="submitProduct(event)">
+      <div class="field"><label>Title</label><input id="prodTitle" required placeholder="e.g. Afrobeat Type Beat — 'Lagos Nights'"></div>
+      <div class="field"><label>Description</label><textarea id="prodDesc" placeholder="BPM, key, mood, what's included..."></textarea></div>
+      <div class="field"><label>Category</label>
+        <select id="prodCategory"><option value="BEAT">Beat</option><option value="TRACK">Track</option><option value="TEMPLATE">Production Template</option><option value="SAMPLE_PACK">Sample Pack</option><option value="OTHER">Other</option></select>
+      </div>
+      <div class="field"><label>Price (NGN)</label><input id="prodPrice" type="number" min="1" required placeholder="15000"></div>
+      <div class="field"><label>License terms</label><textarea id="prodLicense" placeholder="e.g. Non-exclusive, for use in one commercial release...">Standard non-exclusive license</textarea></div>
+      <div class="field"><label>Master file <span style="font-weight:400;color:var(--text-faint)">(audio, zip, or project file — buyers only get this after purchase)</span></label><input id="prodMaster" type="file" required></div>
+      <button class="btn btn-brass btn-block" type="submit" id="prodSubmitBtn">List for sale</button>
+    </form>
+  </div></div>`;
+}
+function openSellModal() {
+  if (!state.user) { openAuth('register'); return; }
+  openModal('sellModal');
+}
+async function submitProduct(e) {
+  e.preventDefault();
+  const btn = document.getElementById('prodSubmitBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const fd = new FormData();
+    fd.append('title', document.getElementById('prodTitle').value.trim());
+    fd.append('description', document.getElementById('prodDesc').value.trim());
+    fd.append('category', document.getElementById('prodCategory').value);
+    fd.append('price', document.getElementById('prodPrice').value);
+    fd.append('licenseTerms', document.getElementById('prodLicense').value.trim());
+    const f = document.getElementById('prodMaster').files[0];
+    if (!f) throw new Error('Please choose a file to upload');
+    fd.append('master', f);
+    const headers = {}; if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    const res = await fetch('/api/products', { method:'POST', headers, body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not list product');
+    toast('Listed! Buyers can find it in the marketplace now.');
+    closeModal('sellModal');
+    go('productDetail', { id: data.id });
+  } catch(e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.textContent = 'List for sale'; }
 }
 
 /* ============================ VIEW: TALENT PROFILE ============================ */
@@ -742,7 +1095,7 @@ async function viewTalentProfile() {
           </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No reviews yet.</p>`}
       </div>
       <div class="panel" style="position:sticky;top:88px">
-        <div class="eyebrow" style="margin-bottom:10px">HIRE THIS PROFESSIONAL</div>
+        <div class="eyebrow" style="margin-bottom:10px">Hire this professional</div>
         <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Post a project brief and assign it directly to ${esc(t.name.split(' ')[0])} — payment stays protected until you approve delivery.</p>
         <button class="btn btn-brass btn-block" onclick="openJobModal('hire','${id}','${esc(t.name).replace(/'/g,"\\'")}')">Hire ${esc(t.name.split(' ')[0])}</button>
       </div>
@@ -757,18 +1110,26 @@ async function viewJobsOpen() {
   return `
   <section style="padding-top:36px"><div class="wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-      <div><div class="eyebrow">OPEN PROJECTS</div><h1 style="font-size:28px">Projects looking for talent</h1></div>
+      <div><div class="eyebrow">Open projects</div><h1 style="font-size:28px">Projects looking for talent</h1></div>
       ${state.user ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
     </div>
-    ${jobs.length ? jobs.map(jobRow).join('') : `<div class="empty"><div class="n">📭</div><h3>No open projects right now</h3><p>Check back soon, or post one yourself.</p></div>`}
+    ${jobs.length ? `<div id="liveJobsList">${jobs.map(jobRow).join('')}</div>` : `<div class="empty"><div class="n">📭</div><h3>No open projects right now</h3><p>Check back soon, or post one yourself.</p></div>`}
   </div></section>`;
 }
 function jobRow(j) {
+  const canClaim = j.instant_claim && j.status === 'OPEN' && state.user && ['talent','reviewer'].includes(state.user.role);
   return `
-  <div class="job-row" onclick="go('jobDetail',{id:'${j.id}'})">
-    <div class="jh"><b>${esc(j.title)}</b><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span></div>
-    <div class="jm">${esc(j.category||'General')} · ${fmt(j.budget)} · posted by ${esc(j.clientName||'—')} ${j.talentName?('· assigned to '+esc(j.talentName)):''}</div>
+  <div class="job-row" id="jobrow_${j.id}">
+    <div onclick="go('jobDetail',{id:'${j.id}'})" style="cursor:pointer">
+      <div class="jh"><b>${esc(j.title)}</b><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span> ${j.instant_claim && j.status==='OPEN' ? '<span class="badge" style="margin-left:6px">⚡ FIRST TO CLAIM</span>' : ''}</div>
+      <div class="jm">${esc(j.category||'General')} · ${fmt(j.budget)} · posted by ${esc(j.clientName||'—')} ${j.talentName?('· assigned to '+esc(j.talentName)):''}</div>
+    </div>
+    ${canClaim ? `<button class="btn btn-brass btn-sm" style="margin-top:8px" onclick="event.stopPropagation();claimJob('${j.id}')">Claim this job</button>` : ''}
   </div>`;
+}
+async function claimJob(jobId) {
+  try { await api('/jobs/'+jobId+'/claim', { method:'POST' }); toast('Claimed! Waiting for client to fund it.'); reload(); }
+  catch(e) { toast(e.message, true); reload(); }
 }
 
 /* ============================ POST / HIRE JOB MODAL ============================ */
@@ -785,6 +1146,8 @@ function openJobModal(mode, talentId, talentName) {
   document.getElementById('jobCategory').value = '';
   document.getElementById('jobBudget').value = '';
   document.getElementById('jobRevisions').value = 2;
+  document.getElementById('jobInstantClaim').checked = false;
+  document.getElementById('instantClaimField').style.display = mode==='hire' ? 'none' : 'flex';
   state.msRows = [];
   renderMsRows();
   openModal('jobModal');
@@ -813,6 +1176,7 @@ async function submitJob(e) {
       category: document.getElementById('jobCategory').value.trim() || undefined,
       budget: Number(document.getElementById('jobBudget').value),
       revisionCount: Number(document.getElementById('jobRevisions').value || 2),
+      instantClaim: state.jobModalMode !== 'hire' && document.getElementById('jobInstantClaim').checked,
       milestones,
     };
     const job = await api('/jobs', { method:'POST', body: JSON.stringify(payload) });
@@ -926,8 +1290,8 @@ async function viewJobDetail() {
               <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding:10px 0;font-size:13px">
                 <span>${esc(f.original_name)}</span>
                 <div style="display:flex;gap:8px">
-                  ${f.preview_name ? `<a class="btn btn-ghost btn-sm" href="/api/files/${f.id}/preview" target="_blank">Preview</a>` : ''}
-                  ${job.status==='RELEASED' && isClient ? `<a class="btn btn-brass btn-sm" href="/api/files/${f.id}/master" target="_blank">Download</a>` : ''}
+                  ${f.preview_name ? `<div style="margin:4px 0"><audio src="/api/files/${f.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : ''}
+                  ${job.status==='RELEASED' && isClient ? `<a class="btn btn-brass btn-sm" href="/api/files/${f.id}/master" target="_blank">Download master</a>` : ''}
                 </div>
               </div>`).join('')}
           </div>` : ''}
@@ -952,14 +1316,16 @@ async function viewJobDetail() {
         ${isClient || isTalent || isStaff ? `
           <div class="panel">
             <h4>Messages</h4>
-            <div id="messageList">${messages.length ? messages.map(m=>`<div class="msg"><b>${esc(m.sender_name)} · ${timeAgo(m.created_at)}</b>${esc(m.body)}</div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No messages yet.</p>`}</div>
-            <div class="field" style="margin-top:12px"><textarea id="msgBody" placeholder="Write a message..."></textarea></div>
-            <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
+            <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
+            <div class="chat-input-row">
+              <textarea id="msgBody" placeholder="Write a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
+              <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
+            </div>
           </div>` : ''}
       </div>
 
       <div class="panel" style="position:sticky;top:88px">
-        <div class="eyebrow" style="margin-bottom:10px">PROJECT SUMMARY</div>
+        <div class="eyebrow" style="margin-bottom:10px">Project summary</div>
         <div class="mono" style="font-size:24px;margin-bottom:4px">${fmt(job.budget)}</div>
         <div style="font-size:12px;color:var(--text-faint);margin-bottom:16px">Payment status: ${statusLabel(job.payment_status || 'UNFUNDED')}</div>
         <div style="border-top:1px solid var(--hair);padding-top:12px;font-size:12.5px;color:var(--text-dim)">
@@ -1036,8 +1402,106 @@ async function submitReview(id) {
 async function sendMessage(jobId) {
   const body = document.getElementById('msgBody').value.trim();
   if (!body) return;
-  try { await api('/messages/'+jobId, { method:'POST', body: JSON.stringify({ body }) }); document.getElementById('msgBody').value=''; reload(); }
+  try {
+    await api('/messages/'+jobId, { method:'POST', body: JSON.stringify({ body }) });
+    document.getElementById('msgBody').value='';
+    await refreshJobChat(jobId);
+  }
   catch(e) { toast(e.message, true); }
+}
+function renderJobChat(messages, currentUser) {
+  if (!messages.length) return `<p style="color:var(--text-faint);font-size:13px">No messages yet — say hello.</p>`;
+  return messages.map(m => {
+    const own = currentUser && m.sender_id === currentUser.id;
+    return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${esc(m.sender_name)} · ${timeAgo(m.created_at)}</span>${esc(m.body)}</div>`;
+  }).join('');
+}
+async function refreshJobChat(jobId) {
+  const el = document.getElementById('messageList');
+  if (!el) return;
+  try {
+    const d = await api('/messages/'+jobId);
+    el.innerHTML = renderJobChat(d.messages, state.user);
+    el.scrollTop = el.scrollHeight;
+  } catch {}
+}
+function startJobChatPolling(jobId) {
+  stopJobChatPolling();
+  state.chatPollTimer = setInterval(() => refreshJobChat(jobId), 6000);
+}
+function stopJobChatPolling() {
+  if (state.chatPollTimer) { clearInterval(state.chatPollTimer); state.chatPollTimer = null; }
+}
+
+/* ============================ SUPPORT CHAT WIDGET ============================ */
+function getGuestToken() {
+  let t = localStorage.getItem('prodilive_guest_token');
+  if (!t) { t = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); localStorage.setItem('prodilive_guest_token', t); }
+  return t;
+}
+function renderSupportMsgs(messages) {
+  if (!messages || !messages.length) return `<p style="color:var(--text-faint);font-size:12.5px">Send us a message and our team will get back to you here.</p>`;
+  return messages.map(m => `<div class="chat-bubble ${m.senderType==='admin'?'admin-msg':(m.senderType==='visitor'?'own':'other')}"><span class="who">${esc(m.senderName)} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`).join('');
+}
+function renderSupportFoot() {
+  const needsContact = !state.user;
+  return `
+    ${needsContact ? `<input id="spName" placeholder="Your name" style="margin-bottom:6px">
+    <input id="spEmail" type="email" placeholder="Your email" style="margin-bottom:6px">` : ''}
+    <textarea id="spBody" placeholder="Type a message..." style="min-height:44px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportMessage()}"></textarea>
+    <button class="btn btn-brass btn-sm btn-block" onclick="sendSupportMessage()">Send</button>`;
+}
+async function toggleSupportPanel(force) {
+  const panel = document.getElementById('supportPanel');
+  const open = force !== undefined ? force : !panel.classList.contains('open');
+  panel.classList.toggle('open', open);
+  if (open) {
+    document.getElementById('supportFoot').innerHTML = renderSupportFoot();
+    await loadSupportThread();
+    startSupportPolling();
+  } else {
+    stopSupportPolling();
+  }
+}
+async function loadSupportThread() {
+  const body = document.getElementById('supportBody');
+  const threadId = state.supportThreadId || localStorage.getItem('prodilive_support_thread');
+  if (!threadId) { body.innerHTML = renderSupportMsgs([]); return; }
+  try {
+    const qs = state.user ? '' : ('?guestToken=' + encodeURIComponent(getGuestToken()));
+    const d = await api('/support/thread/' + threadId + qs);
+    state.supportThreadId = d.thread.id;
+    body.innerHTML = renderSupportMsgs(d.messages);
+    body.scrollTop = body.scrollHeight;
+  } catch { body.innerHTML = renderSupportMsgs([]); }
+}
+async function sendSupportMessage() {
+  const bodyInput = document.getElementById('spBody');
+  const text = bodyInput.value.trim();
+  if (!text) return;
+  const payload = { body: text, threadId: state.supportThreadId || localStorage.getItem('prodilive_support_thread') || undefined };
+  if (!state.user) {
+    payload.guestToken = getGuestToken();
+    const nameEl = document.getElementById('spName'), emailEl = document.getElementById('spEmail');
+    if (nameEl) payload.name = nameEl.value.trim();
+    if (emailEl) payload.email = emailEl.value.trim();
+  }
+  try {
+    const d = await api('/support/message', { method:'POST', body: JSON.stringify(payload) });
+    state.supportThreadId = d.thread.id;
+    localStorage.setItem('prodilive_support_thread', d.thread.id);
+    bodyInput.value = '';
+    const body = document.getElementById('supportBody');
+    body.innerHTML = renderSupportMsgs(d.messages);
+    body.scrollTop = body.scrollHeight;
+  } catch(e) { toast(e.message, true); }
+}
+function startSupportPolling() {
+  stopSupportPolling();
+  state.supportPollTimer = setInterval(loadSupportThread, 8000);
+}
+function stopSupportPolling() {
+  if (state.supportPollTimer) { clearInterval(state.supportPollTimer); state.supportPollTimer = null; }
 }
 
 /* ============================ VIEW: DASHBOARD ============================ */
@@ -1053,13 +1517,16 @@ async function viewDashboard() {
   let services = [];
   if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
 
-  let myDisputes = [];
-  if (u.role === 'reviewer') { try { myDisputes = (await api('/disputes')).disputes.filter(d=>d.assigned_reviewer_id===u.id && d.status==='ASSIGNED'); } catch {} }
+  if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
 
   return `
   <section style="padding-top:32px"><div class="wrap">
+    ${!u.emailVerified ? `<div class="panel" style="background:rgba(230,180,80,.1);border-color:rgba(230,180,80,.4);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <span style="font-size:13px">⚠️ Your email isn't verified yet. Some actions (posting jobs, applying, messaging, payments) are blocked until you verify.</span>
+      <button class="btn btn-ghost btn-sm" onclick="resendVerification()">Resend verification email</button>
+    </div>` : ''}
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-      <div><div class="eyebrow">${u.role.toUpperCase()} DASHBOARD</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
+      <div><div class="eyebrow">${esc(u.role.charAt(0).toUpperCase()+u.role.slice(1))} dashboard</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
       ${u.role==='client' ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
     </div>
 
@@ -1069,21 +1536,6 @@ async function viewDashboard() {
       <div class="stat-card"><div class="l">Completed</div><div class="v" style="color:var(--signal)">${done}</div></div>
       <div class="stat-card"><div class="l">Role</div><div class="v" style="font-size:18px">${esc(u.role)}</div></div>
     </div>
-
-    ${u.role==='reviewer' ? `
-    <div class="panel" style="margin-bottom:20px">
-      <h4>My review queue <span>${myDisputes.length} assigned</span></h4>
-      ${myDisputes.length ? myDisputes.map(d=>`
-        <div class="dispute-card">
-          <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
-          <p>${esc(d.reason||'')}</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
-            <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
-            <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
-          </div>
-        </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
-    </div>` : ''}
 
     <div class="dash-cols">
       <div class="panel">
@@ -1108,10 +1560,8 @@ async function viewDashboard() {
         ${(u.role==='client' || u.role==='talent') ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:8px">Become a PRODILIVE Reviewer</h4>
-            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Verified specialists help resolve project disputes. Applications are reviewed by our team.</p>
-            <div class="field"><label>Your experience</label><textarea id="revExp" placeholder="Years active, notable credits, relevant background..."></textarea></div>
-            <div class="field"><label>Portfolio links (comma separated)</label><input id="revPortfolio" placeholder="https://..."></div>
-            <button class="btn btn-ghost btn-sm" onclick="applyReviewer()">Submit application</button>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Verified specialists help resolve project disputes and earn recognition on the platform.</p>
+            <button class="btn btn-ghost btn-sm" onclick="go('reviewerApply')">Learn more &amp; apply →</button>
           </div>` : ''}
       </div>
       <div class="panel">
@@ -1178,11 +1628,16 @@ async function toggleServiceActive(id, active) {
   try { await api('/services/'+id, { method:'PUT', body: JSON.stringify({ active }) }); toast(active?'Service activated.':'Service deactivated.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
+async function resendVerification() {
+  try { const d = await api('/auth/resend-verification', { method:'POST' }); toast(d.alreadyVerified ? 'Already verified.' : 'Verification email sent — check your inbox.'); }
+  catch(e) { toast(e.message, true); }
+}
 async function applyReviewer() {
   try {
     const portfolio = document.getElementById('revPortfolio').value.split(',').map(s=>s.trim()).filter(Boolean);
     await api('/reviewer/apply', { method:'POST', body: JSON.stringify({ specialties: state.pickedSpecs, experience: document.getElementById('revExp').value.trim(), portfolio }) });
     toast('Application submitted — our team will review it.');
+    reload();
   } catch(e) { toast(e.message, true); }
 }
 async function orderService(id) {
@@ -1208,7 +1663,7 @@ async function savePayout() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [];
+  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null;
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='users') users = (await api('/admin/users')).users;
@@ -1216,9 +1671,13 @@ async function viewAdmin() {
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
     if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
     if (tab==='disputes') { disputes = (await api('/disputes')).disputes; reviewerUsers = (await api('/admin/users')).users.filter(u=>u.role==='reviewer'); }
+    if (tab==='support') {
+      supportThreads = (await api('/admin/support')).threads;
+      if (state.params.threadId) { const d = await api('/admin/support/' + state.params.threadId); supportThread = d; }
+    }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['reviewers','Reviewer Apps'],['disputes','Disputes']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -1265,11 +1724,30 @@ async function viewAdmin() {
             <button class="btn btn-ghost btn-sm" onclick="adminAssignDispute('${d.id}')">Assign</button>
           </div>` : d.status==='ASSIGNED' ? `<span class="mono" style="font-size:11px;color:var(--text-faint)">Assigned — awaiting reviewer decision</span>` : ''}
       </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No disputes.</p>`}</div>`;
+  } else if (tab==='support') {
+    if (supportThread) {
+      body = `<div class="panel">
+        <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="go('admin',{tab:'support'})">← All conversations</button>
+        <h4>${esc(supportThread.thread.name || 'Guest')} ${supportThread.thread.email ? '· ' + esc(supportThread.thread.email) : ''}</h4>
+        <div class="chat-scroll" id="adminSupportMsgs" style="max-height:400px">${supportThread.messages.map(m=>`<div class="chat-bubble ${m.senderType==='admin'?'own':'other'}"><span class="who">${esc(m.senderName)} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`).join('') || '<p style="color:var(--text-faint);font-size:13px">No messages.</p>'}</div>
+        <div class="chat-input-row">
+          <textarea id="adminReplyBody" placeholder="Reply..."></textarea>
+          <button class="btn btn-brass btn-sm" onclick="adminSupportReply('${supportThread.thread.id}')">Send</button>
+        </div>
+        ${supportThread.thread.status==='OPEN' ? `<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="adminSupportClose('${supportThread.thread.id}')">Close conversation</button>` : `<p style="font-size:12px;color:var(--text-faint);margin-top:10px">Closed</p>`}
+      </div>`;
+    } else {
+      body = `<div class="panel">${supportThreads.length ? supportThreads.map(t=>`
+        <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer" onclick="go('admin',{tab:'support',threadId:'${t.id}'})">
+          <div style="min-width:0"><b style="font-size:13.5px">${esc(t.name||'Guest')}</b><div style="font-size:12px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px">${esc(t.lastBody||'')}</div></div>
+          <span class="badge">${esc(t.status)}</span>
+        </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No support conversations yet.</p>`}</div>`;
+    }
   }
 
   return `
   <section style="padding-top:32px"><div class="wrap">
-    <div class="eyebrow">ADMIN</div><h1 style="font-size:26px;margin-bottom:20px">Platform overview</h1>
+    <div class="eyebrow">Admin</div><h1 style="font-size:26px;margin-bottom:20px">Platform overview</h1>
     <div class="tabs-row">${tabs.map(([k,l])=>`<button class="tab-btn ${tab===k?'active':''}" onclick="go('admin',{tab:'${k}'})">${l}</button>`).join('')}</div>
     ${body}
   </div></section>`;
@@ -1277,6 +1755,17 @@ async function viewAdmin() {
 async function adminSuspend(id) { try { await api('/admin/users/'+id+'/suspend', { method:'POST' }); toast('User suspended.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminReactivate(id) { try { await api('/admin/users/'+id+'/reactivate', { method:'POST' }); toast('User reactivated.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminDecideReviewer(id, approved) { try { await api('/admin/reviewer-applications/'+id+'/decision', { method:'POST', body: JSON.stringify({ approved }) }); toast('Decision recorded.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminSupportReply(threadId) {
+  const el = document.getElementById('adminReplyBody');
+  const body = el.value.trim();
+  if (!body) return;
+  try { await api('/admin/support/'+threadId+'/reply', { method:'POST', body: JSON.stringify({ body }) }); el.value=''; go('admin',{tab:'support',threadId}); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminSupportClose(threadId) {
+  try { await api('/admin/support/'+threadId+'/close', { method:'POST' }); toast('Conversation closed.'); go('admin',{tab:'support'}); }
+  catch(e) { toast(e.message, true); }
+}
 async function adminSetQualification(userId) {
   const el = document.getElementById('qScore_'+userId);
   const score = Number(el.value);
