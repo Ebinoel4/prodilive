@@ -117,7 +117,6 @@ app.post('/api/admin/disputes/:id/assign',auth,roles('admin'),async(req,res,next
 \pard\pardeftab560\slleading20\pardirnatural\partightenfactor0
 
 app.post('/api/reviewer/apply',auth,requireVerified,async(req,res,next)=>{try{if((await q("SELECT 1 FROM reviewer_applications WHERE user_id=$1 AND status IN ('PENDING','QUALIFICATION','APPROVED')",[req.user.id])).rowCount)return res.status(409).json({error:'Application already active'});const r=await q('INSERT INTO reviewer_applications(user_id,specialties,experience,portfolio,references_json) VALUES($1,$2,$3,$4,$5) RETURNING *',[req.user.id,JSON.stringify(req.body.specialties||[]),String(req.body.experience||''),JSON.stringify(req.body.portfolio||[]),JSON.stringify(req.body.references||[])]);await audit('REVIEWER_APPLICATION_SUBMITTED',req.user.id,{applicationId:r.rows[0].id});res.status(201).json(r.rows[0])}catch(e){next(e)}});
-\pard\pardeftab720\partightenfactor0
 
 \f0 \cf0 \expnd0\expndtw0\kerning0
 \outl0\strokewidth0 \strokec2 \
