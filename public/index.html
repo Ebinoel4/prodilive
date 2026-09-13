@@ -319,12 +319,20 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <div class="sub" id="authSub">Sign in to manage your bookings and messages.</div>
   <form id="authForm" onsubmit="submitAuth(event)">
     <div class="field" id="nameField" style="display:none"><label>Full name</label><input id="authName" placeholder="e.g. Ebi Noel"></div>
+    <div class="field" id="nicknameField" style="display:none"><label>Nickname <span style="font-weight:400;color:var(--text-faint)">(what we'll call you on the site)</span></label><input id="authNickname" placeholder="e.g. Ebi"></div>
     <div class="role-choice" id="roleChoice" style="display:none">
       <div class="role-opt sel" id="roleClientOpt" onclick="selectRole('client')">🎤 I'm a Client</div>
       <div class="role-opt" id="roleTalentOpt" onclick="selectRole('talent')">🎛️ I'm a Provider</div>
     </div>
     <div class="field"><label>Email address</label><input id="authEmail" type="email" placeholder="you@email.com" required></div>
     <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="••••••••" minlength="8" required></div>
+    <div id="regExtraFields" style="display:none">
+      <div class="field"><label>Phone number</label><input id="authPhone" type="tel" placeholder="e.g. +234 801 234 5678"></div>
+      <div class="field"><label>Country</label><input id="authCountry" placeholder="e.g. Nigeria"></div>
+      <div class="field"><label>State / Region</label><input id="authState" placeholder="e.g. Lagos"></div>
+      <div class="field"><label>City</label><input id="authCity" placeholder="e.g. Ikeja"></div>
+      <div class="field"><label>Address</label><input id="authAddress" placeholder="Street address"></div>
+    </div>
     <div style="text-align:right;margin:-10px 0 14px" id="authForgotWrap"><a style="color:var(--text-faint);font-size:12.5px;cursor:pointer" onclick="openForgot()">Forgot password?</a></div>
     <button class="btn btn-brass btn-block" type="submit" id="authSubmitBtn">Sign in</button>
   </form>
@@ -536,6 +544,8 @@ function openAuth(mode) {
   document.getElementById('authTitle').textContent = mode==='login' ? 'Welcome back' : 'Create your account';
   document.getElementById('authSub').textContent = mode==='login' ? 'Sign in to manage your bookings and messages.' : 'Join as a client looking to hire, or a provider offering services.';
   document.getElementById('nameField').style.display = mode==='login' ? 'none' : 'block';
+  document.getElementById('nicknameField').style.display = mode==='login' ? 'none' : 'block';
+  document.getElementById('regExtraFields').style.display = mode==='login' ? 'none' : 'block';
   document.getElementById('roleChoice').style.display = mode==='login' ? 'none' : 'grid';
   document.getElementById('authForgotWrap').style.display = mode==='login' ? 'block' : 'none';
   document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Sign in' : 'Create account';
@@ -561,8 +571,16 @@ async function submitAuth(e) {
       data = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
     } else {
       const name = document.getElementById('authName').value.trim();
+      const nickname = document.getElementById('authNickname').value.trim();
+      const phone = document.getElementById('authPhone').value.trim();
+      const country = document.getElementById('authCountry').value.trim();
+      const state_ = document.getElementById('authState').value.trim();
+      const city = document.getElementById('authCity').value.trim();
+      const address = document.getElementById('authAddress').value.trim();
       if (!name) throw new Error('Please enter your full name');
-      data = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password, role: state.authRole }) });
+      if (!nickname) throw new Error('Please enter a nickname');
+      if (!phone || !country || !state_ || !city || !address) throw new Error('Please fill in phone, country, state, city and address');
+      data = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password, role: state.authRole, nickname, phone, country, state: state_, city, address }) });
     }
     state.token = data.token; state.user = data.user;
     localStorage.setItem('prodilive_token', data.token);
@@ -1621,12 +1639,12 @@ async function viewDashboard() {
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:6px">Identity verification</h4>
             ${u.verificationStatus==='APPROVED' ? `
-              <p style="font-size:12.5px;color:var(--signal)">✓ Verified — you can apply to and claim projects.</p>` :
-              u.verificationStatus==='PENDING' ? `
-              <p style="font-size:12.5px;color:var(--text-dim)">Your document is under review. We'll notify you once it's checked.</p>` : `
-              <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">${u.verificationStatus==='REJECTED' ? 'Your last document was rejected — please upload a clearer copy. ' : ''}Upload a government-issued ID or passport (PDF, JPG or PNG) so clients know you're a real, verified provider. This is required before you can apply to or claim projects.</p>
-              <div class="field"><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div>
-              <button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Upload document</button>`}
+              <p style="font-size:12.5px;color:var(--signal)">✓ Verified — you can apply to and claim projects.</p>` : `
+              ${u.verificationStatus==='REJECTED' ? `<p style="font-size:12.5px;color:var(--danger);margin-bottom:10px">Your submission was flagged by an admin — please upload a clearer copy.</p>` : `<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID plus a quick selfie so clients know you're a real, verified provider. Both are required before you can apply to or claim projects.</p>`}
+              <div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID (NIN)</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div>
+              <div class="field"><label>ID document (PDF, JPG or PNG)</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div>
+              <div class="field"><label>Selfie <span style="font-weight:400;color:var(--text-faint)">(clear photo of your face, JPG or PNG)</span></label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div>
+              <button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Upload document &amp; selfie</button>`}
           </div>` : ''}
       </div>
     </div>
@@ -1708,15 +1726,20 @@ async function savePayout() {
 }
 async function submitVerificationDoc() {
   const input = document.getElementById('verifDocInput');
-  if (!input.files || !input.files[0]) { toast('Choose a file first', true); return; }
+  const selfieInput = document.getElementById('verifSelfieInput');
+  const docType = document.getElementById('verifDocType').value;
+  if (!input.files || !input.files[0]) { toast('Choose an ID document first', true); return; }
+  if (!selfieInput.files || !selfieInput.files[0]) { toast('Choose a selfie photo too', true); return; }
   const fd = new FormData();
   fd.append('document', input.files[0]);
+  fd.append('selfie', selfieInput.files[0]);
+  fd.append('docType', docType);
   try {
     const res = await fetch('/api/me/verification-document', { method:'POST', headers: { Authorization: 'Bearer ' + state.token }, body: fd });
     const data = await res.json().catch(()=>({}));
     if (!res.ok) throw new Error(data.error || 'Upload failed');
-    toast('Document submitted — we\'ll review it shortly.');
-    state.user.verificationStatus = 'PENDING';
+    toast('Document submitted.');
+    state.user.verificationStatus = 'APPROVED';
     reload();
   } catch(e) { toast(e.message, true); }
 }
@@ -1769,12 +1792,12 @@ async function viewAdmin() {
   } else if (tab==='verifications') {
     body = `<div class="panel">${verifications.length ? verifications.map(v=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div><b style="font-size:13.5px">${esc(v.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(v.email)} · ${esc(v.verification_status)}</div></div>
+        <div><b style="font-size:13.5px">${esc(v.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(v.email)} · ${esc(v.verification_doc_type||'—')} · ${esc(v.verification_status)}</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="adminViewDocument('${v.id}')">View document</button>
-          ${v.verification_status==='PENDING' ? `
-            <button class="btn btn-brass btn-sm" onclick="adminDecideVerification('${v.id}',true)">Approve</button>
-            <button class="btn btn-danger btn-sm" onclick="adminDecideVerification('${v.id}',false)">Reject</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="adminViewSelfie('${v.id}')">View selfie</button>
+          ${v.verification_status!=='APPROVED' ? `<button class="btn btn-brass btn-sm" onclick="adminDecideVerification('${v.id}',true)">Approve</button>` : ''}
+          ${v.verification_status!=='REJECTED' ? `<button class="btn btn-danger btn-sm" onclick="adminDecideVerification('${v.id}',false)">Revoke / Reject</button>` : ''}
         </div>
       </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No documents submitted yet.</p>`}</div>`;
   } else if (tab==='userActivity') {
@@ -1865,6 +1888,14 @@ async function adminViewDocument(userId) {
   try {
     const res = await fetch('/api/admin/verifications/'+userId+'/document', { headers: { Authorization: 'Bearer ' + state.token } });
     if (!res.ok) throw new Error('Could not load document (' + res.status + ')');
+    const blob = await res.blob();
+    window.open(URL.createObjectURL(blob), '_blank');
+  } catch(e) { toast(e.message, true); }
+}
+async function adminViewSelfie(userId) {
+  try {
+    const res = await fetch('/api/admin/verifications/'+userId+'/selfie', { headers: { Authorization: 'Bearer ' + state.token } });
+    if (!res.ok) throw new Error('Could not load selfie (' + res.status + ')');
     const blob = await res.blob();
     window.open(URL.createObjectURL(blob), '_blank');
   } catch(e) { toast(e.message, true); }
