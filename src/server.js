@@ -268,8 +268,31 @@ app.use('/api',(req,res)=>res.status(404).json({error:'API route not found'}));
 app.get(/^(?!\/api).*/,(req,res)=>res.sendFile(path.join(ROOT,'public','index.html')));
 app.use((err,req,res,next)=>{console.error(err);if(err instanceof z.ZodError)return res.status(400).json({error:'Validation failed',details:err.issues.map(x=>x.message)});if(err.code==='LIMIT_FILE_SIZE')return res.status(413).json({error:'File too large'});if(err.code==='LIMIT_UNEXPECTED_FILE')return res.status(400).json({error:err.message||'Unsupported upload'});if(err.code==='23505')return res.status(409).json({error:'Resource already exists'});res.status(500).json({error:process.env.NODE_ENV==='production'?'Internal server error':err.message})});
 
+async function runPendingMigrations(){
+  try{
+    await q('CREATE TABLE IF NOT EXISTS schema_migrations(id text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    const dir=path.join(ROOT,'migrations');
+    if(!fs.existsSync(dir))return;
+    const files=fs.readdirSync(dir).filter(f=>f.endsWith('.sql')).sort();
+    const done=new Set((await q('SELECT id FROM schema_migrations')).rows.map(r=>r.id));
+    for(const file of files){
+      if(done.has(file))continue;
+      const raw=fs.readFileSync(path.join(dir,file),'utf8');
+      // Strip psql-only meta-commands (e.g. \i ../db/schema.sql) — those are
+      // client-side directives, not real SQL, and the base schema they
+      // reference is already applied on any existing production database.
+      const sql=raw.split('\n').filter(line=>!line.trim().startsWith('\\')).join('\n');
+      console.log('Running migration:',file);
+      if(sql.trim())await pool.query(sql);
+      await q('INSERT INTO schema_migrations(id) VALUES($1)',[file]);
+      console.log('Migration applied:',file);
+    }
+  }catch(e){console.error('Migration runner failed:',e.message)}
+}
+
 if(process.env.NODE_ENV==='production'){const required=['DATABASE_URL','ADMIN_EMAIL','ADMIN_PASSWORD','PAYSTACK_SECRET_KEY','APP_URL'];const missing=required.filter(k=>!process.env[k]);if(missing.length){console.error('Missing required production environment variables:',missing.join(', '));process.exitCode=1;}}
 
+await runPendingMigrations();
 ensureAdmin().catch(e=>console.error('Admin bootstrap:',e.message));
 const server=createServer(app);
 const io=new SocketIOServer(server,{cors:{origin:process.env.APP_URL||'*'}});
