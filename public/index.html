@@ -1632,7 +1632,35 @@ async function viewDashboard() {
         ${u.role==='talent' ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:10px">Payout details</h4>
-            <div class="field"><label>Bank code (3 digits)</label><input id="pfBankCode" placeholder="058"></div>
+            <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none'">
+              <option value="">Select your bank</option>
+              <option value="044">Access Bank</option>
+              <option value="023">Citibank Nigeria</option>
+              <option value="050">Ecobank Nigeria</option>
+              <option value="070">Fidelity Bank</option>
+              <option value="011">First Bank of Nigeria</option>
+              <option value="214">First City Monument Bank (FCMB)</option>
+              <option value="058">Guaranty Trust Bank (GTBank)</option>
+              <option value="030">Heritage Bank</option>
+              <option value="301">Jaiz Bank</option>
+              <option value="082">Keystone Bank</option>
+              <option value="076">Polaris Bank</option>
+              <option value="221">Stanbic IBTC Bank</option>
+              <option value="068">Standard Chartered Bank</option>
+              <option value="232">Sterling Bank</option>
+              <option value="032">Union Bank of Nigeria</option>
+              <option value="033">United Bank For Africa (UBA)</option>
+              <option value="215">Unity Bank</option>
+              <option value="035">Wema Bank</option>
+              <option value="057">Zenith Bank</option>
+              <option value="50211">Kuda Bank</option>
+              <option value="999992">Opay</option>
+              <option value="100004">Palmpay</option>
+              <option value="120001">9 Payment Service Bank (9PSB)</option>
+              <option value="OTHER">Other / not listed</option>
+            </select></div>
+            <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058"></div>
+            <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Name on the account"></div>
             <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" placeholder="0123456789"></div>
             <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
           </div>
@@ -1719,8 +1747,13 @@ async function saveProfile() {
   } catch(e) { toast(e.message, true); }
 }
 async function savePayout() {
+  const selected = document.getElementById('pfBankCode').value;
+  const bankCode = selected === 'OTHER' ? document.getElementById('pfBankCodeOther').value.trim() : selected;
+  const accountName = document.getElementById('pfAccountName').value.trim();
+  const accountNumber = document.getElementById('pfAccount').value.trim();
+  if (!bankCode) { toast('Choose your bank first', true); return; }
   try {
-    await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode: document.getElementById('pfBankCode').value.trim(), accountNumber: document.getElementById('pfAccount').value.trim() }) });
+    await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode, accountName, accountNumber }) });
     toast('Payout details saved.');
   } catch(e) { toast(e.message, true); }
 }

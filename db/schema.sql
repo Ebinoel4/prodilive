@@ -124,3 +124,4 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS address text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_doc_type text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_selfie_name text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_name text;
