@@ -28,3 +28,14 @@
 
 ## Deploy steps
 Just push — no migration to run.
+
+## Post-release stability fixes
+- Paystack callbacks now use the actual domain that initiated checkout instead of forcing `APP_URL`, preventing users from being sent to the Render hostname.
+- Payment return verification no longer depends on an authenticated browser session; successful payments can be confirmed even if the customer's browser loses its session during the redirect.
+- Payment records/jobs are updated on return verification as well as by the Paystack webhook path.
+- Client-facing open-project view now shows platform activity summaries rather than other clients' project details.
+- Identity verification submissions now remain `PENDING` until an admin approves/rejects them; uploaded ID/selfie bytes are stored in PostgreSQL so Render restarts do not erase them.
+- Admin verification document/selfie viewing was hardened against popup blocking and missing ephemeral files.
+- Reviewer application decisions now notify applicants and are audited.
+- Dashboard route state is preserved across refreshes when the authenticated session is still valid.
+- Added CI/environment template and updated production checks.
