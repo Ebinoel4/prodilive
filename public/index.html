@@ -1129,6 +1129,14 @@ async function viewTalentProfile() {
         <p style="color:var(--text-dim);line-height:1.7;font-size:15px">${esc(t.bio || 'This professional has not added a bio yet.')}</p>
         <div style="margin:16px 0">${(t.skills||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('') || '<span class="mono" style="color:var(--text-faint);font-size:12px">No skills listed</span>'}</div>
 
+        <h3 style="font-size:17px;margin:28px 0 14px">Portfolio</h3>
+        ${(t.portfolio||[]).length ? `<div class="grid-2" style="gap:14px">${(t.portfolio||[]).map(p=>`
+          <a class="panel" href="${esc(p.url)}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
+            <b style="font-size:13.5px;color:var(--text)">${esc(p.title)}</b>
+            ${p.description ? `<p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0">${esc(p.description)}</p>` : ''}
+            <div class="mono" style="font-size:11px;color:var(--brass-soft);margin-top:8px">VIEW WORK →</div>
+          </a>`).join('')}</div>` : `<p style="color:var(--text-faint);font-size:13px">This professional hasn't added portfolio samples yet.</p>`}
+
         ${services.length ? `
         <h3 style="font-size:17px;margin:28px 0 14px">Services</h3>
         ${services.map(s=>`
@@ -1563,6 +1571,10 @@ function stopSupportPolling() {
 async function viewDashboard() {
   const u = state.user;
   state.pickedSpecs = (u.skills || []).slice();
+  if (!state.portfolioRows) {
+    const existing = Array.isArray(u.portfolio) ? u.portfolio : [];
+    state.portfolioRows = existing.length ? existing.map(p=>({ title:p.title||'', url:p.url||'', description:p.description||'' })) : [{title:'',url:'',description:''},{title:'',url:'',description:''}];
+  }
   let jobs = [];
   try { jobs = (await api('/jobs')).jobs; } catch(e) { toast(e.message, true); }
   const mine = jobs.filter(j => j.client_id===u.id || j.talent_id===u.id);
@@ -1629,6 +1641,14 @@ async function viewDashboard() {
           <div id="specPickerBox">${renderSpecPicker()}</div>
         </div>
         <button class="btn btn-brass btn-sm" onclick="saveProfile()">Save profile</button>
+        ${u.role==='talent' ? `
+          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+            <h4 style="margin-bottom:6px">Portfolio</h4>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Add at least 2 samples of your past work — clients check this before trusting you with a project.</p>
+            <div id="portfolioRowsBox">${renderPortfolioRows()}</div>
+            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addPortfolioRow()">+ Add another piece</button>
+            <button class="btn btn-brass btn-sm" style="margin-top:10px;display:block" onclick="savePortfolio()">Save portfolio</button>
+          </div>` : ''}
         ${u.role==='talent' ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:10px">Payout details</h4>
@@ -1744,6 +1764,26 @@ async function saveProfile() {
     const skills = state.pickedSpecs.length ? state.pickedSpecs : document.getElementById('pfSkills') ? document.getElementById('pfSkills').value.split(',').map(s=>s.trim()).filter(Boolean) : [];
     const d = await api('/me', { method:'PUT', body: JSON.stringify({ name: document.getElementById('pfName').value.trim(), bio: document.getElementById('pfBio').value, skills }) });
     state.user = d.user; updateNav(); toast('Profile saved.');
+  } catch(e) { toast(e.message, true); }
+}
+function renderPortfolioRows() {
+  return state.portfolioRows.map((p,i)=>`
+    <div style="border:1px solid var(--hair);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div class="field"><label>Title</label><input placeholder="e.g. Afrobeats mix — 'Sunrise'" value="${esc(p.title)}" oninput="state.portfolioRows[${i}].title=this.value"></div>
+      <div class="field"><label>Link</label><input placeholder="https://... (SoundCloud, YouTube, Drive, etc.)" value="${esc(p.url)}" oninput="state.portfolioRows[${i}].url=this.value"></div>
+      <div class="field"><label>Description <span style="font-weight:400;color:var(--text-faint)">(optional)</span></label><input placeholder="What you did on this project" value="${esc(p.description)}" oninput="state.portfolioRows[${i}].description=this.value"></div>
+      ${state.portfolioRows.length > 2 ? `<button type="button" class="btn btn-ghost btn-sm" onclick="removePortfolioRow(${i})">Remove</button>` : ''}
+    </div>`).join('');
+}
+function addPortfolioRow() { state.portfolioRows.push({title:'',url:'',description:''}); document.getElementById('portfolioRowsBox').innerHTML = renderPortfolioRows(); }
+function removePortfolioRow(i) { state.portfolioRows.splice(i,1); document.getElementById('portfolioRowsBox').innerHTML = renderPortfolioRows(); }
+async function savePortfolio() {
+  const filled = state.portfolioRows.filter(p=>p.title.trim() && p.url.trim()).map(p=>({ title:p.title.trim(), url:p.url.trim(), description:p.description.trim() }));
+  if (filled.length < 2) { toast('Add at least 2 portfolio pieces (title + link) before saving', true); return; }
+  try {
+    const d = await api('/me', { method:'PUT', body: JSON.stringify({ portfolio: filled }) });
+    state.user = d.user;
+    toast('Portfolio saved.');
   } catch(e) { toast(e.message, true); }
 }
 async function savePayout() {
