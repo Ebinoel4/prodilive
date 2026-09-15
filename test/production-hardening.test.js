@@ -20,6 +20,6 @@ test('webhook events are deduplicated in the database', () => {
   assert.match(server, /ON CONFLICT\(event_key\) DO NOTHING/);
 });
 
-test('production version is 5.16.0', () => {
-  assert.match(server, /version:'5\.14\.0'/);
+test('production version is 5.0.0', () => {
+  assert.match(server, /version:'5\.0\.0'/);
 });
