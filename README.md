@@ -62,3 +62,7 @@ A successful transfer API response is not treated as final payout completion. Th
 
 ## Production requirements
 Before accepting real money, configure the required production environment variables, HTTPS, managed PostgreSQL with backups/PITR, verified SMTP, Paystack webhook, private file storage strategy, malware scanning, monitoring and legal policies. The application refuses to start in NODE_ENV=production when core secrets are missing.
+
+
+## Zoho mail configuration
+Use `support@prodilive.com` as the PRODILIVE sending/admin mailbox. Configure Render environment variables with Zoho SMTP: `SMTP_HOST=smtp.zoho.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, `SMTP_USER=support@prodilive.com`, `SMTP_PASS=<Zoho app password>`, `MAIL_FROM=PRODILIVE <support@prodilive.com>`, and `ADMIN_EMAIL=support@prodilive.com`. If Zoho requires an app password for your account, generate one in Zoho and use it as `SMTP_PASS`; never commit the password to the repository.

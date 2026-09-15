@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 const appUrl = String(process.env.APP_URL || '').replace(/\/$/, '');
-const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER || 'PRODILIVE <no-reply@prodilive.com>';
+const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER || 'PRODILIVE <support@prodilive.com>';
 const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
 
 const transporter = process.env.SMTP_HOST ? nodemailer.createTransport({
