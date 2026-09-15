@@ -443,7 +443,7 @@ async function api(path, opt = {}) {
   const res = await fetch('/api' + path, { ...opt, headers });
   let body = {};
   try { body = await res.json(); } catch {}
-  if (!res.ok) throw new Error(body.error || ('Request failed (' + res.status + ')'));
+  if (!res.ok) { const err = new Error(body.error || ('Request failed (' + res.status + ')')); err.status = res.status; throw err; }
   return body;
 }
 function esc(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -470,7 +470,6 @@ function go(view, params = {}) {
   if (needsAuth(view) && !state.user) { openAuth('login'); toast('Sign in to continue'); return; }
   stopJobChatPolling();
   state.view = view; state.params = params;
-  localStorage.setItem('prodilive_view', JSON.stringify({view,params}));
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   render();
   renderMobileNav();
@@ -484,23 +483,36 @@ function initLiveFeed() {
   if (_socket || typeof io === 'undefined') return;
   _socket = io();
   _socket.on('feed:job', (d) => {
-    if (state.view === 'jobs' || state.view === 'home') {
+    if (state.view === 'jobs') {
       const list = document.getElementById('liveJobsList');
       if (list && d.job.status === 'OPEN') { list.insertAdjacentHTML('afterbegin', jobRow(d.job)); }
+      toast('New project posted: ' + d.job.title);
+    } else if (state.view === 'home') {
+      // Don't leak a specific client's job title to anonymous homepage
+      // visitors — just nudge the aggregate counters up.
+      bumpStat('projectsToday'); bumpStat('openProjects');
     }
-    toast('New project posted: ' + d.job.title);
   });
   _socket.on('feed:product', (d) => {
     if (state.view === 'marketplace') {
       const list = document.getElementById('liveProductsList');
       if (list) list.insertAdjacentHTML('afterbegin', productCard(d.product));
+      toast('New listing: ' + d.product.title);
     }
-    toast('New listing: ' + d.product.title);
   });
   _socket.on('feed:jobClaimed', (d) => {
     const btn = document.querySelector(`#jobrow_${d.jobId} button`);
     if (btn) { btn.disabled = true; btn.textContent = 'Claimed by ' + d.talentName; }
   });
+}
+function bumpStat(key) {
+  const box = document.getElementById('statsStrip');
+  if (!box) return;
+  const labels = { projectsToday: 'projects posted today', openProjects: 'open projects right now' };
+  const target = Array.from(box.children).find(c => c.textContent.includes(labels[key]));
+  if (!target) return;
+  const num = target.querySelector('.mono');
+  if (num) num.textContent = String(Number(num.textContent || '0') + 1);
 }
 function renderMobileNav() {
   const el = document.getElementById('mobileNav');
@@ -517,7 +529,7 @@ async function render() {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
       jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing,
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
-      marketplace:viewMarketplace, productDetail:viewProductDetail, paymentSuccess:viewPaymentSuccess };
+      marketplace:viewMarketplace, productDetail:viewProductDetail };
     app.innerHTML = await (views[state.view] || viewHome)();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
@@ -611,15 +623,39 @@ async function bootstrap() {
       const d = await api('/me');
       state.user = d.user;
       loadNotifications();
-    } catch { state.token = null; state.user = null; localStorage.removeItem('prodilive_token'); }
+    } catch (e) {
+      // Only a real "not authenticated" response should log the person out.
+      // Any other failure (network blip, cold-start timeout, brief 500) must
+      // NOT wipe a perfectly valid session — that was making refreshes look
+      // like random logouts.
+      if (e.status === 401) { state.token = null; state.user = null; localStorage.removeItem('prodilive_token'); }
+    }
   }
+  await checkForPaymentCallback();
   updateNav();
-  const paymentReturn = await handlePaymentReturn();
-  if (!paymentReturn) {
-    try { const saved = JSON.parse(localStorage.getItem('prodilive_view') || 'null'); if (saved?.view && (!needsAuth(saved.view) || state.user)) { state.view=saved.view; state.params=saved.params||{}; } } catch {}
-  }
   render();
   initLiveFeed();
+}
+async function checkForPaymentCallback() {
+  if (!window.location.pathname.startsWith('/payment-callback')) return;
+  const params = new URLSearchParams(window.location.search);
+  const reference = params.get('reference') || params.get('trxref');
+  const type = params.get('type');
+  const jobId = params.get('jobId');
+  const productId = params.get('productId');
+  window.history.replaceState({}, '', '/');
+  if (!reference) return;
+  if (!state.user) { toast('Sign in to confirm your payment.', true); openAuth('login'); return; }
+  try {
+    if (type === 'product' && productId) {
+      const d = await api('/product-orders/verify/' + encodeURIComponent(reference));
+      toast(d.status === 'success' ? 'Payment confirmed — check My Purchases.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
+    } else if (jobId) {
+      const d = await api('/payments/verify/' + encodeURIComponent(reference));
+      toast(d.status === 'success' ? 'Payment confirmed — project funded.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
+      go('jobDetail', { id: jobId });
+    }
+  } catch (e) { toast(e.message, true); }
 }
 
 /* ============================ NOTIFICATIONS ============================ */
@@ -670,6 +706,8 @@ function heroWaveformSvg() {
 async function viewHome() {
   let featured = [];
   try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
+  let stats = null;
+  try { stats = await api('/stats/public'); } catch {}
   const cats = ['Mixing','Mastering','Session Musicians','Vocal Coaching','Songwriting','Recording Studios','Beat Making','Arrangement'];
   const iconCats = [
     ['🎚','Production',['Music Producer','Beat Making']],
@@ -699,6 +737,16 @@ async function viewHome() {
     </div>
     <div class="cat-row">${cats.map(c=>`<span class="cat-pill" onclick="go('talents',{q:'${esc(c)}'})">${c}</span>`).join('')}</div>
   </div></section>
+
+  ${stats ? `
+  <section style="border-bottom:1px solid var(--hair)"><div class="wrap" style="padding-top:22px;padding-bottom:22px">
+    <div id="statsStrip" style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;text-align:center">
+      <div><div class="mono" style="font-size:22px;color:var(--brass-soft)">${stats.projectsToday}</div><div style="font-size:12px;color:var(--text-faint)">projects posted today</div></div>
+      <div><div class="mono" style="font-size:22px;color:var(--brass-soft)">${stats.openProjects}</div><div style="font-size:12px;color:var(--text-faint)">open projects right now</div></div>
+      <div><div class="mono" style="font-size:22px;color:var(--brass-soft)">${stats.activeUsers}</div><div style="font-size:12px;color:var(--text-faint)">active users</div></div>
+      <div><div class="mono" style="font-size:22px;color:var(--brass-soft)">${stats.projectsCompleted}</div><div style="font-size:12px;color:var(--text-faint)">projects completed</div></div>
+    </div>
+  </div></section>` : ''}
 
   <section><div class="wrap">
     <div class="section-head"><div><div class="eyebrow">Explore</div><h2>Explore creative talent</h2></div></div>
@@ -1051,7 +1099,6 @@ async function purchaseProduct(id) {
   try {
     const d = await api('/products/'+id+'/purchase', { method:'POST' });
     window.location.href = d.authorization_url;
-    toast('Redirecting to secure Paystack checkout…');
   } catch(e) { toast(e.message, true); }
 }
 
@@ -1173,24 +1220,6 @@ async function viewTalentProfile() {
 
 /* ============================ VIEW: OPEN JOBS MARKETPLACE ============================ */
 async function viewJobsOpen() {
-  if (state.user?.role === 'client') {
-    let stats = {activeUsers:0,activeProjects:0,projectsDoneToday:0};
-    try { stats = await api('/platform/stats'); } catch(e) {}
-    return `
-    <section style="padding-top:50px"><div class="wrap">
-      <div style="max-width:760px;margin:0 auto;text-align:center">
-        <div class="eyebrow" style="justify-content:center">PRODILIVE activity</div>
-        <h1 style="font-size:30px">Create your project. We’ll help you find the right talent.</h1>
-        <p class="lead" style="max-width:600px;margin:0 auto 30px">You don't need to browse other clients' project posts. Post your own brief and manage everything from your dashboard.</p>
-        <button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>
-      </div>
-      <div class="dash-stats" style="max-width:850px;margin:40px auto 0">
-        <div class="stat-card"><div class="l">Projects done today</div><div class="v">${stats.projectsDoneToday}</div></div>
-        <div class="stat-card"><div class="l">Active projects</div><div class="v">${stats.activeProjects}</div></div>
-        <div class="stat-card"><div class="l">Active users</div><div class="v">${stats.activeUsers}</div></div>
-      </div>
-    </div></section>`;
-  }
   let jobs = [];
   try { jobs = (await api('/jobs?status=OPEN')).jobs; } catch(e) { toast(e.message, true); }
   return `
@@ -1423,65 +1452,6 @@ async function viewJobDetail() {
           <div class="mono" style="font-size:10px;color:var(--text-faint);margin-bottom:4px">MILESTONE BREAKDOWN</div>
           ${job.milestones.map(m=>`<div class="row"><span>${esc(m.label)}</span><span>${fmt(m.amount)}</span></div>`).join('')}
         </div>` : ''}
-      </div>
-    </div>
-  </div></section>`;
-}
-
-
-/* ============================ PAYMENT RETURN ============================ */
-async function handlePaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const reference = params.get('reference');
-  if (!params.get('payment') && !reference) return false;
-  if (!reference) {
-    state.paymentResult = { status:'error', message:'We could not find the Paystack payment reference.' };
-    state.view = 'paymentSuccess';
-    state.params = {};
-    return true;
-  }
-  state.view = 'paymentSuccess';
-  state.params = { reference };
-  try {
-    let d;
-    if (reference.startsWith('PRODILIVE_PRODUCT_')) {
-      d = await api('/product-orders/return/'+encodeURIComponent(reference));
-    } else {
-      d = await api('/payments/return/'+encodeURIComponent(reference));
-    }
-    state.paymentResult = d;
-  } catch (e) {
-    state.paymentResult = { status:'error', reference, message:e.message };
-  }
-  // Keep the page clean after Paystack returns, while retaining the result in state.
-  window.history.replaceState({}, '', '/');
-  return true;
-}
-
-async function viewPaymentSuccess() {
-  const d = state.paymentResult || {};
-  const success = d.status === 'success';
-  const pending = d.status && d.status !== 'success' && d.status !== 'failed' && d.status !== 'error';
-  const title = success ? 'Payment successful' : (d.status === 'failed' ? 'Payment not completed' : 'Payment status');
-  const icon = success ? '✓' : (d.status === 'failed' ? '!' : '…');
-  const message = success
-    ? 'Your payment has been confirmed securely. Your Prodilive order is now being processed.'
-    : (d.message || 'We could not confirm this payment yet. If money was debited, please do not pay again — contact support with your reference.');
-  return `<section class="section"><div class="wrap" style="max-width:720px">
-    <div class="panel" style="text-align:center;padding:48px 28px">
-      <div style="width:68px;height:68px;border:2px solid var(--brass);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;font-size:34px;color:var(--brass)">${icon}</div>
-      <div class="eyebrow">PRODILIVE</div>
-      <h1 style="margin:8px 0 10px">${title}</h1>
-      <p style="max-width:520px;margin:0 auto 26px;color:var(--text-dim);line-height:1.6">${esc(message)}</p>
-      <div style="text-align:left;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);padding:14px 0;margin:0 auto 24px;max-width:480px">
-        ${d.title ? `<div style="display:flex;justify-content:space-between;gap:20px;padding:7px 0"><span style="color:var(--text-faint)">Order</span><strong>${esc(d.title)}</strong></div>` : ''}
-        ${d.amount != null ? `<div style="display:flex;justify-content:space-between;gap:20px;padding:7px 0"><span style="color:var(--text-faint)">Amount</span><strong>${fmt(d.amount)}</strong></div>` : ''}
-        ${d.reference ? `<div style="display:flex;justify-content:space-between;gap:20px;padding:7px 0"><span style="color:var(--text-faint)">Reference</span><span class="mono" style="font-size:11px;word-break:break-all">${esc(d.reference)}</span></div>` : ''}
-        <div style="display:flex;justify-content:space-between;gap:20px;padding:7px 0"><span style="color:var(--text-faint)">Status</span><strong>${success ? 'Confirmed' : (d.status || 'Checking')}</strong></div>
-      </div>
-      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-brass" onclick="go('dashboard')">Continue to Prodilive</button>
-        <button class="btn btn-ghost" onclick="go('home')">Back to home</button>
       </div>
     </div>
   </div></section>`;
@@ -1894,7 +1864,7 @@ async function submitVerificationDoc() {
     const data = await res.json().catch(()=>({}));
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     toast('Document submitted.');
-    state.user.verificationStatus = data.verificationStatus || 'PENDING';
+    state.user.verificationStatus = 'APPROVED';
     reload();
   } catch(e) { toast(e.message, true); }
 }
@@ -1984,7 +1954,10 @@ async function viewAdmin() {
     body = `<div class="panel">${apps.length ? apps.map(a=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}</div></div>
-        ${a.status==='PENDING' ? `<button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>` : ''}
+        ${a.status==='PENDING' ? `<div style="display:flex;gap:8px">
+          <button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>
+          <button class="btn btn-danger btn-sm" onclick="adminDecideReviewer('${a.id}',false)">Reject</button>
+        </div>` : ''}
         ${a.status==='QUALIFICATION' ? `
           <div style="display:flex;gap:8px;align-items:center">
             <input id="qScore_${a.user_id}" type="number" min="0" max="100" placeholder="Score 0-100" style="width:110px">
@@ -2040,26 +2013,20 @@ async function adminDeleteUser(id, name) {
   try { await api('/admin/users/'+id, { method:'DELETE' }); toast('Account deleted.'); reload(); } catch(e){ toast(e.message, true); }
 }
 async function adminViewDocument(userId) {
-  const win = window.open('about:blank', '_blank');
   try {
     const res = await fetch('/api/admin/verifications/'+userId+'/document', { headers: { Authorization: 'Bearer ' + state.token } });
     if (!res.ok) throw new Error('Could not load document (' + res.status + ')');
     const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    if (win) win.location.href = url; else window.location.href = url;
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-  } catch(e) { if (win) win.close(); toast(e.message, true); }
+    window.open(URL.createObjectURL(blob), '_blank');
+  } catch(e) { toast(e.message, true); }
 }
 async function adminViewSelfie(userId) {
-  const win = window.open('about:blank', '_blank');
   try {
     const res = await fetch('/api/admin/verifications/'+userId+'/selfie', { headers: { Authorization: 'Bearer ' + state.token } });
     if (!res.ok) throw new Error('Could not load selfie (' + res.status + ')');
     const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    if (win) win.location.href = url; else window.location.href = url;
-    setTimeout(()=>URL.revokeObjectURL(url), 60000);
-  } catch(e) { if (win) win.close(); toast(e.message, true); }
+    window.open(URL.createObjectURL(blob), '_blank');
+  } catch(e) { toast(e.message, true); }
 }
 async function adminDecideVerification(userId, approved) {
   try { await api('/admin/verifications/'+userId+'/decision', { method:'POST', body: JSON.stringify({ approved }) }); toast(approved ? 'Provider approved.' : 'Provider rejected.'); reload(); }

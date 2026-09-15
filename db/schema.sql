@@ -125,9 +125,3 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_doc_type text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_selfie_name text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS account_name text;
-
--- Persistent verification file storage for Render/redeploy-safe admin review.
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_doc_data bytea;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_doc_mime text;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_selfie_data bytea;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_selfie_mime text;
