@@ -46,8 +46,32 @@ async function notify(userId, type, title, body, meta={}) { await q('INSERT INTO
 app.set('trust proxy', process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 1);
 app.disable('x-powered-by');
 app.use((req,res,next)=>{req.requestId=crypto.randomUUID();res.setHeader('X-Request-ID',req.requestId);next()});
-const allowedOrigins=String(process.env.CORS_ORIGINS||process.env.APP_URL||'').split(',').map(x=>x.trim()).filter(Boolean);
-app.use(cors({origin:(origin,cb)=>{if(!origin||allowedOrigins.length===0||allowedOrigins.includes(origin))return cb(null,true);return cb(new Error('Origin not allowed'))},credentials:false}));
+const allowedOrigins=String(process.env.CORS_ORIGINS||process.env.APP_URL||'')
+  .split(',')
+  .map(x=>x.trim().replace(/^['"]|['"]$/g,''))
+  .filter(Boolean);
+
+const isValidOrigin = origin => {
+  if (!origin) return true;
+  // Never reflect an Origin containing control characters into a response header.
+  if (/[\\r\\n\\t]/.test(origin)) return false;
+  try {
+    const u = new URL(origin);
+    return /^https?:$/.test(u.protocol) && Boolean(u.host);
+  } catch {
+    return false;
+  }
+};
+
+app.use(cors({
+  origin:(origin,cb)=>{
+    if (!origin) return cb(null,true);
+    if (!isValidOrigin(origin)) return cb(null,false);
+    if (allowedOrigins.length===0 || allowedOrigins.includes(origin)) return cb(null,true);
+    return cb(null,false);
+  },
+  credentials:false
+}));
 app.use(helmet({ contentSecurityPolicy:false, crossOriginResourcePolicy:{policy:'cross-origin'} }));
 app.use(compression());
 app.use(express.json({limit:'2mb', verify:(req,res,buf)=>{req.rawBody=Buffer.from(buf)}}));
@@ -60,6 +84,17 @@ app.use('/api/auth/', rateLimit({windowMs:15*60*1000,max:20,standardHeaders:true
 function token(req){return (req.headers.authorization||'').replace(/^Bearer\s+/i,'').trim();}
 async function auth(req,res,next){try{const t=token(req);if(!t)return res.status(401).json({error:'Authentication required'});const r=await q(`SELECT u.*,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1`,[sha(t)]);const u=r.rows[0];if(!u||new Date(u.expires_at)<=new Date())return res.status(401).json({error:'Invalid or expired session'});if(['SUSPENDED','DELETED'].includes(u.status))return res.status(403).json({error:'Account suspended'});req.user=u;req.tokenHash=sha(t);next()}catch(e){next(e)}}
 const roles=(...rs)=>(req,res,next)=>rs.includes(req.user.role)?next():res.status(403).json({error:'Insufficient permissions'});
+
+// Admin-only email diagnostics. Never expose the ZeptoMail token.
+app.get('/api/admin/email-status',auth,roles('admin'),(req,res)=>{
+  res.json({
+    configured: emailConfigured,
+    provider: 'ZeptoMail',
+    from: process.env.MAIL_FROM || 'PRODILIVE <support@prodilive.com>',
+    adminEmail: process.env.ADMIN_EMAIL || '',
+    apiUrl: process.env.ZEPTO_API_URL || 'https://api.zeptomail.com/v1.1/email'
+  });
+});
 const requireVerified=(req,res,next)=>(req.user.email_verified||req.user.role==='admin')?next():res.status(403).json({error:'Please verify your email address before doing this. Check your inbox for a verification link.'});
 const requireIdVerified=(req,res,next)=>(req.user.role!=='talent'||req.user.verification_status==='APPROVED')?next():res.status(403).json({error:'Please verify your identity with a document before applying to or claiming projects. Upload one from your dashboard.'});
 const DISPOSABLE_DOMAINS=new Set(['mailinator.com','tempmail.com','temp-mail.org','guerrillamail.com','10minutemail.com','yopmail.com','trashmail.com','getnada.com','sharklasers.com','throwawaymail.com','fakeinbox.com','maildrop.cc','dispostable.com','mintemail.com','mohmal.com','moakt.com','emailondeck.com','tempinbox.com','mailnesia.com']);
@@ -75,7 +110,23 @@ app.post('/api/auth/login',async(req,res,next)=>{try{const email=String(req.body
 app.post('/api/auth/logout',auth,async(req,res,next)=>{try{await q('DELETE FROM sessions WHERE token_hash=$1',[req.tokenHash]);res.json({ok:true})}catch(e){next(e)}});
 app.get('/api/auth/verify-email',async(req,res,next)=>{try{const r=await q("SELECT * FROM email_verifications WHERE token_hash=$1 AND verified_at IS NULL AND expires_at>now()",[sha(String(req.query.token||''))]);if(!r.rowCount)return res.status(400).json({error:'Invalid or expired verification token'});await q('UPDATE email_verifications SET verified_at=now() WHERE id=$1',[r.rows[0].id]);await q('UPDATE users SET email_verified=true WHERE id=$1',[r.rows[0].user_id]);res.json({ok:true,message:'Email verified'})}catch(e){next(e)}});
 app.post('/api/auth/resend-verification',auth,async(req,res,next)=>{try{if(req.user.email_verified)return res.json({ok:true,alreadyVerified:true});if(!emailConfigured)return res.status(503).json({error:'Email sending is not configured on this server yet. Contact support.'});const verifyRaw=crypto.randomBytes(32).toString('hex');await q("INSERT INTO email_verifications(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '24 hours')",[req.user.id,sha(verifyRaw)]);sendMailAsync(req.user.email,'Verify your PRODILIVE email',`Please verify your PRODILIVE email: ${links.verify(verifyRaw)}`);res.json({ok:true})}catch(e){next(e)}});
-app.post('/api/auth/forgot-password',async(req,res,next)=>{try{const email=String(req.body.email||'').trim().toLowerCase(),u=(await q('SELECT id FROM users WHERE email=$1',[email])).rows[0];if(u){const raw=crypto.randomBytes(32).toString('hex');await q("INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '30 minutes')",[u.id,sha(raw)]);if(emailConfigured)sendMailAsync(email,'Reset your PRODILIVE password',`We received a request to reset your PRODILIVE password. Use this link within 30 minutes:\n\n${links.reset(raw)}\n\nIf you did not request this, you can ignore this email.`);if(process.env.NODE_ENV!=='production')return res.json({ok:true,developmentToken:raw})}res.json({ok:true})}catch(e){next(e)}});
+app.post('/api/auth/forgot-password',async(req,res,next)=>{try{
+  const email=String(req.body.email||'').trim().toLowerCase();
+  if(!emailConfigured)return res.status(503).json({error:'Password reset email service is not configured. Please contact support.'});
+  const u=(await q('SELECT id FROM users WHERE email=$1',[email])).rows[0];
+  if(u){
+    const raw=crypto.randomBytes(32).toString('hex');
+    await q("INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '30 minutes')",[u.id,sha(raw)]);
+    // Await this send so a ZeptoMail rejection is visible in Render logs and
+    // the client no longer receives a false success response.
+    const sent=await sendMailAsync(email,'Reset your PRODILIVE password',`We received a request to reset your PRODILIVE password. Use this link within 30 minutes:\n\n${links.reset(raw)}\n\nIf you did not request this, you can ignore this email.`);
+    if(!sent)return res.status(502).json({error:'We could not send the reset email right now. Please try again shortly.'});
+    if(process.env.NODE_ENV!=='production')return res.json({ok:true,developmentToken:raw});
+  }
+  // Keep the response generic so the endpoint does not reveal whether an email
+  // address exists in the database.
+  res.json({ok:true});
+}catch(e){next(e)}});
 app.post('/api/auth/reset-password',async(req,res,next)=>{try{const raw=String(req.body.token||''),pw=String(req.body.password||'');if(pw.length<8)return res.status(400).json({error:'Password must be at least 8 characters'});const r=await q("SELECT * FROM password_resets WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now()",[sha(raw)]);if(!r.rowCount)return res.status(400).json({error:'Invalid or expired reset token'});const x=r.rows[0];await q('UPDATE users SET password_hash=$1 WHERE id=$2',[await bcrypt.hash(pw,12),x.user_id]);await q('UPDATE password_resets SET used_at=now() WHERE id=$1',[x.id]);await q('DELETE FROM sessions WHERE user_id=$1',[x.user_id]);res.json({ok:true})}catch(e){next(e)}});
 app.get('/api/me',auth,(req,res)=>res.json({user:cleanUser(req.user)}));
 app.put('/api/me',auth,async(req,res,next)=>{try{const name=req.body.name!=null?String(req.body.name).trim():req.user.name,bio=req.body.bio!=null?String(req.body.bio).slice(0,2000):req.user.bio;const skills=Array.isArray(req.body.skills)?req.body.skills.slice(0,50):req.user.skills||[],portfolio=Array.isArray(req.body.portfolio)?req.body.portfolio.slice(0,50):req.user.portfolio||[];const r=await q('UPDATE users SET name=$1,bio=$2,skills=$3,portfolio=$4 WHERE id=$5 RETURNING *',[name,bio,skills,portfolio,req.user.id]);await audit('PROFILE_UPDATED',req.user.id);res.json({user:cleanUser(r.rows[0])})}catch(e){next(e)}});
@@ -345,6 +396,9 @@ ensureAdmin().catch(e=>console.error('Admin bootstrap:',e.message));
 const server=createServer(app);
 const io=new SocketIOServer(server,{cors:{origin:process.env.APP_URL||'*'}});
 io.on('connection',()=>{});
-server.listen(PORT,()=>console.log(`PRODILIVE running on ${PORT}`));
+server.listen(PORT,()=>{
+  console.log(`PRODILIVE running on ${PORT}`);
+  console.log(`Transactional email: ${emailConfigured ? 'configured' : 'NOT CONFIGURED'} via ZeptoMail from ${process.env.MAIL_FROM || 'PRODILIVE <support@prodilive.com>'}`);
+});
 async function shutdown(){server.close(()=>pool.end().then(()=>process.exit(0)));setTimeout(()=>process.exit(1),10000)}
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

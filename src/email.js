@@ -33,28 +33,45 @@ export async function sendMail(to, subject, text, html=emailHtml(subject, text))
     htmlbody: String(html || '')
   };
 
-  const response = await fetch(zeptoApiUrl, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Zoho-enczapikey ${zeptoApiKey}`
-    },
-    body: JSON.stringify(body)
-  });
+  let response;
+  try {
+    response = await fetch(zeptoApiUrl, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Zoho-enczapikey ${zeptoApiKey}`
+      },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    throw new Error(`ZeptoMail connection failed: ${e.message}`);
+  }
+
+  // Read the response body only once. The old implementation attempted
+  // response.json() and then response.text(), which consumed the body and
+  // hid ZeptoMail's actual error message.
+  const raw = await response.text().catch(() => '');
+  let detail = raw;
+  try {
+    const parsed = raw ? JSON.parse(raw) : null;
+    detail = parsed ? JSON.stringify(parsed) : raw;
+  } catch {}
 
   if (!response.ok) {
-    let detail = '';
-    try { detail = JSON.stringify(await response.json()); } catch { detail = await response.text().catch(() => ''); }
     throw new Error(`ZeptoMail ${response.status}: ${detail || response.statusText}`);
   }
 
+  console.log(`ZeptoMail sent: ${recipients.length} recipient(s), status=${response.status}`);
   return true;
 }
 
 export function sendMailAsync(to, subject, text, html=emailHtml(subject, text)) {
-  if (!emailConfigured || !to) return;
-  sendMail(to, subject, text, html).catch(e => console.error('Email send failed:', e.message));
+  if (!emailConfigured || !to) return Promise.resolve(false);
+  return sendMail(to, subject, text, html).catch(e => {
+    console.error('Email send failed:', e.message);
+    return false;
+  });
 }
 
 export function sendAdminMail(subject, text, html=emailHtml(subject, text)) {
