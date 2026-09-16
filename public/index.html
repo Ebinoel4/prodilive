@@ -637,7 +637,7 @@ async function bootstrap() {
   initLiveFeed();
 }
 async function checkForPaymentCallback() {
-  if (!window.location.pathname.startsWith('/payment-callback')) return;
+  if (!window.location.pathname.includes('payment-callback')) return;
   const params = new URLSearchParams(window.location.search);
   const reference = params.get('reference') || params.get('trxref');
   const type = params.get('type');
@@ -1873,13 +1873,15 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [];
+  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='users') users = (await api('/admin/users')).users;
     if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
     if (tab==='verifications') verifications = (await api('/admin/verifications')).verifications;
+    if (tab==='audit') auditLog = (await api('/admin/audit')).audit;
+    if (tab==='settings') settings = (await api('/admin/settings')).settings;
     if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
     if (tab==='disputes') { disputes = (await api('/disputes')).disputes; reviewerUsers = (await api('/admin/users')).users.filter(u=>u.role==='reviewer'); }
     if (tab==='support') {
@@ -1896,7 +1898,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -1947,9 +1949,24 @@ async function viewAdmin() {
       ${jobs.map(j=>`<tr><td style="color:var(--text)">${esc(j.title)}</td><td>${esc(j.clientName||'—')}</td><td>${esc(j.talentName||'—')}</td><td>${fmt(j.budget)}</td><td><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span></td></tr>`).join('')}
       </table></div>`;
   } else if (tab==='payments') {
-    body = `<div class="panel"><table><tr><th>Job</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
-      ${payments.map(p=>`<tr><td style="color:var(--text)">${esc(p.job_title)}</td><td>${fmt(p.amount)}</td><td>${esc(p.status)}</td><td class="mono" style="font-size:11px">${esc(p.reference)}</td></tr>`).join('')}
+    body = `<div class="panel"><table><tr><th>Job</th><th>Amount</th><th>Status</th><th>Reference</th><th>Actions</th></tr>
+      ${payments.map(p=>`<tr><td style="color:var(--text)">${esc(p.job_title)}</td><td>${fmt(p.amount)}</td><td>${esc(p.status)}</td><td class="mono" style="font-size:11px">${esc(p.reference)}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${p.job_payment_status==='RELEASE_PENDING' ? `<button class="btn btn-brass btn-sm" onclick="adminReleasePayout('${p.job_id}')">Release payout</button>` : ''}
+          ${['HELD','RELEASE_PENDING','FROZEN'].includes(p.status) ? `<button class="btn btn-danger btn-sm" onclick="adminRefund('${p.job_id}')">Refund</button>` : ''}
+        </td></tr>`).join('')}
       </table></div>`;
+  } else if (tab==='audit') {
+    body = `<div class="panel">${auditLog.length ? `<table><tr><th>When</th><th>Action</th><th>Actor</th><th>Details</th></tr>
+      ${auditLog.map(a=>`<tr><td class="mono" style="font-size:11px">${new Date(a.at).toLocaleString()}</td><td style="color:var(--text)">${esc(a.action)}</td><td class="mono" style="font-size:11px">${esc(a.actor_id||'—')}</td><td class="mono" style="font-size:11px;max-width:280px;overflow-wrap:anywhere">${esc(JSON.stringify(a.meta||{}))}</td></tr>`).join('')}
+      </table>` : `<p style="color:var(--text-faint);font-size:13px">No audit entries yet.</p>`}</div>`;
+  } else if (tab==='settings') {
+    body = `<div class="panel">
+      <div class="field"><label>Platform commission (%)</label><input id="setCommission" type="number" min="0" max="100" value="${settings.commission ?? 12}"></div>
+      <div class="field"><label>Client review window (hours) <span style="font-weight:400;color:var(--text-faint)">— time a client has to review a delivery before it auto-approves</span></label><input id="setReviewWindow" type="number" min="1" value="${settings.reviewWindowHours ?? 72}"></div>
+      <div class="field"><label>Auto-approve after (hours) <span style="font-weight:400;color:var(--text-faint)">— safety net if a client never responds</span></label><input id="setAutoApprove" type="number" min="1" value="${settings.autoApproveHours ?? 168}"></div>
+      <button class="btn btn-brass btn-sm" onclick="adminSaveSettings()">Save settings</button>
+    </div>`;
   } else if (tab==='reviewers') {
     body = `<div class="panel">${apps.length ? apps.map(a=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
@@ -2005,6 +2022,24 @@ async function viewAdmin() {
     <div class="tabs-row">${tabs.map(([k,l])=>`<button class="tab-btn ${tab===k?'active':''}" onclick="go('admin',{tab:'${k}'})">${l}</button>`).join('')}</div>
     ${body}
   </div></section>`;
+}
+async function adminReleasePayout(jobId) {
+  if (!confirm('Release payout to the provider for this project? This sends real money via Paystack and cannot be undone.')) return;
+  try { await api('/admin/payouts/'+jobId+'/release', { method:'POST' }); toast('Payout initiated.'); reload(); } catch(e) { toast(e.message, true); }
+}
+async function adminSaveSettings() {
+  try {
+    await api('/admin/settings', { method:'PUT', body: JSON.stringify({
+      commission: Number(document.getElementById('setCommission').value),
+      reviewWindowHours: Number(document.getElementById('setReviewWindow').value),
+      autoApproveHours: Number(document.getElementById('setAutoApprove').value)
+    }) });
+    toast('Settings saved.');
+  } catch(e) { toast(e.message, true); }
+}
+async function adminRefund(jobId) {
+  if (!confirm('Refund the client for this project? This reverses the payment via Paystack and cannot be undone.')) return;
+  try { await api('/admin/payments/'+jobId+'/refund', { method:'POST' }); toast('Refund initiated.'); reload(); } catch(e) { toast(e.message, true); }
 }
 async function adminSuspend(id) { try { await api('/admin/users/'+id+'/suspend', { method:'POST' }); toast('User suspended.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminReactivate(id) { try { await api('/admin/users/'+id+'/reactivate', { method:'POST' }); toast('User reactivated.'); reload(); } catch(e){ toast(e.message, true); } }
@@ -2102,7 +2137,7 @@ async function submitReset(e) {
 function checkForResetLink() {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
-  if (token && window.location.pathname.startsWith('/reset-password')) {
+  if (token && window.location.pathname.includes('reset-password')) {
     state.resetToken = token;
     openModal('resetModal');
     // Strip the token from the visible URL/history once captured.
