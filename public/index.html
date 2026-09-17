@@ -489,7 +489,7 @@ function go(view, params = {}) {
   renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub'].includes(view); }
+function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub','jobs'].includes(view); }
 
 /* ============================ REAL-TIME LIVE FEED ============================ */
 let _socket = null;
@@ -527,8 +527,8 @@ function initLiveFeed() {
     }
   });
   _socket.on('feed:jobClaimed', (d) => {
-    const btn = document.querySelector(`#jobrow_${d.jobId} button`);
-    if (btn) { btn.disabled = true; btn.textContent = 'Claimed by ' + d.talentName; }
+    const row = document.getElementById('jobrow_' + d.jobId);
+    if (row) row.remove();
   });
 }
 function bumpStat(key) {
@@ -677,6 +677,10 @@ async function checkForPaymentCallback() {
     if (type === 'product' && productId) {
       const d = await api('/product-orders/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Payment confirmed — check My Purchases.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
+    } else if (type === 'deposit') {
+      const d = await api('/wallet/deposit/verify/' + encodeURIComponent(reference));
+      toast(d.status === 'success' ? 'Deposit confirmed — added to your wallet.' : 'Deposit not yet confirmed — try refreshing in a moment.', d.status !== 'success');
+      reload();
     } else if (jobId) {
       const d = await api('/payments/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Payment confirmed — project funded.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
@@ -1089,7 +1093,7 @@ function talentCard(t) {
     </div>
     <p class="desc">${esc(t.bio || 'Music professional on PRODILIVE.')}</p>
     <div>${skills.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div>
-    <div class="p-card-foot"><span>Joined ${timeAgo(t.created_at)}</span><span class="mono">On PRODILIVE</span></div>
+    <div class="p-card-foot"><span>${skills.length} skill${skills.length===1?'':'s'}</span><span class="mono">On PRODILIVE</span></div>
   </div>`;
 }
 
@@ -1434,6 +1438,15 @@ async function viewJobDetail() {
     </div>
     <div style="color:var(--text-faint);font-size:13px;margin-bottom:24px">${esc(job.category||'General')} · ${fmt(job.budget)} · Client: ${esc(job.clientName||'—')} ${job.talentName ? '· Talent: '+esc(job.talentName) : ''}</div>
 
+    ${job.accepted_at ? `
+    <div class="panel" style="margin-bottom:18px;display:flex;gap:24px;flex-wrap:wrap">
+      <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Accepted</div><div style="font-size:13px">${new Date(job.accepted_at).toLocaleString()}</div></div>
+      <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Started</div><div style="font-size:13px">${job.started_at ? new Date(job.started_at).toLocaleString() : '— not yet started —'}</div></div>
+      ${job.deadline ? `<div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Deadline</div><div style="font-size:13px;${new Date(job.deadline)<new Date()&&!['RELEASED','CANCELLED','DELETED'].includes(job.status)?'color:var(--danger)':''}">${new Date(job.deadline).toLocaleString()}</div></div>` : ''}
+      ${isTalent && job.status==='IN_PROGRESS' && !job.started_at ? `<button class="btn btn-brass btn-sm" onclick="startJob('${job.id}')">Mark work as started</button>` : ''}
+      ${isClient && job.deadline && new Date(job.deadline)<new Date() && ['IN_PROGRESS','REVISION_REQUESTED'].includes(job.status) ? `<button class="btn btn-danger btn-sm" onclick="cancelOverdueJob('${job.id}')">Deadline missed — cancel &amp; refund me</button>` : ''}
+    </div>` : ''}
+
     <div style="display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start">
       <div>
         <div class="panel" style="margin-bottom:18px">
@@ -1465,6 +1478,7 @@ async function viewJobDetail() {
             <h4>Fund this project</h4>
             <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Payment of ${fmt(job.budget)} is held securely and only released once you approve the finished work.</p>
             <button class="btn btn-brass btn-block" onclick="fundJob('${job.id}')">Fund via Paystack</button>
+            <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="fundJobFromWallet('${job.id}')">Pay from wallet balance</button>
           </div>` : ''}
 
         ${['IN_PROGRESS','REVISION_REQUESTED'].includes(job.status) && isTalent ? `
@@ -1572,6 +1586,23 @@ async function fundJob(id) {
     toast('Redirecting to Paystack…');
     window.location.href = d.authorization_url;
   } catch(e) { toast(e.message, true); }
+}
+async function fundJobFromWallet(id) {
+  if (!confirm('Fund this project from your PRODILIVE wallet balance?')) return;
+  try {
+    await api('/jobs/'+id+'/fund-from-wallet', { method:'POST' });
+    toast('Project funded from wallet.');
+    reload();
+  } catch(e) { toast(e.message, true); }
+}
+async function startJob(id) {
+  try { await api('/jobs/'+id+'/start', { method:'POST' }); toast('Marked as started — the client can now see your deadline is running.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function cancelOverdueJob(id) {
+  if (!confirm('The deadline has passed — cancel this project and refund yourself? This cannot be undone.')) return;
+  try { await api('/jobs/'+id+'/cancel-overdue', { method:'POST' }); toast('Project cancelled — refund initiated.'); reload(); }
+  catch(e) { toast(e.message, true); }
 }
 async function deliverJob(id) {
   const input = document.getElementById('deliverFiles');
@@ -1732,6 +1763,8 @@ async function viewDashboard() {
 
   let services = [];
   if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
+  let wallet = { balance: 0 };
+  try { wallet = await api('/wallet/balance'); } catch {}
 
   if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
   if (u.role === 'admin') { go('admin'); return ''; }
@@ -1751,7 +1784,17 @@ async function viewDashboard() {
       <div class="stat-card"><div class="l">Total projects</div><div class="v">${mine.length}</div></div>
       <div class="stat-card"><div class="l">Active</div><div class="v" style="color:var(--brass-soft)">${active}</div></div>
       <div class="stat-card"><div class="l">Completed</div><div class="v" style="color:var(--signal)">${done}</div></div>
-      <div class="stat-card"><div class="l">Role</div><div class="v" style="font-size:18px">${esc(u.role)}</div></div>
+      <div class="stat-card"><div class="l">Wallet balance</div><div class="v" style="font-size:18px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:22px">
+      <h4 style="margin-bottom:6px">Wallet</h4>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Available balance: <b style="color:var(--text)">${fmt(wallet.balance)}</b>${u.role==='client' ? ' — deposit ahead of time to fund projects instantly without a Paystack redirect each time.' : ' — job earnings land here the moment a client approves your delivery.'}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="margin-bottom:0"><label>Amount (₦)</label><input id="walletAmount" type="number" min="100" placeholder="5000" style="width:160px"></div>
+        <button class="btn btn-brass btn-sm" onclick="depositToWallet()">Deposit</button>
+        <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
+      </div>
     </div>
 
     <div class="dash-cols">
@@ -1773,13 +1816,6 @@ async function viewDashboard() {
               <button class="btn btn-ghost btn-sm" onclick="addService()">+ Add service</button>
             </div>
           </div>` : ''}
-
-        ${(u.role==='client' || u.role==='talent') ? `
-          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:8px">Become a PRODILIVE Reviewer</h4>
-            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Verified specialists help resolve project disputes and earn recognition on the platform.</p>
-            <button class="btn btn-ghost btn-sm" onclick="go('reviewerApply')">Learn more &amp; apply →</button>
-          </div>` : ''}
       </div>
       <div class="panel">
         <h4>Profile</h4>
@@ -1798,9 +1834,9 @@ async function viewDashboard() {
             <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addPortfolioRow()">+ Add another piece</button>
             <button class="btn btn-brass btn-sm" style="margin-top:10px;display:block" onclick="savePortfolio()">Save portfolio</button>
           </div>` : ''}
-        ${u.role==='talent' ? `
+        ${(u.role==='talent'||u.role==='client') ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:10px">Payout details</h4>
+            <h4 style="margin-bottom:10px">Payout details <span style="font-weight:400;color:var(--text-faint);font-size:11.5px">(needed to withdraw your wallet balance)</span></h4>
             <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none'">
               <option value="">Select your bank</option>
               <option value="044">Access Bank</option>
@@ -1933,6 +1969,24 @@ async function savePortfolio() {
     const d = await api('/me', { method:'PUT', body: JSON.stringify({ portfolio: filled }) });
     state.user = d.user;
     toast('Portfolio saved.');
+  } catch(e) { toast(e.message, true); }
+}
+async function depositToWallet() {
+  const amount = Number(document.getElementById('walletAmount').value);
+  if (!amount || amount < 100) { toast('Enter an amount of at least ₦100', true); return; }
+  try {
+    const d = await api('/wallet/deposit', { method:'POST', body: JSON.stringify({ amount }) });
+    window.location.href = d.authorization_url;
+  } catch(e) { toast(e.message, true); }
+}
+async function withdrawFromWallet() {
+  const raw = document.getElementById('walletAmount').value;
+  const amount = raw ? Number(raw) : undefined;
+  if (!confirm(amount ? `Withdraw ₦${amount} to your saved bank account? A withdrawal fee applies.` : 'Withdraw your full available balance to your saved bank account? A withdrawal fee applies.')) return;
+  try {
+    const d = await api('/wallet/withdraw', { method:'POST', body: JSON.stringify(amount ? { amount } : {}) });
+    toast(`Withdrawal initiated: ₦${d.payout} sent (₦${d.fee} fee deducted).`);
+    reload();
   } catch(e) { toast(e.message, true); }
 }
 async function savePayout() {
@@ -2070,6 +2124,9 @@ async function viewAdmin() {
       <div class="field"><label>Platform commission (%)</label><input id="setCommission" type="number" min="0" max="100" value="${settings.commission ?? 12}"></div>
       <div class="field"><label>Client review window (hours) <span style="font-weight:400;color:var(--text-faint)">— time a client has to review a delivery before it auto-approves</span></label><input id="setReviewWindow" type="number" min="1" value="${settings.reviewWindowHours ?? 72}"></div>
       <div class="field"><label>Auto-approve after (hours) <span style="font-weight:400;color:var(--text-faint)">— safety net if a client never responds</span></label><input id="setAutoApprove" type="number" min="1" value="${settings.autoApproveHours ?? 168}"></div>
+      <div class="field"><label>Reviewer case fee (%) <span style="font-weight:400;color:var(--text-faint)">— % of a job's budget a reviewer earns for resolving its dispute</span></label><input id="setReviewerFee" type="number" min="0" max="100" value="${settings.reviewerFeePercent ?? 5}"></div>
+      <div class="field"><label>Wallet deposit fee (%)</label><input id="setDepositFee" type="number" min="0" max="100" value="${settings.depositFeePercent ?? 0}"></div>
+      <div class="field"><label>Wallet withdrawal fee (%)</label><input id="setWithdrawalFee" type="number" min="0" max="100" value="${settings.withdrawalFeePercent ?? 2}"></div>
       <button class="btn btn-brass btn-sm" onclick="adminSaveSettings()">Save settings</button>
     </div>`;
   } else if (tab==='reviewers') {
@@ -2150,7 +2207,10 @@ async function adminSaveSettings() {
     await api('/admin/settings', { method:'PUT', body: JSON.stringify({
       commission: Number(document.getElementById('setCommission').value),
       reviewWindowHours: Number(document.getElementById('setReviewWindow').value),
-      autoApproveHours: Number(document.getElementById('setAutoApprove').value)
+      autoApproveHours: Number(document.getElementById('setAutoApprove').value),
+      reviewerFeePercent: Number(document.getElementById('setReviewerFee').value),
+      depositFeePercent: Number(document.getElementById('setDepositFee').value),
+      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value)
     }) });
     toast('Settings saved.');
   } catch(e) { toast(e.message, true); }
@@ -2254,6 +2314,9 @@ async function submitReset(e) {
 }
 function checkForResetLink() {
   const params = new URLSearchParams(window.location.search);
+  const verify = params.get('verify');
+  if (verify === 'success') { toast('Email verified — welcome to PRODILIVE!'); window.history.replaceState({}, '', '/'); }
+  else if (verify === 'failed') { toast('That verification link is invalid or expired. Request a new one from your dashboard.', true); window.history.replaceState({}, '', '/'); }
   const token = params.get('token');
   if (token && window.location.pathname.includes('reset-password')) {
     state.resetToken = token;
