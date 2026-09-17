@@ -257,7 +257,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <a onclick="go('jobs')">Find Work</a>
       <a onclick="go('marketplace')">Beats &amp; Templates</a>
       <a onclick="go('pricing')">Pricing</a>
-      <a onclick="go('reviewerApply')" id="navReviewerLink">Become a Reviewer</a>
+      <a onclick="openModal('reviewerRegisterModal')" id="navReviewerLink">Become a Reviewer</a>
       <a onclick="go(state.user && state.user.role==='reviewer' ? 'reviewerHub' : 'dashboard')" id="navDashLink" style="display:none">Dashboard</a>
       <a onclick="go('admin')" id="navAdminLink" style="display:none">Admin</a>
     </nav>
@@ -299,7 +299,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <h5>Trust &amp; Safety</h5>
       <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
       <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
-      <a onclick="go('reviewerApply')">Become a Reviewer</a>
+      <a onclick="openModal('reviewerRegisterModal')">Become a Reviewer</a>
     </div>
     <div class="foot-col">
       <h5>Account</h5>
@@ -357,6 +357,20 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
     <div class="field"><label>New password</label><input id="resetPassword" type="password" placeholder="••••••••" minlength="8" required></div>
     <div class="field"><label>Confirm new password</label><input id="resetPasswordConfirm" type="password" placeholder="••••••••" minlength="8" required></div>
     <button class="btn btn-brass btn-block" type="submit" id="resetSubmitBtn">Set new password</button>
+  </form>
+</div></div>
+
+<div class="modal-bg" id="reviewerRegisterModal"><div class="modal">
+  <button class="modal-close" onclick="closeModal('reviewerRegisterModal')">&times;</button>
+  <h3>Become a PRODILIVE Reviewer</h3>
+  <div class="sub">Reviewers settle disputes anonymously and earn a fee per case. This is a separate account from client/provider accounts — a reviewer can't post or apply to jobs.</div>
+  <form id="reviewerRegisterForm" onsubmit="submitReviewerRegister(event)">
+    <div class="field"><label>Full name</label><input id="revRegName" required></div>
+    <div class="field"><label>Email address</label><input id="revRegEmail" type="email" required></div>
+    <div class="field"><label>Password</label><input id="revRegPassword" type="password" minlength="8" required></div>
+    <div class="field"><label>Relevant experience</label><textarea id="revRegExp" placeholder="Music production, audio engineering, project management, dispute resolution, etc." required></textarea></div>
+    <div class="field"><label>Specialties <span style="font-weight:400;color:var(--text-faint)">(comma separated)</span></label><input id="revRegSpecialties" placeholder="mixing, mastering, songwriting"></div>
+    <button class="btn btn-brass btn-block" type="submit" id="revRegSubmitBtn">Apply to become a reviewer</button>
   </form>
 </div></div>
 
@@ -482,6 +496,18 @@ let _socket = null;
 function initLiveFeed() {
   if (_socket || typeof io === 'undefined') return;
   _socket = io();
+  _socket.on('connect', () => {
+    if (state.user && state.user.role === 'reviewer') _socket.emit('join:reviewers', state.token);
+  });
+  _socket.on('dispute:new', (d) => {
+    if (state.user && state.user.role === 'reviewer') {
+      toast('New dispute needs a reviewer: ' + d.jobTitle);
+      if (state.view === 'reviewerHub') reload();
+    }
+  });
+  _socket.on('dispute:claimed', () => {
+    if (state.user && state.user.role === 'reviewer' && state.view === 'reviewerHub') reload();
+  });
   _socket.on('feed:job', (d) => {
     if (state.view === 'jobs') {
       const list = document.getElementById('liveJobsList');
@@ -597,6 +623,7 @@ async function submitAuth(e) {
     }
     state.token = data.token; state.user = data.user;
     localStorage.setItem('prodilive_token', data.token);
+    if (data.user.role === 'reviewer' && _socket) _socket.emit('join:reviewers', state.token);
     closeModal('authModal');
     updateNav();
     loadNotifications();
@@ -926,38 +953,53 @@ async function viewReviewerApply() {
 async function viewReviewerHub() {
   const u = state.user;
   if (!u || u.role !== 'reviewer') { go('dashboard'); return ''; }
-  let disputes = [];
+  let disputes = [], balance = { available: 0, withdrawn: 0 };
   try { disputes = (await api('/disputes')).disputes; } catch(e) { toast(e.message, true); }
+  try { balance = await api('/reviewer/balance'); } catch {}
+  const available = disputes.filter(d => d.status === 'OPEN');
   const assigned = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'ASSIGNED');
   const decided = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'DECIDED');
+  const locked = u.reviewerLevel !== 'CERTIFIED' && u.reviewerLevel !== 'TRAINEE';
 
   return `
   <section style="padding-top:32px"><div class="wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-      <div><div class="eyebrow">Reviewer hub</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
-      <span class="badge">${u.reviewerLevel === 'CERTIFIED' ? '✓ Certified' : esc(u.reviewerLevel || 'TRAINEE')}</span>
+      <div><div class="eyebrow">Reviewer hub</div><h1 style="font-size:26px">Welcome back</h1></div>
+      <span class="badge">${u.reviewerLevel === 'CERTIFIED' ? '✓ Certified' : esc(u.reviewerLevel || 'Pending qualification')}</span>
     </div>
 
+    ${locked ? `<div class="panel" style="margin-bottom:20px;border-color:var(--danger)"><p style="font-size:13px;color:var(--text-dim)">Your reviewer account is still pending admin approval and a qualification test. You'll be able to claim disputes once that's complete — check back soon.</p></div>` : ''}
+
     <div class="dash-stats">
-      <div class="stat-card"><div class="l">Assigned cases</div><div class="v" style="color:var(--brass-soft)">${assigned.length}</div></div>
-      <div class="stat-card"><div class="l">Resolved cases</div><div class="v" style="color:var(--signal)">${decided.length}</div></div>
-      <div class="stat-card"><div class="l">Qualification score</div><div class="v" style="font-size:18px">${u.reviewerScore ?? '—'}</div></div>
-      <div class="stat-card"><div class="l">Status</div><div class="v" style="font-size:18px">${esc(u.status)}</div></div>
+      <div class="stat-card"><div class="l">Available cases</div><div class="v" style="color:var(--brass-soft)">${available.length}</div></div>
+      <div class="stat-card"><div class="l">Assigned to me</div><div class="v" style="color:var(--brass-soft)">${assigned.length}</div></div>
+      <div class="stat-card"><div class="l">Resolved</div><div class="v" style="color:var(--signal)">${decided.length}</div></div>
+      <div class="stat-card"><div class="l">Available balance</div><div class="v" style="font-size:18px">${fmt(balance.available)}</div></div>
     </div>
 
     <div class="dash-cols">
       <div class="panel">
-        <h4>My review queue <span>${assigned.length} assigned</span></h4>
-        ${assigned.length ? assigned.map(d=>`
+        <h4>Available disputes <span>${available.length} unclaimed</span></h4>
+        ${available.length ? available.map(d=>`
           <div class="dispute-card">
             <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
             <p>${esc(d.reason||'')}</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
-              <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
-              <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
-            </div>
-          </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
+            <button class="btn btn-brass btn-sm" ${locked?'disabled':''} onclick="claimDispute('${d.id}')">Claim this case</button>
+          </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No unclaimed disputes right now — you'll be alerted the moment one opens.</p>`}
+
+        <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
+          <h4 style="margin-bottom:10px">My review queue <span>${assigned.length} assigned</span></h4>
+          ${assigned.length ? assigned.map(d=>`
+            <div class="dispute-card">
+              <div class="dh"><b>${esc(d.title)}</b><span class="mono">${fmt(d.budget)}</span></div>
+              <p>${esc(d.reason||'')}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to provider</button>
+                <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+                <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
+              </div>
+            </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
+        </div>
 
         <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
           <h4 style="margin-bottom:10px">Case history <span>${decided.length}</span></h4>
@@ -970,13 +1012,68 @@ async function viewReviewerHub() {
       </div>
 
       <div class="panel">
-        <h4>Profile</h4>
-        <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
-        <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
-        <button class="btn btn-ghost btn-sm" onclick="saveProfile()">Save profile</button>
+        <h4 style="margin-bottom:10px">Guidelines</h4>
+        <ul style="font-size:12.5px;color:var(--text-dim);line-height:1.7;padding-left:18px;margin-bottom:6px">
+          <li>Read both sides' messages and the delivered files before deciding.</li>
+          <li>You stay anonymous — neither party ever sees your name.</li>
+          <li>Release to the provider, refund the client, or (via the API) split the funds — pick whichever the evidence supports.</li>
+          <li>Once you decide, it's final and funds move immediately.</li>
+        </ul>
+
+        <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
+          <h4 style="margin-bottom:6px">Earnings</h4>
+          <p style="font-size:12.5px;color:var(--text-dim)">Available: <b style="color:var(--text)">${fmt(balance.available)}</b> · Withdrawn to date: ${fmt(balance.withdrawn)}</p>
+          <button class="btn btn-brass btn-sm" style="margin-top:10px" onclick="withdrawReviewerEarnings()">Withdraw available balance</button>
+        </div>
+
+        <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
+          <h4 style="margin-bottom:10px">Payout details</h4>
+          <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none'">
+            <option value="">Select your bank</option>
+            <option value="044">Access Bank</option><option value="058">Guaranty Trust Bank (GTBank)</option>
+            <option value="011">First Bank of Nigeria</option><option value="033">United Bank For Africa (UBA)</option>
+            <option value="057">Zenith Bank</option><option value="221">Stanbic IBTC Bank</option>
+            <option value="50211">Kuda Bank</option><option value="999992">Opay</option><option value="100004">Palmpay</option>
+            <option value="OTHER">Other / not listed</option>
+          </select></div>
+          <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058"></div>
+          <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Name on the account"></div>
+          <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" placeholder="0123456789"></div>
+          <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
+        </div>
       </div>
     </div>
   </div></section>`;
+}
+async function submitReviewerRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('revRegSubmitBtn');
+  const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const specialties = document.getElementById('revRegSpecialties').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const data = await api('/auth/register-reviewer', { method:'POST', body: JSON.stringify({
+      name: document.getElementById('revRegName').value.trim(),
+      email: document.getElementById('revRegEmail').value.trim(),
+      password: document.getElementById('revRegPassword').value,
+      experience: document.getElementById('revRegExp').value.trim(),
+      specialties
+    }) });
+    state.token = data.token; state.user = data.user;
+    localStorage.setItem('prodilive_token', data.token);
+    closeModal('reviewerRegisterModal');
+    toast('Application submitted — we\'ll email you once it\'s reviewed.');
+    updateNav(); go('reviewerHub');
+  } catch(err) { toast(err.message, true); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
+async function claimDispute(id) {
+  try { await api('/reviewer/disputes/'+id+'/claim', { method:'POST' }); toast('Case claimed — it\'s yours to resolve.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function withdrawReviewerEarnings() {
+  if (!confirm('Withdraw your full available balance to your saved bank account?')) return;
+  try { const d = await api('/reviewer/withdraw', { method:'POST' }); toast('Withdrawal of ' + fmt(d.amount) + ' initiated.'); reload(); }
+  catch(e) { toast(e.message, true); }
 }
 
 /* ============================ TALENT CARD ============================ */
@@ -1910,8 +2007,11 @@ async function viewAdmin() {
   } else if (tab==='users') {
     body = `<div class="panel"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>ID Verified</th><th>Actions</th></tr>
       ${users.map(u=>`<tr><td style="color:var(--text)">${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.status)}</td><td>${u.role==='talent' ? esc(u.verificationStatus||'NONE') : '—'}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'userActivity',userId:'${u.id}'})">View activity</button>
+          ${u.status!=='DELETED' ? `<select id="roleSel_${u.id}" style="font-size:12px;padding:4px 6px;border-radius:6px">
+            ${['client','talent','reviewer','admin'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
+          </select><button class="btn btn-ghost btn-sm" onclick="adminChangeRole('${u.id}')">Set role</button>` : ''}
           ${u.status==='SUSPENDED' ? `<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${u.id}')">Reactivate</button>` : u.status==='DELETED' ? '' : `<button class="btn btn-danger btn-sm" onclick="adminSuspend('${u.id}')">Suspend</button>`}
           ${u.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.id}','${esc(u.name)}')">Delete</button>` : ''}
         </td></tr>`).join('')}
@@ -1945,8 +2045,13 @@ async function viewAdmin() {
         </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No support conversations.</p>`}
     </div>`;
   } else if (tab==='jobs') {
-    body = `<div class="panel"><table><tr><th>Title</th><th>Client</th><th>Talent</th><th>Budget</th><th>Status</th></tr>
-      ${jobs.map(j=>`<tr><td style="color:var(--text)">${esc(j.title)}</td><td>${esc(j.clientName||'—')}</td><td>${esc(j.talentName||'—')}</td><td>${fmt(j.budget)}</td><td><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span></td></tr>`).join('')}
+    body = `<div class="panel"><table><tr><th>Title</th><th>Client</th><th>Talent</th><th>Budget</th><th>Status</th><th>Actions</th></tr>
+      ${jobs.map(j=>`<tr><td style="color:var(--text)">${esc(j.title)}</td><td>${esc(j.clientName||'—')}</td><td>${esc(j.talentName||'—')}</td><td>${fmt(j.budget)}</td><td><span class="status ${statusClass(j.status)}">${statusLabel(j.status)}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${j.id}'})">View</button>
+          ${!['RELEASED','CANCELLED','DELETED'].includes(j.status) ? `<button class="btn btn-danger btn-sm" onclick="adminCancelJob('${j.id}')">Cancel</button>` : ''}
+          ${j.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteJob('${j.id}')">Delete</button>` : ''}
+        </td></tr>`).join('')}
       </table></div>`;
   } else if (tab==='payments') {
     body = `<div class="panel"><table><tr><th>Job</th><th>Amount</th><th>Status</th><th>Reference</th><th>Actions</th></tr>
@@ -2022,6 +2127,19 @@ async function viewAdmin() {
     <div class="tabs-row">${tabs.map(([k,l])=>`<button class="tab-btn ${tab===k?'active':''}" onclick="go('admin',{tab:'${k}'})">${l}</button>`).join('')}</div>
     ${body}
   </div></section>`;
+}
+async function adminChangeRole(userId) {
+  const role = document.getElementById('roleSel_'+userId).value;
+  if (!confirm('Change this user\'s role to "'+role+'"? This immediately changes what they can do on the site.')) return;
+  try { await api('/admin/users/'+userId+'/role', { method:'PUT', body: JSON.stringify({ role }) }); toast('Role updated.'); reload(); } catch(e) { toast(e.message, true); }
+}
+async function adminCancelJob(jobId) {
+  if (!confirm('Cancel this project? If it was funded, the client will be automatically refunded.')) return;
+  try { await api('/admin/jobs/'+jobId+'/cancel', { method:'POST' }); toast('Project cancelled.'); reload(); } catch(e) { toast(e.message, true); }
+}
+async function adminDeleteJob(jobId) {
+  if (!confirm('Delete this project? It will be hidden from everyone but kept on record. This cannot be undone from here.')) return;
+  try { await api('/admin/jobs/'+jobId, { method:'DELETE' }); toast('Project deleted.'); reload(); } catch(e) { toast(e.message, true); }
 }
 async function adminReleasePayout(jobId) {
   if (!confirm('Release payout to the provider for this project? This sends real money via Paystack and cannot be undone.')) return;
