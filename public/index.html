@@ -253,11 +253,13 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <div class="wrap nav-inner">
     <div class="logo" onclick="go('home')"><span class="dot"></span>PRODILIVE</div>
     <nav class="nav-links">
-      <a onclick="go('talents')">Find Talent</a>
-      <a onclick="go('jobs')">Find Work</a>
-      <a onclick="go('marketplace')">Beats &amp; Templates</a>
+      <a onclick="go('talents')" id="navTalentsLink">Find Talent</a>
+      <a onclick="go('jobs')" id="navJobsLink">Find Work</a>
+      <a onclick="go('marketplace')" id="navMarketLink">Beats &amp; Templates</a>
       <a onclick="go('pricing')">Pricing</a>
       <a onclick="openModal('reviewerRegisterModal')" id="navReviewerLink">Become a Reviewer</a>
+      <a onclick="go('myPurchases')" id="navPurchasesLink" style="display:none">My Purchases</a>
+      <a onclick="go('profile')" id="navProfileLink" style="display:none">Profile</a>
       <a onclick="go(state.user && state.user.role==='reviewer' ? 'reviewerHub' : 'dashboard')" id="navDashLink" style="display:none">Dashboard</a>
       <a onclick="go('admin')" id="navAdminLink" style="display:none">Admin</a>
     </nav>
@@ -299,6 +301,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <h5>Trust &amp; Safety</h5>
       <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
       <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
+      <a onclick="go('terms')">Terms &amp; Conditions</a>
       <a onclick="openModal('reviewerRegisterModal')">Become a Reviewer</a>
     </div>
     <div class="foot-col">
@@ -363,14 +366,26 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
 <div class="modal-bg" id="reviewerRegisterModal"><div class="modal">
   <button class="modal-close" onclick="closeModal('reviewerRegisterModal')">&times;</button>
   <h3>Become a PRODILIVE Reviewer</h3>
-  <div class="sub">Reviewers settle disputes anonymously and earn a fee per case. This is a separate account from client/provider accounts — a reviewer can't post or apply to jobs.</div>
+  <div class="sub">Reviewers settle disputes anonymously and earn a fee per case. This is a job application, not instant sign-up: an admin reviews your documents and emails you directly. If approved, you'll get a link to finish setting up your account.</div>
   <form id="reviewerRegisterForm" onsubmit="submitReviewerRegister(event)">
     <div class="field"><label>Full name</label><input id="revRegName" required></div>
     <div class="field"><label>Email address</label><input id="revRegEmail" type="email" required></div>
-    <div class="field"><label>Password</label><input id="revRegPassword" type="password" minlength="8" required></div>
     <div class="field"><label>Relevant experience</label><textarea id="revRegExp" placeholder="Music production, audio engineering, project management, dispute resolution, etc." required></textarea></div>
     <div class="field"><label>Specialties <span style="font-weight:400;color:var(--text-faint)">(comma separated)</span></label><input id="revRegSpecialties" placeholder="mixing, mastering, songwriting"></div>
-    <button class="btn btn-brass btn-block" type="submit" id="revRegSubmitBtn">Apply to become a reviewer</button>
+    <div class="field"><label>ID type</label><select id="revRegDocType"><option value="NIN">National ID (NIN)</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div>
+    <div class="field"><label>ID document (PDF, JPG or PNG)</label><input id="revRegDoc" type="file" accept="application/pdf,image/png,image/jpeg" required></div>
+    <div class="field"><label>Selfie <span style="font-weight:400;color:var(--text-faint)">(clear photo of your face, JPG or PNG)</span></label><input id="revRegSelfie" type="file" accept="image/png,image/jpeg" required></div>
+    <button class="btn btn-brass btn-block" type="submit" id="revRegSubmitBtn">Submit application</button>
+  </form>
+</div></div>
+
+<div class="modal-bg" id="completeReviewerModal"><div class="modal">
+  <h3>Finish setting up your account</h3>
+  <div class="sub" id="completeReviewerSub">Loading your invite…</div>
+  <form id="completeReviewerForm" onsubmit="submitCompleteReviewerRegistration(event)" style="display:none">
+    <div class="field"><label>Password</label><input id="crPassword" type="password" minlength="8" required></div>
+    <div class="field"><label>Confirm password</label><input id="crPasswordConfirm" type="password" minlength="8" required></div>
+    <button class="btn btn-brass btn-block" type="submit" id="crSubmitBtn">Create my account</button>
   </form>
 </div></div>
 
@@ -489,7 +504,7 @@ function go(view, params = {}) {
   renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub','jobs'].includes(view); }
+function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub','jobs','myPurchases','profile'].includes(view); }
 
 /* ============================ REAL-TIME LIVE FEED ============================ */
 let _socket = null;
@@ -555,7 +570,7 @@ async function render() {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
       jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing,
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
-      marketplace:viewMarketplace, productDetail:viewProductDetail };
+      marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms };
     app.innerHTML = await (views[state.view] || viewHome)();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
@@ -569,12 +584,20 @@ async function render() {
 /* ============================ AUTH ============================ */
 function updateNav() {
   const signedIn = !!state.user;
+  const isReviewer = signedIn && state.user.role === 'reviewer';
+  const isAdmin = signedIn && state.user.role === 'admin';
   document.getElementById('signedOutBtns').style.display = signedIn ? 'none' : 'block';
   document.getElementById('signedInBtns').style.display = signedIn ? 'flex' : 'none';
   document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
-  document.getElementById('navDashLink').textContent = (signedIn && state.user.role==='reviewer') ? 'Reviewer Hub' : 'Dashboard';
-  document.getElementById('navAdminLink').style.display = (signedIn && state.user.role==='admin') ? 'inline' : 'none';
-  document.getElementById('navReviewerLink').style.display = (signedIn && state.user.role==='reviewer') ? 'none' : 'inline';
+  document.getElementById('navDashLink').textContent = isReviewer ? 'Reviewer Hub' : 'Dashboard';
+  document.getElementById('navAdminLink').style.display = isAdmin ? 'inline' : 'none';
+  document.getElementById('navReviewerLink').style.display = signedIn ? 'none' : 'inline';
+  // Reviewers are a separate entity: no marketplace browsing/buying, no job board.
+  document.getElementById('navTalentsLink').style.display = isReviewer ? 'none' : 'inline';
+  document.getElementById('navJobsLink').style.display = isReviewer ? 'none' : 'inline';
+  document.getElementById('navMarketLink').style.display = isReviewer ? 'none' : 'inline';
+  document.getElementById('navPurchasesLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
+  document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
   renderMobileNav();
 }
@@ -1054,18 +1077,53 @@ async function submitReviewerRegister(e) {
   const btn = document.getElementById('revRegSubmitBtn');
   const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
   try {
-    const specialties = document.getElementById('revRegSpecialties').value.split(',').map(s=>s.trim()).filter(Boolean);
-    const data = await api('/auth/register-reviewer', { method:'POST', body: JSON.stringify({
-      name: document.getElementById('revRegName').value.trim(),
-      email: document.getElementById('revRegEmail').value.trim(),
-      password: document.getElementById('revRegPassword').value,
-      experience: document.getElementById('revRegExp').value.trim(),
-      specialties
-    }) });
+    const docFile = document.getElementById('revRegDoc').files[0];
+    const selfieFile = document.getElementById('revRegSelfie').files[0];
+    if (!docFile || !selfieFile) throw new Error('Please attach both a document and a selfie');
+    const fd = new FormData();
+    fd.append('name', document.getElementById('revRegName').value.trim());
+    fd.append('email', document.getElementById('revRegEmail').value.trim());
+    fd.append('experience', document.getElementById('revRegExp').value.trim());
+    fd.append('specialties', document.getElementById('revRegSpecialties').value.trim());
+    fd.append('docType', document.getElementById('revRegDocType').value);
+    fd.append('document', docFile);
+    fd.append('selfie', selfieFile);
+    const res = await fetch('/api/reviewer/apply-external', { method:'POST', body: fd });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) throw new Error(data.error || 'Could not submit application');
+    closeModal('reviewerRegisterModal');
+    toast("Application submitted — we'll email you once it's reviewed.");
+  } catch(err) { toast(err.message, true); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
+async function checkForReviewerInvite() {
+  if (!window.location.pathname.includes('complete-reviewer-registration')) return;
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (!token) return;
+  state.reviewerInviteToken = token;
+  openModal('completeReviewerModal');
+  try {
+    const d = await api('/reviewer/invite/' + encodeURIComponent(token));
+    document.getElementById('completeReviewerSub').textContent = `Welcome, ${d.name} — set a password for ${d.email} to finish setting up your reviewer account.`;
+    document.getElementById('completeReviewerForm').style.display = 'block';
+  } catch(e) {
+    document.getElementById('completeReviewerSub').textContent = e.message;
+  }
+}
+async function submitCompleteReviewerRegistration(e) {
+  e.preventDefault();
+  const btn = document.getElementById('crSubmitBtn');
+  const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const p1 = document.getElementById('crPassword').value, p2 = document.getElementById('crPasswordConfirm').value;
+    if (p1 !== p2) throw new Error('Passwords do not match');
+    const data = await api('/reviewer/complete-registration', { method:'POST', body: JSON.stringify({ token: state.reviewerInviteToken, password: p1 }) });
     state.token = data.token; state.user = data.user;
     localStorage.setItem('prodilive_token', data.token);
-    closeModal('reviewerRegisterModal');
-    toast('Application submitted — we\'ll email you once it\'s reviewed.');
+    closeModal('completeReviewerModal');
+    window.history.replaceState({}, '', '/');
+    toast('Account created — welcome to PRODILIVE.');
     updateNav(); go('reviewerHub');
   } catch(err) { toast(err.message, true); }
   finally { btn.disabled = false; btn.textContent = orig; }
@@ -1188,7 +1246,7 @@ async function viewProductDetail() {
       </div>
       <div class="panel" style="position:sticky;top:90px">
         <div class="mono" style="font-size:26px;color:var(--brass-soft);font-weight:700;margin-bottom:14px">${fmt(p.price)}</div>
-        ${d.owned ? `<a class="btn btn-brass btn-block" href="/api/products/${p.id}/download" target="_blank">Download files</a>` :
+        ${d.owned ? `<button class="btn btn-brass btn-block" onclick="downloadProduct('${p.id}','${esc(p.title)}')">Download files</button>` :
           `<button class="btn btn-brass btn-block" onclick="purchaseProduct('${p.id}')">Buy now</button>`}
         <p style="font-size:11.5px;color:var(--text-faint);margin-top:10px">Instant delivery after payment. Non-refundable digital goods.</p>
       </div>
@@ -1201,6 +1259,112 @@ async function purchaseProduct(id) {
     const d = await api('/products/'+id+'/purchase', { method:'POST' });
     window.location.href = d.authorization_url;
   } catch(e) { toast(e.message, true); }
+}
+async function downloadProduct(id, title) {
+  try {
+    const res = await fetch('/api/products/'+id+'/download', { headers: { Authorization: 'Bearer ' + state.token } });
+    if (!res.ok) throw new Error('Download failed (' + res.status + ')');
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : (title || 'download');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch(e) { toast(e.message, true); }
+}
+async function viewMyPurchases() {
+  let orders = [];
+  try { orders = (await api('/products/mine/orders')).orders; } catch(e) { toast(e.message, true); }
+  return `
+  <section style="padding-top:32px"><div class="wrap">
+    <div class="eyebrow">Purchases</div><h1 style="font-size:26px;margin-bottom:20px">My Purchases</h1>
+    <div class="panel">
+      ${orders.length ? orders.map(o=>`
+        <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div><b style="font-size:13.5px">${esc(o.title)}</b><div style="font-size:12px;color:var(--text-faint)">${fmt(o.amount)} · ${new Date(o.paid_at).toLocaleDateString()}</div></div>
+          <button class="btn btn-brass btn-sm" onclick="downloadProduct('${o.product_id}','${esc(o.title)}')">Download</button>
+        </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">You haven't bought anything yet. <a onclick="go('marketplace')" style="color:var(--brass-soft);cursor:pointer">Browse the marketplace →</a></p>`}
+    </div>
+  </div></section>`;
+}
+async function viewProfile() {
+  const u = state.user;
+  if (!u) { openAuth('login'); return ''; }
+  return `
+  <section style="padding-top:32px"><div class="wrap" style="max-width:640px">
+    <div class="eyebrow">Account</div><h1 style="font-size:26px;margin-bottom:20px">My Profile</h1>
+    <div class="panel">
+      <div class="field"><label>Full name</label><input id="profName" value="${esc(u.name)}"></div>
+      <div class="field"><label>Nickname</label><input id="profNickname" value="${esc(u.nickname||'')}"></div>
+      <div class="field"><label>Email</label><input value="${esc(u.email)}" disabled style="opacity:.6"></div>
+      <div class="field"><label>Role</label><input value="${esc(u.role)}" disabled style="opacity:.6"></div>
+      <div class="field"><label>Phone</label><input id="profPhone" value="${esc(u.phone||'')}"></div>
+      <div class="field"><label>Country</label><input id="profCountry" value="${esc(u.country||'')}"></div>
+      <div class="field"><label>State</label><input id="profState" value="${esc(u.state||'')}"></div>
+      <div class="field"><label>City</label><input id="profCity" value="${esc(u.city||'')}"></div>
+      <div class="field"><label>Address</label><input id="profAddress" value="${esc(u.address||'')}"></div>
+      <div class="field"><label>Bio</label><textarea id="profBio">${esc(u.bio||'')}</textarea></div>
+      <button class="btn btn-brass btn-sm" onclick="saveFullProfile()">Save changes</button>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <h4 style="margin-bottom:10px">Change password</h4>
+      <div class="field"><label>Current password</label><input id="pwCurrent" type="password"></div>
+      <div class="field"><label>New password</label><input id="pwNew" type="password" minlength="8"></div>
+      <div class="field"><label>Confirm new password</label><input id="pwConfirm" type="password" minlength="8"></div>
+      <button class="btn btn-ghost btn-sm" onclick="changePassword()">Update password</button>
+    </div>
+  </div></section>`;
+}
+async function saveFullProfile() {
+  try {
+    const d = await api('/me', { method:'PUT', body: JSON.stringify({
+      name: document.getElementById('profName').value.trim(),
+      nickname: document.getElementById('profNickname').value.trim(),
+      phone: document.getElementById('profPhone').value.trim(),
+      country: document.getElementById('profCountry').value.trim(),
+      state: document.getElementById('profState').value.trim(),
+      city: document.getElementById('profCity').value.trim(),
+      address: document.getElementById('profAddress').value.trim(),
+      bio: document.getElementById('profBio').value
+    }) });
+    state.user = d.user; updateNav();
+    toast('Profile saved.');
+  } catch(e) { toast(e.message, true); }
+}
+async function changePassword() {
+  const current = document.getElementById('pwCurrent').value;
+  const next = document.getElementById('pwNew').value;
+  const confirm_ = document.getElementById('pwConfirm').value;
+  if (next !== confirm_) { toast('New passwords do not match', true); return; }
+  try {
+    await api('/me/change-password', { method:'POST', body: JSON.stringify({ currentPassword: current, newPassword: next }) });
+    toast('Password updated.');
+    document.getElementById('pwCurrent').value = document.getElementById('pwNew').value = document.getElementById('pwConfirm').value = '';
+  } catch(e) { toast(e.message, true); }
+}
+async function viewTerms() {
+  return `
+  <section style="padding-top:32px"><div class="wrap" style="max-width:760px">
+    <div class="eyebrow">Legal</div><h1 style="font-size:26px;margin-bottom:20px">Terms &amp; Conditions</h1>
+    <div class="panel" style="font-size:13.5px;color:var(--text-dim);line-height:1.8">
+      <h4>1. On-platform only</h4>
+      <p>All communication and payment for a project must stay on PRODILIVE. Any arrangement made outside the platform is entirely at the parties' own risk and is not covered by PRODILIVE's escrow protection, dispute resolution, or any refund or chargeback support.</p>
+      <h4>2. Escrow &amp; release</h4>
+      <p>A client's payment is held in escrow until they approve the delivered work, at which point it is released to the provider (minus platform commission). If a dispute is opened, a PRODILIVE reviewer investigates and decides how the funds are split, and that decision is final.</p>
+      <h4>3. Fraud &amp; misrepresentation</h4>
+      <p>Submitting a fake or stolen identity document, misrepresenting your work in a portfolio or delivery, or attempting to solicit off-platform payment are all grounds for immediate account suspension, forfeiture of any pending payout, and reporting to relevant authorities where applicable.</p>
+      <h4>4. Reviewers</h4>
+      <p>Reviewers act as independent, anonymous dispute officers. A reviewer account may not also act as a client or provider, may not purchase marketplace listings, and every dispute decision is logged and visible to PRODILIVE admins.</p>
+      <h4>5. Wallet &amp; fees</h4>
+      <p>Deposits and withdrawals to your PRODILIVE wallet may carry a fee, set by PRODILIVE and shown before you confirm. Marketplace commission is deducted from provider payouts automatically.</p>
+      <h4>6. Changes</h4>
+      <p>These terms may be updated as the platform evolves. Continued use of PRODILIVE after a change means you accept the updated terms.</p>
+      <p style="margin-top:18px;color:var(--text-faint);font-size:12px">Questions? Contact <a href="mailto:${SUPPORT_EMAIL}" style="color:var(--brass-soft)">${SUPPORT_EMAIL}</a>.</p>
+    </div>
+  </div></section>`;
 }
 
 /* ============================ SELL A PRODUCT MODAL ============================ */
@@ -1763,7 +1927,7 @@ async function viewDashboard() {
 
   let services = [];
   if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
-  let wallet = { balance: 0 };
+  let wallet = { balance: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
   try { wallet = await api('/wallet/balance'); } catch {}
 
   if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
@@ -1789,7 +1953,13 @@ async function viewDashboard() {
 
     <div class="panel" style="margin-bottom:22px">
       <h4 style="margin-bottom:6px">Wallet</h4>
-      <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Available balance: <b style="color:var(--text)">${fmt(wallet.balance)}</b>${u.role==='client' ? ' — deposit ahead of time to fund projects instantly without a Paystack redirect each time.' : ' — job earnings land here the moment a client approves your delivery.'}</p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px">
+        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Balance</div><div style="font-size:16px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total deposited</div><div style="font-size:16px">${fmt(wallet.totalDeposits)}</div></div>
+        ${u.role==='talent' ? `<div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total earned</div><div style="font-size:16px;color:var(--signal)">${fmt(wallet.totalEarnings)}</div></div>` : ''}
+        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total withdrawn</div><div style="font-size:16px">${fmt(wallet.totalWithdrawals)}</div></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">${u.role==='client' ? 'Deposit ahead of time to fund projects instantly without a Paystack redirect each time.' : 'Job earnings land here the moment a client approves your delivery.'}</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="margin-bottom:0"><label>Amount (₦)</label><input id="walletAmount" type="number" min="100" placeholder="5000" style="width:160px"></div>
         <button class="btn btn-brass btn-sm" onclick="depositToWallet()">Deposit</button>
@@ -2132,12 +2302,19 @@ async function viewAdmin() {
   } else if (tab==='reviewers') {
     body = `<div class="panel">${apps.length ? apps.map(a=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}</div></div>
-        ${a.status==='PENDING' ? `<div style="display:flex;gap:8px">
+        <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}${a.doc_type ? ' · '+esc(a.doc_type) : ''}</div></div>
+        ${a.status==='PENDING' && !a.user_id ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${a.doc_name ? `<button class="btn btn-ghost btn-sm" onclick="adminViewReviewerDoc('${a.id}','document')">View document</button>` : ''}
+          ${a.selfie_name ? `<button class="btn btn-ghost btn-sm" onclick="adminViewReviewerDoc('${a.id}','selfie')">View selfie</button>` : ''}
+          <button class="btn btn-brass btn-sm" onclick="adminSendReviewerInvite('${a.id}')">Send registration invite</button>
+          <button class="btn btn-danger btn-sm" onclick="adminRejectReviewerApp('${a.id}')">Reject</button>
+        </div>` : ''}
+        ${a.status==='INVITED' ? `<span style="font-size:12px;color:var(--text-faint)">Invite sent — waiting for applicant to finish registering</span>` : ''}
+        ${a.status==='PENDING' && a.user_id ? `<div style="display:flex;gap:8px">
           <button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>
           <button class="btn btn-danger btn-sm" onclick="adminDecideReviewer('${a.id}',false)">Reject</button>
         </div>` : ''}
-        ${a.status==='QUALIFICATION' ? `
+        ${(a.status==='QUALIFICATION' || a.status==='APPROVED') && a.user_id ? `
           <div style="display:flex;gap:8px;align-items:center">
             <input id="qScore_${a.user_id}" type="number" min="0" max="100" placeholder="Score 0-100" style="width:110px">
             <button class="btn btn-ghost btn-sm" onclick="adminSetQualification('${a.user_id}')">Set score</button>
@@ -2246,6 +2423,24 @@ async function adminDecideVerification(userId, approved) {
   catch(e) { toast(e.message, true); }
 }
 async function adminDecideReviewer(id, approved) { try { await api('/admin/reviewer-applications/'+id+'/decision', { method:'POST', body: JSON.stringify({ approved }) }); toast('Decision recorded.'); reload(); } catch(e){ toast(e.message, true); } }
+async function adminViewReviewerDoc(appId, kind) {
+  try {
+    const res = await fetch('/api/admin/reviewer-applications/'+appId+'/'+kind, { headers: { Authorization: 'Bearer ' + state.token } });
+    if (!res.ok) throw new Error('Could not load file (' + res.status + ')');
+    const blob = await res.blob();
+    window.open(URL.createObjectURL(blob), '_blank');
+  } catch(e) { toast(e.message, true); }
+}
+async function adminSendReviewerInvite(id) {
+  if (!confirm("Send this applicant a registration link? They'll be able to set up their account once they click it.")) return;
+  try { await api('/admin/reviewer-applications/'+id+'/invite', { method:'POST' }); toast('Invite sent.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
+async function adminRejectReviewerApp(id) {
+  if (!confirm('Reject this reviewer application? They will be notified by email.')) return;
+  try { await api('/admin/reviewer-applications/'+id+'/reject', { method:'POST' }); toast('Application rejected.'); reload(); }
+  catch(e) { toast(e.message, true); }
+}
 async function adminSupportReply(threadId) {
   const el = document.getElementById('adminReplyBody');
   const body = el.value.trim();
@@ -2328,6 +2523,7 @@ function checkForResetLink() {
 
 /* ============================ INIT ============================ */
 checkForResetLink();
+checkForReviewerInvite();
 bootstrap();
 </script>
 </body>
