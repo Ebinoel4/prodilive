@@ -520,7 +520,7 @@ function go(view, params = {}) {
   renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function needsAuth(view){ return ['dashboard','admin','jobDetail','reviewerHub','jobs','myPurchases','profile'].includes(view); }
+function needsAuth(view){ return ['dashboard','wallet','admin','jobDetail','reviewerHub','jobs','myPurchases','profile'].includes(view); }
 
 /* ============================ REAL-TIME LIVE FEED ============================ */
 let _socket = null;
@@ -584,7 +584,7 @@ async function render() {
   app.innerHTML = '<div class="wrap" style="padding:80px 0;text-align:center;color:var(--text-faint)">Loading…</div>';
   try {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
-      jobDetail:viewJobDetail, dashboard:viewDashboard, admin:viewAdmin, pricing:viewPricing,
+      jobDetail:viewJobDetail, dashboard:viewDashboard, wallet:viewWallet, admin:viewAdmin, pricing:viewPricing,
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
       marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms };
     app.innerHTML = await (views[state.view] || viewHome)();
@@ -1927,6 +1927,39 @@ function stopSupportPolling() {
   if (state.supportPollTimer) { clearInterval(state.supportPollTimer); state.supportPollTimer = null; }
 }
 
+/* ============================ VIEW: WALLET ============================ */
+async function viewWallet() {
+  const u = state.user;
+  let wallet = { balance:0, heldFunds:0, totalDeposits:0, totalEarnings:0, totalWithdrawals:0 };
+  let history = [];
+  try { wallet = await api('/wallet/balance'); } catch(e) { toast(e.message,true); }
+  try { history = (await api('/wallet/history')).history || []; } catch(e) { toast(e.message,true); }
+  return `<section style="padding-top:32px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:12px;flex-wrap:wrap">
+      <div><div class="eyebrow">Account</div><h1 style="font-size:28px">Wallet</h1></div>
+      <button class="btn btn-ghost btn-sm" onclick="go('dashboard')">← Dashboard</button>
+    </div>
+    <div class="dash-stats" style="margin-bottom:22px">
+      <div class="stat-card"><div class="l">Available balance</div><div class="v" style="font-size:18px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
+      <div class="stat-card"><div class="l">Funds on hold</div><div class="v" style="font-size:18px">${fmt(wallet.heldFunds||0)}</div></div>
+      <div class="stat-card"><div class="l">Total deposited</div><div class="v" style="font-size:18px">${fmt(wallet.totalDeposits)}</div></div>
+      <div class="stat-card"><div class="l">Total withdrawn</div><div class="v" style="font-size:18px">${fmt(wallet.totalWithdrawals)}</div></div>
+    </div>
+    <div class="panel" style="margin-bottom:22px">
+      <h4 style="margin-bottom:14px">Wallet actions</h4>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="margin-bottom:0"><label>Amount (₦)</label><input id="walletAmount" type="number" min="100" placeholder="5000" style="width:180px"></div>
+        <button class="btn btn-brass btn-sm" onclick="depositToWallet()">Deposit</button>
+        <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h4 style="margin-bottom:12px">Transaction history</h4>
+      ${history.length ? history.slice(0,100).map(tx=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(String(tx.type||'TRANSACTION').replaceAll('_',' '))}</strong><div style="color:var(--text-faint)">${new Date(tx.created_at).toLocaleString()} · ${esc(tx.status||'')}</div><div class="mono" style="color:var(--text-faint);font-size:10.5px">${esc(tx.reference||'')}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
+    </div>
+  </div></section>`;
+}
+
 /* ============================ VIEW: DASHBOARD ============================ */
 async function viewDashboard() {
   const u = state.user;
@@ -1944,9 +1977,7 @@ async function viewDashboard() {
   let services = [];
   if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
   let wallet = { balance: 0, heldFunds: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
-  let walletHistory = [];
   try { wallet = await api('/wallet/balance'); } catch {}
-  try { walletHistory = (await api('/wallet/history')).history || []; } catch {}
 
   if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
   if (u.role === 'admin') { go('admin'); return ''; }
@@ -1969,25 +2000,13 @@ async function viewDashboard() {
       <div class="stat-card"><div class="l">Wallet balance</div><div class="v" style="font-size:18px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
     </div>
 
-    <div class="panel" style="margin-bottom:22px">
-      <h4 style="margin-bottom:6px">Wallet</h4>
-      <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px">
-        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Balance</div><div style="font-size:16px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
-        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Funds on hold</div><div style="font-size:16px">${fmt(wallet.heldFunds||0)}</div></div>
-        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total deposited</div><div style="font-size:16px">${fmt(wallet.totalDeposits)}</div></div>
-        ${u.role==='talent' ? `<div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total earned</div><div style="font-size:16px;color:var(--signal)">${fmt(wallet.totalEarnings)}</div></div>` : ''}
-        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total withdrawn</div><div style="font-size:16px">${fmt(wallet.totalWithdrawals)}</div></div>
+    <div class="panel" style="margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Wallet</div>
+        <div style="font-size:20px;font-weight:700;color:var(--brass-soft);margin-top:3px">${fmt(wallet.balance)}</div>
+        ${Number(wallet.heldFunds||0)>0 ? `<div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">${fmt(wallet.heldFunds)} on hold</div>` : ''}
       </div>
-      <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">${u.role==='client' ? 'Deposit ahead of time to fund projects instantly without a Paystack redirect each time.' : 'Job earnings land here the moment a client approves your delivery.'}</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="margin-bottom:0"><label>Amount (₦)</label><input id="walletAmount" type="number" min="100" placeholder="5000" style="width:160px"></div>
-        <button class="btn btn-brass btn-sm" onclick="depositToWallet()">Deposit</button>
-        <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
-      </div>
-      <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:14px">
-        <h4 style="margin-bottom:10px">Transaction history</h4>
-        ${walletHistory.length ? walletHistory.slice(0,50).map(tx=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(String(tx.type||'TRANSACTION').replaceAll('_',' '))}</strong><div style="color:var(--text-faint)">${new Date(tx.created_at).toLocaleString()} · ${esc(tx.status||'')}</div><div class="mono" style="color:var(--text-faint);font-size:10.5px">${esc(tx.reference||'')}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('wallet')">Open Wallet →</button>
     </div>
 
     <div class="dash-cols">
