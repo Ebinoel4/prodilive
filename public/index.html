@@ -314,7 +314,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   </div>
   <div class="foot-bottom">
     <div>© <span id="footYear"></span> PRODILIVE. All rights reserved.</div>
-    <div class="mono">NIGERIA · ₦NGN · EXPANDING GLOBALLY</div>
+    <div class="mono">GLOBAL CREATIVE MARKETPLACE · SECURE PAYMENTS</div>
   </div>
 </div></footer>
 
@@ -330,10 +330,10 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <div class="role-opt" id="roleTalentOpt" onclick="selectRole('talent')">🎛️ I'm a Provider</div>
     </div>
     <div class="field"><label>Email address</label><input id="authEmail" type="email" placeholder="you@email.com" required></div>
-    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="••••••••" minlength="8" required></div>
+    <div class="field"><label>Password</label><div style="display:flex;gap:8px"><input id="authPassword" type="password" placeholder="••••••••" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('authPassword',this)">Show</button></div></div>
     <div id="regExtraFields" style="display:none">
       <div class="field"><label>Phone number</label><input id="authPhone" type="tel" placeholder="e.g. +234 801 234 5678"></div>
-      <div class="field"><label>Country</label><input id="authCountry" placeholder="e.g. Nigeria"></div>
+      <div class="field"><label>Country</label><input id="authCountry" placeholder="e.g. United Kingdom"></div>
       <div class="field"><label>State / Region</label><input id="authState" placeholder="e.g. Lagos"></div>
       <div class="field"><label>City</label><input id="authCity" placeholder="e.g. Ikeja"></div>
       <div class="field"><label>Address</label><input id="authAddress" placeholder="Street address"></div>
@@ -359,8 +359,8 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <h3>Choose a new password</h3>
   <div class="sub">You're resetting the password for your PRODILIVE account.</div>
   <form id="resetForm" onsubmit="submitReset(event)">
-    <div class="field"><label>New password</label><input id="resetPassword" type="password" placeholder="••••••••" minlength="8" required></div>
-    <div class="field"><label>Confirm new password</label><input id="resetPasswordConfirm" type="password" placeholder="••••••••" minlength="8" required></div>
+    <div class="field"><label>New password</label><div style="display:flex;gap:8px"><input id="resetPassword" type="password" placeholder="••••••••" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('resetPassword',this)">Show</button></div></div>
+    <div class="field"><label>Confirm new password</label><div style="display:flex;gap:8px"><input id="resetPasswordConfirm" type="password" placeholder="••••••••" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('resetPasswordConfirm',this)">Show</button></div></div>
     <button class="btn btn-brass btn-block" type="submit" id="resetSubmitBtn">Set new password</button>
   </form>
 </div></div>
@@ -385,8 +385,8 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <h3>Finish setting up your account</h3>
   <div class="sub" id="completeReviewerSub">Loading your invite…</div>
   <form id="completeReviewerForm" onsubmit="submitCompleteReviewerRegistration(event)" style="display:none">
-    <div class="field"><label>Password</label><input id="crPassword" type="password" minlength="8" required></div>
-    <div class="field"><label>Confirm password</label><input id="crPasswordConfirm" type="password" minlength="8" required></div>
+    <div class="field"><label>Password</label><div style="display:flex;gap:8px"><input id="crPassword" type="password" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('crPassword',this)">Show</button></div></div>
+    <div class="field"><label>Confirm password</label><div style="display:flex;gap:8px"><input id="crPasswordConfirm" type="password" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('crPasswordConfirm',this)">Show</button></div></div>
     <button class="btn btn-brass btn-block" type="submit" id="crSubmitBtn">Create my account</button>
   </form>
 </div></div>
@@ -491,7 +491,8 @@ async function api(path, opt = {}) {
   return body;
 }
 function esc(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function fmt(n){ return '₦' + Number(n||0).toLocaleString('en-NG'); }
+function togglePassword(id,btn){const el=document.getElementById(id);if(!el)return;el.type=el.type==='password'?'text':'password';if(btn)btn.textContent=el.type==='password'?'Show':'Hide';}
+function fmt(n,currency='NGN'){try{return new Intl.NumberFormat(undefined,{style:'currency',currency}).format(Number(n||0));}catch{return currency+' '+Number(n||0).toLocaleString();}}
 function stars(n){ n = Math.round(Number(n)||0); return '★'.repeat(n) + '☆'.repeat(5-n); }
 function timeAgo(iso){ if(!iso) return ''; const d=(Date.now()-new Date(iso))/1000; if(d<60) return 'just now'; if(d<3600) return Math.floor(d/60)+'m ago'; if(d<86400) return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago'; }
 function statusClass(s){
@@ -705,20 +706,9 @@ async function checkForPaymentCallback() {
   if (!window.location.pathname.includes('payment-callback')) return;
   const params = new URLSearchParams(window.location.search);
   const reference = params.get('reference') || params.get('trxref');
-  // Do not rely only on callback query parameters: infer the payment kind from
-  // PRODILIVE's own reference format if Paystack/browser drops custom params.
-  let type = params.get('type');
-  let jobId = params.get('jobId');
-  let productId = params.get('productId');
-  if (!type && reference) {
-    if (reference.startsWith('PRODILIVE_DEPOSIT_')) type = 'deposit';
-    else if (reference.startsWith('PRODILIVE_PRODUCT_')) type = 'product';
-    else if (reference.startsWith('PRODILIVE_')) type = 'job';
-  }
-  if (!productId && type === 'product' && reference) {
-    const m = reference.match(/^PRODILIVE_PRODUCT_([^_]+)_/);
-    if (m) productId = m[1];
-  }
+  const type = params.get('type');
+  const jobId = params.get('jobId');
+  const productId = params.get('productId');
   window.history.replaceState({}, '', '/');
   if (!reference) return;
   if (!state.user) { toast('Sign in to confirm your payment.', true); openAuth('login'); return; }
@@ -730,11 +720,10 @@ async function checkForPaymentCallback() {
       const d = await api('/wallet/deposit/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Deposit confirmed — added to your wallet.' : 'Deposit not yet confirmed — try refreshing in a moment.', d.status !== 'success');
       reload();
-    } else if (type === 'job') {
+    } else if (jobId) {
       const d = await api('/payments/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Payment confirmed — project funded.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
-      if (jobId) go('jobDetail', { id: jobId });
-      else reload();
+      go('jobDetail', { id: jobId });
     }
   } catch (e) { toast(e.message, true); }
 }
@@ -804,7 +793,7 @@ async function viewHome() {
   <section class="hero"><div class="wrap">
     <div class="hero-grid">
       <div>
-        <div class="eyebrow">Music production marketplace · Nigeria</div>
+        <div class="eyebrow">Global music production marketplace</div>
         <h1>Bring your ideas to life — with the right creative professional.</h1>
         <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
         <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
@@ -1338,9 +1327,9 @@ async function viewProfile() {
 
     <div class="panel" style="margin-top:18px">
       <h4 style="margin-bottom:10px">Change password</h4>
-      <div class="field"><label>Current password</label><input id="pwCurrent" type="password"></div>
-      <div class="field"><label>New password</label><input id="pwNew" type="password" minlength="8"></div>
-      <div class="field"><label>Confirm new password</label><input id="pwConfirm" type="password" minlength="8"></div>
+      <div class="field"><label>Current password</label><div style="display:flex;gap:8px"><input id="pwCurrent" type="password"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwCurrent',this)">Show</button></div></div>
+      <div class="field"><label>New password</label><div style="display:flex;gap:8px"><input id="pwNew" type="password" minlength="8"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwNew',this)">Show</button></div></div>
+      <div class="field"><label>Confirm new password</label><div style="display:flex;gap:8px"><input id="pwConfirm" type="password" minlength="8"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwConfirm',this)">Show</button></div></div>
       <button class="btn btn-ghost btn-sm" onclick="changePassword()">Update password</button>
     </div>
   </div></section>`;
@@ -1954,8 +1943,10 @@ async function viewDashboard() {
 
   let services = [];
   if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
-  let wallet = { balance: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
+  let wallet = { balance: 0, heldFunds: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
+  let walletHistory = [];
   try { wallet = await api('/wallet/balance'); } catch {}
+  try { walletHistory = (await api('/wallet/history')).history || []; } catch {}
 
   if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
   if (u.role === 'admin') { go('admin'); return ''; }
@@ -1982,6 +1973,7 @@ async function viewDashboard() {
       <h4 style="margin-bottom:6px">Wallet</h4>
       <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px">
         <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Balance</div><div style="font-size:16px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Funds on hold</div><div style="font-size:16px">${fmt(wallet.heldFunds||0)}</div></div>
         <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total deposited</div><div style="font-size:16px">${fmt(wallet.totalDeposits)}</div></div>
         ${u.role==='talent' ? `<div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total earned</div><div style="font-size:16px;color:var(--signal)">${fmt(wallet.totalEarnings)}</div></div>` : ''}
         <div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Total withdrawn</div><div style="font-size:16px">${fmt(wallet.totalWithdrawals)}</div></div>
@@ -1991,6 +1983,10 @@ async function viewDashboard() {
         <div class="field" style="margin-bottom:0"><label>Amount (₦)</label><input id="walletAmount" type="number" min="100" placeholder="5000" style="width:160px"></div>
         <button class="btn btn-brass btn-sm" onclick="depositToWallet()">Deposit</button>
         <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
+      </div>
+      <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:14px">
+        <h4 style="margin-bottom:10px">Transaction history</h4>
+        ${walletHistory.length ? walletHistory.slice(0,50).map(tx=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(String(tx.type||'TRANSACTION').replaceAll('_',' '))}</strong><div style="color:var(--text-faint)">${new Date(tx.created_at).toLocaleString()} · ${esc(tx.status||'')}</div><div class="mono" style="color:var(--text-faint);font-size:10.5px">${esc(tx.reference||'')}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
       </div>
     </div>
 

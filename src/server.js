@@ -148,10 +148,10 @@ app.post('/api/payments/initialize',auth,roles('client'),requireVerified,async(r
 app.get('/api/payments/verify/:reference',auth,roles('client'),async(req,res,next)=>{try{const p=(await q('SELECT p.*,j.client_id,j.title FROM payments p JOIN jobs j ON j.id=p.job_id WHERE p.reference=$1 AND j.client_id=$2',[req.params.reference,req.user.id])).rows[0];if(!p)return res.sendStatus(404);const remote=await paystack('/transaction/verify/'+encodeURIComponent(p.reference));if(remote.status==='success'&&p.status!=='HELD'){const expectedKobo=Math.round(Number(p.amount)*100);if(Number(remote.amount)!==expectedKobo||String(remote.currency||'NGN')!=='NGN')return res.status(400).json({error:'Payment amount or currency mismatch'});await q("UPDATE payments SET status='HELD',paid_at=now(),provider_payload=$1 WHERE id=$2",[remote,p.id]);await q("UPDATE jobs SET payment_status='HELD',status='IN_PROGRESS',funded_at=now() WHERE id=$1",[p.job_id]);await audit('PAYMENT_VERIFIED','PAYSTACK',{jobId:p.job_id,reference:p.reference})}res.json({status:remote.status,reference:p.reference})}catch(e){next(e)}});
 app.post('/api/jobs/:id/start',auth,roles('talent'),async(req,res,next)=>{try{const r=await q("UPDATE jobs SET started_at=now() WHERE id=$1 AND talent_id=$2 AND status='IN_PROGRESS' AND started_at IS NULL RETURNING *",[req.params.id,req.user.id]);if(!r.rowCount)return res.status(400).json({error:'Job cannot be started right now'});await audit('JOB_STARTED',req.user.id,{jobId:req.params.id});await notify(r.rows[0].client_id,'JOB_STARTED','Work has started',`Work on "${r.rows[0].title}" has officially started.`,{jobId:r.rows[0].id});res.json(publicJob(r.rows[0]))}catch(e){next(e)}});
 app.post('/api/jobs/:id/cancel-overdue',auth,roles('client'),async(req,res,next)=>{try{const j=(await q('SELECT * FROM jobs WHERE id=$1 AND client_id=$2',[req.params.id,req.user.id])).rows[0];if(!j)return res.sendStatus(404);if(!j.deadline||new Date(j.deadline)>new Date())return res.status(400).json({error:'The deadline has not passed yet'});if(!['IN_PROGRESS','REVISION_REQUESTED'].includes(j.status))return res.status(400).json({error:'This job cannot be cancelled right now'});const p=(await q('SELECT * FROM payments WHERE job_id=$1 ORDER BY created_at DESC LIMIT 1',[j.id])).rows[0];if(p&&p.status==='HELD'){if(p.provider==='WALLET'){await q("INSERT INTO wallet_ledger(user_id,type,amount,reference,status,meta) VALUES($1,'REFUND',$2,$3,'COMPLETED',$4)",[j.client_id,Number(p.amount),p.reference,JSON.stringify({jobId:j.id})]);await q("UPDATE payments SET status='REFUNDED' WHERE id=$1",[p.id]);}else{const amount=Math.round(Number(p.amount)*100);const refund=await paystack('/refund','POST',{transaction:p.reference,amount});await q("UPDATE payments SET status='REFUND_PROCESSING',provider_payload=$1 WHERE id=$2",[refund,p.id]);}await q("UPDATE jobs SET payment_status='REFUND_PENDING' WHERE id=$1",[j.id]);}await q("UPDATE jobs SET status='CANCELLED' WHERE id=$1",[j.id]);await notify(j.talent_id,'JOB_CANCELLED','Project cancelled — deadline missed',`"${j.title}" was cancelled by the client because the deadline passed.`,{jobId:j.id});await audit('CLIENT_CANCELLED_OVERDUE_JOB',req.user.id,{jobId:j.id});res.json({ok:true})}catch(e){next(e)}});
-app.get('/api/wallet/balance',auth,async(req,res,next)=>{try{const r=await q("SELECT COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED'",[req.user.id]);const byType=await q("SELECT type,COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED' GROUP BY type",[req.user.id]);const totals=Object.fromEntries(byType.rows.map(x=>[x.type,Number(x.total)]));res.json({balance:Number(r.rows[0].total),totalDeposits:totals.DEPOSIT||0,totalEarnings:totals.JOB_EARNING||0,totalWithdrawals:Math.abs(totals.WITHDRAWAL||0),totalRefunds:totals.REFUND||0})}catch(e){next(e)}});
+app.get('/api/wallet/balance',auth,async(req,res,next)=>{try{const r=await q("SELECT COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED'",[req.user.id]);const byType=await q("SELECT type,COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED' GROUP BY type",[req.user.id]);const totals=Object.fromEntries(byType.rows.map(x=>[x.type,Number(x.total)]));let held=0;if(req.user.role==='client'){const h=await q("SELECT COALESCE(SUM(p.amount),0) total FROM payments p JOIN jobs j ON j.id=p.job_id WHERE j.client_id=$1 AND p.status IN ('HELD','RELEASE_PENDING','FROZEN')",[req.user.id]);held=Number(h.rows[0].total)}else if(req.user.role==='talent'){const h=await q("SELECT COALESCE(SUM(p.amount),0) total FROM payments p JOIN jobs j ON j.id=p.job_id WHERE j.talent_id=$1 AND p.status IN ('HELD','RELEASE_PENDING','FROZEN')",[req.user.id]);held=Number(h.rows[0].total)}res.json({balance:Number(r.rows[0].total),heldFunds:held,totalDeposits:totals.DEPOSIT||0,totalEarnings:totals.JOB_EARNING||0,totalWithdrawals:Math.abs(totals.WITHDRAWAL||0),totalRefunds:totals.REFUND||0})}catch(e){next(e)}});
 app.get('/api/wallet/history',auth,async(req,res,next)=>{try{const r=await q('SELECT * FROM wallet_ledger WHERE user_id=$1 ORDER BY created_at DESC LIMIT 200',[req.user.id]);res.json({history:r.rows})}catch(e){next(e)}});
 app.post('/api/wallet/deposit',auth,async(req,res,next)=>{try{const amount=Number(req.body.amount);if(!Number.isFinite(amount)||amount<100)return res.status(400).json({error:'Minimum deposit is 100'});const reference=`PRODILIVE_DEPOSIT_${req.user.id}_${Date.now()}`;const p=await paystack('/transaction/initialize','POST',{email:req.user.email,amount:Math.round(amount*100),currency:'NGN',reference,callback_url:`${APP_ORIGIN}/payment-callback?type=deposit`,metadata:{userId:req.user.id,type:'WALLET_DEPOSIT'}});await q("INSERT INTO wallet_ledger(user_id,type,amount,reference,status,meta) VALUES($1,'DEPOSIT',$2,$3,'PROCESSING',$4)",[req.user.id,amount,reference,JSON.stringify({requested:amount})]);res.json({authorization_url:p.authorization_url,reference})}catch(e){next(e)}});
-app.get('/api/wallet/deposit/verify/:reference',auth,async(req,res,next)=>{try{const entry=(await q("SELECT * FROM wallet_ledger WHERE reference=$1 AND user_id=$2 AND type='DEPOSIT'",[req.params.reference,req.user.id])).rows[0];if(!entry)return res.sendStatus(404);if(entry.status==='COMPLETED')return res.json({status:'success'});const remote=await paystack('/transaction/verify/'+encodeURIComponent(req.params.reference));if(remote.status==='success'){const feeSetting=await q('SELECT value FROM settings WHERE key=$1',['depositFeePercent']);const feePercent=Number(feeSetting.rowCount?json(feeSetting.rows[0].value):0);const requested=Number(entry.amount);const expectedKobo=Math.round(requested*100);if(Number(remote.amount)!==expectedKobo)return res.status(400).json({error:'Amount mismatch'});const credited=Math.round(requested*(1-feePercent/100)*100)/100;await q("UPDATE wallet_ledger SET status='COMPLETED',amount=$1,meta=$2 WHERE id=$3",[credited,JSON.stringify({requested,feePercent}),entry.id]);await audit('WALLET_DEPOSIT',req.user.id,{amount:credited,reference:req.params.reference});}res.json({status:remote.status})}catch(e){next(e)}});
+app.get('/api/wallet/deposit/verify/:reference',auth,async(req,res,next)=>{try{const entry=(await q("SELECT * FROM wallet_ledger WHERE reference=$1 AND user_id=$2 AND type='DEPOSIT'",[req.params.reference,req.user.id])).rows[0];if(!entry)return res.sendStatus(404);if(entry.status==='COMPLETED')return res.json({status:'success'});const remote=await paystack('/transaction/verify/'+encodeURIComponent(req.params.reference));if(remote.status==='success'){const feeSetting=await q('SELECT value FROM settings WHERE key=$1',['depositFeePercent']);const feePercent=Number(feeSetting.rowCount?json(feeSetting.rows[0].value):0);const requested=Number(entry.amount);const expectedKobo=Math.round(requested*100);console.log('Wallet deposit verify check:',{reference:req.params.reference,storedAmountNgn:requested,expectedKobo,paystackAmountKobo:Number(remote.amount),currency:String(remote.currency||'')});if(Number(remote.amount)!==expectedKobo){console.error('Wallet deposit amount mismatch:',{reference:req.params.reference,storedAmountNgn:requested,expectedKobo,paystackAmountKobo:Number(remote.amount)});return res.status(400).json({error:`Amount mismatch (expected ${expectedKobo} kobo, Paystack returned ${Number(remote.amount)} kobo)`});}const credited=Math.round(requested*(1-feePercent/100)*100)/100;await q("UPDATE wallet_ledger SET status='COMPLETED',amount=$1,meta=$2 WHERE id=$3",[credited,JSON.stringify({requested,feePercent}),entry.id]);await audit('WALLET_DEPOSIT',req.user.id,{amount:credited,reference:req.params.reference});}res.json({status:remote.status})}catch(e){next(e)}});
 app.post('/api/wallet/withdraw',auth,async(req,res,next)=>{try{const u=(await q('SELECT * FROM users WHERE id=$1',[req.user.id])).rows[0];if(!u.bank_code||!u.account_number)return res.status(400).json({error:'Add your payout details first'});const balanceRow=await q("SELECT COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED'",[u.id]);const balance=Number(balanceRow.rows[0].total);const amount=req.body.amount?Number(req.body.amount):balance;if(!Number.isFinite(amount)||amount<=0||amount>balance)return res.status(400).json({error:'Invalid withdrawal amount'});const feeSetting=await q('SELECT value FROM settings WHERE key=$1',['withdrawalFeePercent']);const feePercent=Number(feeSetting.rowCount?json(feeSetting.rows[0].value):2);const fee=Math.round(amount*feePercent/100*100)/100;const payout=amount-fee;if(payout<=0)return res.status(400).json({error:'Amount is too small after fees'});if(!u.paystack_recipient_code){const recipient=await paystack('/transferrecipient','POST',{type:'nuban',name:u.account_name||u.name,account_number:u.account_number,bank_code:u.bank_code,currency:'NGN'});await q('UPDATE users SET paystack_recipient_code=$1 WHERE id=$2',[recipient.recipient_code,u.id]);u.paystack_recipient_code=recipient.recipient_code}const reference=`PRODILIVE_WD_${u.id}_${Date.now()}`;await q("INSERT INTO wallet_ledger(user_id,type,amount,reference,status,meta) VALUES($1,'WITHDRAWAL',$2,$3,'COMPLETED',$4)",[u.id,-amount,reference,JSON.stringify({fee,payout})]);try{const transfer=await paystack('/transfer','POST',{source:'balance',amount:Math.round(payout*100),recipient:u.paystack_recipient_code,reason:'PRODILIVE wallet withdrawal',reference});await audit('WALLET_WITHDRAWAL',u.id,{amount,fee,payout,reference});res.json({ok:true,amount,fee,payout})}catch(err){await q("INSERT INTO wallet_ledger(user_id,type,amount,reference,status,meta) VALUES($1,'REFUND',$2,$3,'COMPLETED',$4)",[u.id,amount,reference+'_reversal',JSON.stringify({reversalOf:reference})]);throw err}}catch(e){next(e)}});
 app.post('/api/jobs/:id/fund-from-wallet',auth,roles('client'),requireVerified,async(req,res,next)=>{try{const j=(await q('SELECT * FROM jobs WHERE id=$1 AND client_id=$2',[req.params.id,req.user.id])).rows[0];if(!j)return res.sendStatus(404);if(j.status!=='AWAITING_PAYMENT')return res.status(400).json({error:'Job is not awaiting funding'});const balanceRow=await q("SELECT COALESCE(SUM(amount),0) total FROM wallet_ledger WHERE user_id=$1 AND status='COMPLETED'",[req.user.id]);const balance=Number(balanceRow.rows[0].total);if(balance<Number(j.budget))return res.status(400).json({error:'Insufficient wallet balance'});const reference=`PRODILIVE_WALLETFUND_${j.id}_${Date.now()}`;await q("INSERT INTO wallet_ledger(user_id,type,amount,reference,status,meta) VALUES($1,'JOB_FUNDING',$2,$3,'COMPLETED',$4)",[req.user.id,-Number(j.budget),reference,JSON.stringify({jobId:j.id})]);await q('INSERT INTO payments(job_id,reference,amount,status,currency,provider,paid_at) VALUES($1,$2,$3,$4,$5,$6,now())',[j.id,reference,j.budget,'HELD','NGN','WALLET']);await q("UPDATE jobs SET payment_status='HELD',status='IN_PROGRESS',funded_at=now() WHERE id=$1",[j.id]);await audit('JOB_FUNDED_FROM_WALLET',req.user.id,{jobId:j.id,reference});await notify(j.talent_id,'FUNDED','Project funded',`"${j.title}" has been funded — you can start work.`,{jobId:j.id});res.json({ok:true})}catch(e){next(e)}});
 // If this Paystack account is shared with another site, set
@@ -167,108 +167,27 @@ function forwardWebhookToSecondary(rawBody,signature){
     .then(r=>{if(!r.ok)console.error('Webhook forward to secondary site returned',r.status)})
     .catch(e=>console.error('Webhook forward to secondary site failed:',e.message));
 }
-app.post('/api/paystack/webhook',async(req,res)=>{
-  const sig=String(req.headers['x-paystack-signature']||''),expected=crypto.createHmac('sha512',process.env.PAYSTACK_SECRET_KEY||'').update(req.rawBody||'').digest('hex');
-  if(!sig||sig.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return res.sendStatus(401);
-
-  const event=req.body||{};
-  const eventKey=sha(req.rawBody||'');
-  let claimed=false;
-  try{
-    const claim=await q("INSERT INTO webhook_events(event_key,provider,event_type,payload) VALUES($1,'PAYSTACK',$2,$3) ON CONFLICT(event_key) DO NOTHING RETURNING event_key",[eventKey,String(event.event||'UNKNOWN'),event]);
-    if(!claim.rowCount)return res.sendStatus(200);
-    claimed=true;
-
-    console.log('Paystack webhook received:',event.event,event.data?.reference||'');
-
-    if(event.event==='charge.success'){
-      const ref=String(event.data?.reference||'');
-      const currency=String(event.data?.currency||'NGN');
-      const amountKobo=Number(event.data?.amount);
-      let handled=false;
-
-      // 1) Marketplace job payment.
-      const r=await q('SELECT * FROM payments WHERE reference=$1',[ref]);
-      if(r.rowCount){
-        handled=true;
-        const p=r.rows[0];
-        if(amountKobo!==Math.round(Number(p.amount)*100)||currency!=='NGN'){
-          await audit('PAYMENT_WEBHOOK_REJECTED','PAYSTACK',{reference:ref,reason:'amount_or_currency_mismatch'});
-        }else if(p.status!=='HELD'){
-          await q("UPDATE payments SET status='HELD',paid_at=now(),provider_payload=$1 WHERE id=$2 AND status<>'HELD'",[event.data,p.id]);
-          const j=(await q("UPDATE jobs SET payment_status='HELD',status='IN_PROGRESS',funded_at=COALESCE(funded_at,now()) WHERE id=$1 RETURNING *",[p.job_id])).rows[0];
-          if(j){
-            await audit('PAYMENT_CONFIRMED_HELD','PAYSTACK',{jobId:j.id,reference:ref});
-            if(j.talent_id)await notify(j.talent_id,'PAYMENT_HELD','Job funded',`"${j.title}" is funded and ready for production.`,{jobId:j.id});
-          }
-          console.log('Paystack job payment confirmed:',ref);
-        }
+app.post('/api/paystack/webhook',async(req,res)=>{try{const sig=String(req.headers['x-paystack-signature']||''),expected=crypto.createHmac('sha512',process.env.PAYSTACK_SECRET_KEY||'').update(req.rawBody||'').digest('hex');if(!sig||sig.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))return res.sendStatus(401);const eventKey=sha(req.rawBody||'');const claimed=await q("INSERT INTO webhook_events(event_key,provider,event_type,payload) VALUES($1,'PAYSTACK',$2,$3) ON CONFLICT(event_key) DO NOTHING RETURNING event_key",[eventKey,String(req.body?.event||'UNKNOWN'),req.body||{}]);if(!claimed.rowCount)return res.sendStatus(200);res.sendStatus(200);forwardWebhookToSecondary(req.rawBody,sig);const event=req.body;if(event.event==='charge.success'){const ref=event.data.reference;const r=await q('SELECT * FROM payments WHERE reference=$1',[ref]);if(r.rowCount&&r.rows[0].status!=='HELD'){const p=r.rows[0];if(Number(event.data.amount)!==Math.round(Number(p.amount)*100)||String(event.data.currency||'NGN')!=='NGN'){await audit('PAYMENT_WEBHOOK_REJECTED','PAYSTACK',{reference:ref,reason:'amount_or_currency_mismatch'});return}await q("UPDATE payments SET status='HELD',paid_at=now(),provider_payload=$1 WHERE id=$2",[event.data,p.id]);const j=(await q("UPDATE jobs SET payment_status='HELD',status='IN_PROGRESS',funded_at=now() WHERE id=$1 RETURNING *",[p.job_id])).rows[0];if(j){await audit('PAYMENT_CONFIRMED_HELD','PAYSTACK',{jobId:j.id,reference:ref});if(j.talent_id)await notify(j.talent_id,'PAYMENT_HELD','Job funded',`"${j.title}" is funded and ready for production.`,{jobId:j.id})}}else if(!r.rowCount){
+    // Not a job payment - check if this reference belongs to a wallet deposit.
+    // This is the reliable server-side path: it credits the wallet even if
+    // the person never lands back on the site after paying (closed tab,
+    // lost connection, browser back button, etc).
+    const w=(await q("SELECT * FROM wallet_ledger WHERE reference=$1 AND type='DEPOSIT'",[ref])).rows[0];
+    if(w&&w.status!=='COMPLETED'){
+      const feeSetting=await q('SELECT value FROM settings WHERE key=$1',['depositFeePercent']);
+      const feePercent=Number(feeSetting.rowCount?json(feeSetting.rows[0].value):0);
+      const requested=Number(w.amount);
+      const expectedKobo=Math.round(requested*100);
+      console.log('Wallet deposit webhook check:',{reference:ref,storedAmountNgn:requested,expectedKobo,paystackAmountKobo:Number(event.data.amount),currency:String(event.data.currency||'')});
+      if(Number(event.data.amount)===expectedKobo&&String(event.data.currency||'NGN')==='NGN'){
+        const credited=Math.round(requested*(1-feePercent/100)*100)/100;
+        await q("UPDATE wallet_ledger SET status='COMPLETED',amount=$1,meta=$2 WHERE id=$3",[credited,JSON.stringify({requested,feePercent,viaWebhook:true}),w.id]);
+        await audit('WALLET_DEPOSIT_WEBHOOK','PAYSTACK',{userId:w.user_id,amount:credited,reference:ref});
+      }else{
+        console.error('Wallet deposit webhook rejected:',{reference:ref,storedAmountNgn:requested,expectedKobo,paystackAmountKobo:Number(event.data.amount),currency:String(event.data.currency||'')});await audit('WALLET_DEPOSIT_WEBHOOK_REJECTED','PAYSTACK',{reference:ref,reason:'amount_or_currency_mismatch',requested,expectedKobo,paystackAmountKobo:Number(event.data.amount),currency:String(event.data.currency||'')});
       }
-
-      // 2) Wallet deposit. Atomic status guard prevents double crediting.
-      if(!handled){
-        const w=(await q("SELECT * FROM wallet_ledger WHERE reference=$1 AND type='DEPOSIT'",[ref])).rows[0];
-        if(w){
-          handled=true;
-          const requested=Number(w.meta?.requested ?? w.amount);
-          if(amountKobo!==Math.round(requested*100)||currency!=='NGN'){
-            await audit('WALLET_DEPOSIT_WEBHOOK_REJECTED','PAYSTACK',{reference:ref,reason:'amount_or_currency_mismatch'});
-          }else if(w.status!=='COMPLETED'){
-            const feeSetting=await q('SELECT value FROM settings WHERE key=$1',['depositFeePercent']);
-            const feePercent=Number(feeSetting.rowCount?json(feeSetting.rows[0].value):0);
-            const credited=Math.round(requested*(1-feePercent/100)*100)/100;
-            const done=await q("UPDATE wallet_ledger SET status='COMPLETED',amount=$1,meta=$2 WHERE id=$3 AND status<>'COMPLETED' RETURNING id",[credited,JSON.stringify({requested,feePercent,viaWebhook:true}),w.id]);
-            if(done.rowCount){
-              await audit('WALLET_DEPOSIT_WEBHOOK','PAYSTACK',{userId:w.user_id,amount:credited,reference:ref});
-              console.log('Paystack wallet deposit credited:',ref,'user',w.user_id,'amount',credited);
-            }
-          }
-        }
-      }
-
-      // 3) Marketplace product purchase. This previously depended on the browser callback.
-      if(!handled){
-        const o=(await q('SELECT * FROM product_orders WHERE reference=$1',[ref])).rows[0];
-        if(o){
-          handled=true;
-          if(amountKobo!==Math.round(Number(o.amount)*100)||currency!=='NGN'){
-            await audit('PRODUCT_WEBHOOK_REJECTED','PAYSTACK',{reference:ref,reason:'amount_or_currency_mismatch'});
-          }else if(o.status!=='PAID'){
-            const paid=await q("UPDATE product_orders SET status='PAID',paid_at=now(),provider_payload=$1 WHERE id=$2 AND status<>'PAID' RETURNING id",[event.data,o.id]);
-            if(paid.rowCount){
-              await q('UPDATE products SET sales_count=sales_count+1 WHERE id=$1',[o.product_id]);
-              await notify(o.seller_id,'PRODUCT_SALE','You made a sale!',`Your listing sold for ₦${o.amount}.`,{productId:o.product_id});
-              await audit('PRODUCT_PURCHASE_WEBHOOK','PAYSTACK',{productId:o.product_id,reference:ref});
-              console.log('Paystack product purchase confirmed:',ref);
-            }
-          }
-        }
-      }
-
-      if(!handled)console.warn('Paystack charge.success reference not found locally:',ref);
-    }else if(['refund.processed','refund.failed','refund.pending'].includes(event.event)){
-      const ref=event.data.transaction_reference||event.data.reference;
-      const status=event.event==='refund.processed'?'REFUNDED':event.event==='refund.failed'?'REFUND_FAILED':'REFUND_PROCESSING';
-      const p=(await q('UPDATE payments SET status=$1,provider_payload=$2 WHERE reference=$3 RETURNING *',[status,event.data,ref])).rows[0];
-      if(p){await audit('REFUND_WEBHOOK','PAYSTACK',{jobId:p.job_id,reference:ref,status});if(status==='REFUNDED')await q("UPDATE jobs SET payment_status='REFUNDED',status='CANCELLED' WHERE id=$1",[p.job_id])}
-    }else if(['transfer.success','transfer.failed','transfer.reversed'].includes(event.event)){
-      const ref=event.data.reference;
-      const status=event.event==='transfer.success'?'SUCCESS':event.event==='transfer.failed'?'FAILED':'REVERSED';
-      const p=(await q('UPDATE payouts SET status=$1,provider_payload=$2 WHERE reference=$3 RETURNING *',[status,event.data,ref])).rows[0];
-      if(p){if(status==='SUCCESS'){await q("UPDATE jobs SET payment_status='RELEASED',status='RELEASED' WHERE id=$1 AND payment_status='RELEASE_PENDING'",[p.job_id])}else{await q("UPDATE jobs SET payment_status='RELEASE_PENDING',status='APPROVED' WHERE id=$1 AND status='RELEASED'",[p.job_id])}await audit('PAYOUT_WEBHOOK','PAYSTACK',{jobId:p.job_id,reference:ref,status})}
     }
-
-    // Acknowledge only after PRODILIVE has processed the event. Forwarding is best-effort and separate.
-    res.sendStatus(200);
-    forwardWebhookToSecondary(req.rawBody,sig);
-  }catch(e){
-    console.error('Paystack webhook processing failed:',e);
-    // If processing failed after claiming the event, release the claim so Paystack's retry can process it again.
-    if(claimed){try{await q('DELETE FROM webhook_events WHERE event_key=$1',[eventKey])}catch(cleanupErr){console.error('Paystack webhook claim cleanup failed:',cleanupErr)}}
-    if(!res.headersSent)res.sendStatus(500);
-  }
-});
-
+  }}else if(['refund.processed','refund.failed','refund.pending'].includes(event.event)){const ref=event.data.transaction_reference||event.data.reference;const status=event.event==='refund.processed'?'REFUNDED':event.event==='refund.failed'?'REFUND_FAILED':'REFUND_PROCESSING';const p=(await q('UPDATE payments SET status=$1,provider_payload=$2 WHERE reference=$3 RETURNING *',[status,event.data,ref])).rows[0];if(p){await audit('REFUND_WEBHOOK','PAYSTACK',{jobId:p.job_id,reference:ref,status});if(status==='REFUNDED')await q("UPDATE jobs SET payment_status='REFUNDED',status='CANCELLED' WHERE id=$1",[p.job_id])}}else if(['transfer.success','transfer.failed','transfer.reversed'].includes(event.event)){const ref=event.data.reference;const status=event.event==='transfer.success'?'SUCCESS':event.event==='transfer.failed'?'FAILED':'REVERSED';const p=(await q('UPDATE payouts SET status=$1,provider_payload=$2 WHERE reference=$3 RETURNING *',[status,event.data,ref])).rows[0];if(p){if(status==='SUCCESS'){await q("UPDATE jobs SET payment_status='RELEASED',status='RELEASED' WHERE id=$1 AND payment_status='RELEASE_PENDING'",[p.job_id])}else{await q("UPDATE jobs SET payment_status='RELEASE_PENDING',status='APPROVED' WHERE id=$1 AND status='RELEASED'",[p.job_id])}await audit('PAYOUT_WEBHOOK', 'PAYSTACK',{jobId:p.job_id,reference:ref,status})}}}catch(e){console.error('Paystack webhook:',e)}});
 const ALLOWED_UPLOAD_MIMES=new Set(String(process.env.ALLOWED_UPLOAD_MIMES||'audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/aac,audio/flac,audio/ogg,application/zip,application/pdf,image/png,image/jpeg').split(',').map(x=>x.trim().toLowerCase()));
 const upload=multer({dest:TMP,limits:{fileSize:Number(process.env.MAX_UPLOAD_MB||500)*1024*1024,files:10},fileFilter:(req,file,cb)=>{if(file.fieldname==='selfie')return['image/jpeg','image/png'].includes(String(file.mimetype).toLowerCase())?cb(null,true):cb(Object.assign(new Error('Selfie must be a JPG or PNG photo'),{code:'LIMIT_UNEXPECTED_FILE'}));return ALLOWED_UPLOAD_MIMES.has(String(file.mimetype).toLowerCase())?cb(null,true):cb(Object.assign(new Error('Unsupported file type'),{code:'LIMIT_UNEXPECTED_FILE'}))}});
 const VALID_DOC_TYPES=new Set(['NIN','PASSPORT','DRIVERS_LICENSE','VOTERS_CARD','OTHER']);
