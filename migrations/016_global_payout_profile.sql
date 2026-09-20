@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payout_country text NOT NULL DEFAULT 'NG';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payout_currency text NOT NULL DEFAULT 'NGN';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payout_recipient_type text NOT NULL DEFAULT 'nuban';

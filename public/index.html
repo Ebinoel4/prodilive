@@ -1071,17 +1071,10 @@ async function viewReviewerHub() {
 
         <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
           <h4 style="margin-bottom:10px">Payout details</h4>
-          <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none';resolvePayoutAccount()">
-            <option value="">Select your bank</option>
-            <option value="044">Access Bank</option><option value="058">Guaranty Trust Bank (GTBank)</option>
-            <option value="011">First Bank of Nigeria</option><option value="033">United Bank For Africa (UBA)</option>
-            <option value="057">Zenith Bank</option><option value="221">Stanbic IBTC Bank</option>
-            <option value="50211">Kuda Bank</option><option value="999992">Opay</option><option value="100004">Palmpay</option>
-            <option value="OTHER">Other / not listed</option>
-          </select></div>
-          <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058" oninput="resolvePayoutAccount()"></div>
-          <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Enter bank + account number to verify" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
-          <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" inputmode="numeric" maxlength="10" placeholder="0123456789" oninput="resolvePayoutAccount()"></div>
+          <div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div>
+          <div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div>
+          <div class="field"><label>Account number</label><input id="pfAccount" inputmode="numeric" maxlength="24" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div>
+          <div class="field"><label>Verified account name</label><input id="pfAccountName" placeholder="Account name will appear automatically" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
           <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
         </div>
       </div>
@@ -2053,36 +2046,10 @@ async function viewDashboard() {
         ${(u.role==='talent'||u.role==='client') ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:10px">Payout details <span style="font-weight:400;color:var(--text-faint);font-size:11.5px">(needed to withdraw your wallet balance)</span></h4>
-            <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none';resolvePayoutAccount()">
-              <option value="">Select your bank</option>
-              <option value="044">Access Bank</option>
-              <option value="023">Citibank Nigeria</option>
-              <option value="050">Ecobank Nigeria</option>
-              <option value="070">Fidelity Bank</option>
-              <option value="011">First Bank of Nigeria</option>
-              <option value="214">First City Monument Bank (FCMB)</option>
-              <option value="058">Guaranty Trust Bank (GTBank)</option>
-              <option value="030">Heritage Bank</option>
-              <option value="301">Jaiz Bank</option>
-              <option value="082">Keystone Bank</option>
-              <option value="076">Polaris Bank</option>
-              <option value="221">Stanbic IBTC Bank</option>
-              <option value="068">Standard Chartered Bank</option>
-              <option value="232">Sterling Bank</option>
-              <option value="032">Union Bank of Nigeria</option>
-              <option value="033">United Bank For Africa (UBA)</option>
-              <option value="215">Unity Bank</option>
-              <option value="035">Wema Bank</option>
-              <option value="057">Zenith Bank</option>
-              <option value="50211">Kuda Bank</option>
-              <option value="999992">Opay</option>
-              <option value="100004">Palmpay</option>
-              <option value="120001">9 Payment Service Bank (9PSB)</option>
-              <option value="OTHER">Other / not listed</option>
-            </select></div>
-            <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058" oninput="resolvePayoutAccount()"></div>
-            <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Enter bank + account number to verify" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
-            <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" inputmode="numeric" maxlength="10" placeholder="0123456789" oninput="resolvePayoutAccount()"></div>
+            <div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select><div style="font-size:11.5px;color:var(--text-faint);margin-top:5px">PRODILIVE is global. Bank payouts shown here depend on the payout countries enabled by Paystack.</div></div>
+            <div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div>
+            <div class="field"><label>Account number</label><input id="pfAccount" inputmode="numeric" maxlength="24" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div>
+            <div class="field"><label>Verified account name</label><input id="pfAccountName" placeholder="Account name will appear automatically" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
             <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
           </div>
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
@@ -2198,7 +2165,7 @@ async function depositToWallet() {
 async function withdrawFromWallet() {
   const raw = document.getElementById('walletAmount').value;
   const amount = raw ? Number(raw) : undefined;
-  if (!confirm(amount ? `Withdraw ₦${amount} to your saved bank account? A withdrawal fee applies.` : 'Withdraw your full available balance to your saved bank account? A withdrawal fee applies.')) return;
+  if (!confirm(amount ? `Request withdrawal of ₦${amount}? The amount will be reserved while an admin processes the payout.` : 'Request withdrawal of your full available balance? The amount will be reserved while an admin processes the payout.')) return;
   try {
     const d = await api('/wallet/withdraw', { method:'POST', body: JSON.stringify(amount ? { amount } : {}) });
     toast(`Withdrawal initiated: ₦${d.payout} sent (₦${d.fee} fee deducted).`);
@@ -2206,27 +2173,21 @@ async function withdrawFromWallet() {
   } catch(e) { toast(e.message, true); }
 }
 let payoutResolveTimer;
+async function loadPayoutBanks(){
+  const countryEl=document.getElementById('pfPayoutCountry'),bankEl=document.getElementById('pfBankCode'),statusEl=document.getElementById('pfAccountVerify'),nameEl=document.getElementById('pfAccountName');
+  if(!countryEl||!bankEl)return;const country=countryEl.value||'NG';bankEl.innerHTML='<option value="">Loading banks…</option>';if(nameEl)nameEl.value='';
+  try{const d=await api('/payout/banks?country='+encodeURIComponent(country));bankEl.innerHTML='<option value="">Select your bank</option>'+d.banks.map(b=>`<option value="${esc(b.code)}">${esc(b.name)}</option>`).join('');if(statusEl&&['ZA','KE'].includes(country)){statusEl.textContent='This market needs a country-specific verification flow before automatic withdrawal can be enabled.';statusEl.style.color='var(--text-dim)'}}
+  catch(e){bankEl.innerHTML='<option value="">Could not load banks</option>';if(statusEl){statusEl.textContent=e.message;statusEl.style.color='var(--danger)'}}
+}
 async function resolvePayoutAccount() {
-  clearTimeout(payoutResolveTimer);
-  const bankEl=document.getElementById('pfBankCode'), acctEl=document.getElementById('pfAccount'), nameEl=document.getElementById('pfAccountName'), statusEl=document.getElementById('pfAccountVerify');
-  if(!bankEl||!acctEl||!nameEl)return;
-  const selected=bankEl.value;const bankCode=selected==='OTHER'?(document.getElementById('pfBankCodeOther')?.value.trim()||''):selected;const accountNumber=acctEl.value.replace(/\D/g,'').slice(0,10);acctEl.value=accountNumber;
-  nameEl.value='';if(statusEl)statusEl.textContent='';
-  if(!/^\d{3,6}$/.test(bankCode)||!/^\d{10}$/.test(accountNumber))return;
-  if(statusEl)statusEl.textContent='Verifying account…';
-  payoutResolveTimer=setTimeout(async()=>{try{const d=await api('/payout/resolve-account?bankCode='+encodeURIComponent(bankCode)+'&accountNumber='+encodeURIComponent(accountNumber));nameEl.value=d.accountName||'';if(statusEl){statusEl.textContent='✓ Account verified';statusEl.style.color='var(--signal)'}}catch(e){nameEl.value='';if(statusEl){statusEl.textContent=e.message||'Account could not be verified';statusEl.style.color='var(--danger)'}}},350);
+  clearTimeout(payoutResolveTimer);const countryEl=document.getElementById('pfPayoutCountry'),bankEl=document.getElementById('pfBankCode'),acctEl=document.getElementById('pfAccount'),nameEl=document.getElementById('pfAccountName'),statusEl=document.getElementById('pfAccountVerify');
+  if(!countryEl||!bankEl||!acctEl||!nameEl)return;const country=countryEl.value||'NG',bankCode=bankEl.value,accountNumber=acctEl.value.replace(/\s/g,'');nameEl.value='';if(statusEl)statusEl.textContent='';if(!bankCode||accountNumber.length<5)return;
+  if(statusEl)statusEl.textContent='Verifying account…';payoutResolveTimer=setTimeout(async()=>{try{const d=await api('/payout/resolve-account?country='+encodeURIComponent(country)+'&bankCode='+encodeURIComponent(bankCode)+'&accountNumber='+encodeURIComponent(accountNumber));nameEl.value=d.accountName||'';if(statusEl){statusEl.textContent='✓ Account verified';statusEl.style.color='var(--signal)'}}catch(e){nameEl.value='';if(statusEl){statusEl.textContent=e.message||'Account could not be verified';statusEl.style.color='var(--danger)'}}},350);
 }
 async function savePayout() {
-  const selected = document.getElementById('pfBankCode').value;
-  const bankCode = selected === 'OTHER' ? document.getElementById('pfBankCodeOther').value.trim() : selected;
-  const accountNumber = document.getElementById('pfAccount').value.trim();
-  if (!bankCode) { toast('Choose your bank first', true); return; }
-  if (!/^\d{10}$/.test(accountNumber)) { toast('Enter a valid 10-digit account number', true); return; }
-  try {
-    const d=await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode, accountNumber }) });
-    document.getElementById('pfAccountName').value=d.accountName||'';
-    toast('Bank account verified and saved.');
-  } catch(e) { toast(e.message, true); }
+  const country=document.getElementById('pfPayoutCountry')?.value||'NG',bankCode=document.getElementById('pfBankCode')?.value||'',accountNumber=document.getElementById('pfAccount')?.value.trim()||'';
+  if(!bankCode){toast('Choose your bank first',true);return}if(accountNumber.length<5){toast('Enter a valid account number',true);return}
+  try{const d=await api('/me/payout-profile',{method:'PUT',body:JSON.stringify({country,bankCode,accountNumber})});document.getElementById('pfAccountName').value=d.accountName||'';toast('Bank account verified and saved.')}catch(e){toast(e.message,true)}
 }
 async function submitVerificationDoc() {
   const input = document.getElementById('verifDocInput');
@@ -2252,12 +2213,13 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], payments = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
+  let overview = {}, users = [], jobs = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='users') users = (await api('/admin/users')).users;
     if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
+    if (tab==='withdrawals') withdrawals = (await api('/admin/withdrawals')).withdrawals;
     if (tab==='verifications') verifications = (await api('/admin/verifications')).verifications;
     if (tab==='audit') auditLog = (await api('/admin/audit')).audit;
     if (tab==='settings') settings = (await api('/admin/settings')).settings;
@@ -2277,7 +2239,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -2298,6 +2260,8 @@ async function viewAdmin() {
           ${u.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.id}','${esc(u.name)}')">Delete</button>` : ''}
         </td></tr>`).join('')}
       </table></div>`;
+  } else if (tab==='withdrawals') {
+    body = `<div class="panel">${withdrawals.length ? withdrawals.map(w=>`<div style="border-top:1px solid var(--hair);padding:14px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>${esc(w.user_name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(w.user_email)} · ${esc(w.currency)} ${Number(w.payout_amount).toLocaleString()} · ${esc(w.status)}</div><div style="font-size:12px;margin-top:5px">${esc(w.account_name||'')} · ${esc(w.account_number||'')} · Bank code: ${esc(w.bank_code||'')}</div></div>${w.status==='PROCESSING'?`<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><input id="wdRef_${w.id}" placeholder="Payment reference" style="width:170px"><button class="btn btn-brass btn-sm" onclick="adminMarkWithdrawalPaid('${w.id}')">Mark paid</button><button class="btn btn-danger btn-sm" onclick="adminRejectWithdrawal('${w.id}')">Reject</button></div>`:`<span class="badge">${esc(w.status)}</span>`}</div></div>`).join('') : '<p style="color:var(--text-faint);font-size:13px">No withdrawal requests yet.</p>'}</div>`;
   } else if (tab==='verifications') {
     body = `<div class="panel">${verifications.length ? verifications.map(v=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
@@ -2429,6 +2393,9 @@ async function viewAdmin() {
     ${body}
   </div></section>`;
 }
+
+async function adminMarkWithdrawalPaid(id){const reference=document.getElementById('wdRef_'+id)?.value.trim();if(!reference){toast('Enter the payment/reference number first',true);return}if(!confirm('Mark this withdrawal as paid?'))return;try{await api('/admin/withdrawals/'+id+'/paid',{method:'POST',body:JSON.stringify({reference})});toast('Withdrawal marked paid.');reload()}catch(e){toast(e.message,true)}}
+async function adminRejectWithdrawal(id){const note=prompt('Reason for rejection?','Unable to process payout');if(note===null)return;try{await api('/admin/withdrawals/'+id+'/reject',{method:'POST',body:JSON.stringify({note})});toast('Withdrawal rejected and funds returned.');reload()}catch(e){toast(e.message,true)}}
 async function adminChangeRole(userId) {
   const role = document.getElementById('roleSel_'+userId).value;
   if (!confirm('Change this user\'s role to "'+role+'"? This immediately changes what they can do on the site.')) return;
