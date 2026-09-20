@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS products (
   master_mime text,
   preview_file_name text,
   cover_image_url text,
+  cover_file_name text,
   active boolean NOT NULL DEFAULT true,
   sales_count integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()

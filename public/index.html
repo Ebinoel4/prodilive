@@ -1071,7 +1071,7 @@ async function viewReviewerHub() {
 
         <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
           <h4 style="margin-bottom:10px">Payout details</h4>
-          <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none'">
+          <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none';resolvePayoutAccount()">
             <option value="">Select your bank</option>
             <option value="044">Access Bank</option><option value="058">Guaranty Trust Bank (GTBank)</option>
             <option value="011">First Bank of Nigeria</option><option value="033">United Bank For Africa (UBA)</option>
@@ -1079,9 +1079,9 @@ async function viewReviewerHub() {
             <option value="50211">Kuda Bank</option><option value="999992">Opay</option><option value="100004">Palmpay</option>
             <option value="OTHER">Other / not listed</option>
           </select></div>
-          <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058"></div>
-          <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Name on the account"></div>
-          <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" placeholder="0123456789"></div>
+          <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058" oninput="resolvePayoutAccount()"></div>
+          <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Enter bank + account number to verify" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
+          <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" inputmode="numeric" maxlength="10" placeholder="0123456789" oninput="resolvePayoutAccount()"></div>
           <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
         </div>
       </div>
@@ -1226,7 +1226,7 @@ function productCard(p) {
   const catLabel = {BEAT:'Beat',TRACK:'Track',TEMPLATE:'Template',SAMPLE_PACK:'Sample Pack',OTHER:'Other'}[p.category] || p.category;
   return `
   <div class="p-card" onclick="go('productDetail',{id:'${p.id}'})" style="cursor:pointer">
-    <div style="height:110px;border-radius:10px;background:linear-gradient(135deg,var(--paper-2),var(--ink-2));display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px">🎵</div>
+    ${p.coverImageUrl ? `<img src="${esc(p.coverImageUrl)}" alt="${esc(p.title)} thumbnail" style="width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px">` : `<div style="height:150px;border-radius:10px;background:linear-gradient(135deg,var(--paper-2),var(--ink-2));display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px">🎵</div>`}
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <b style="font-size:14.5px">${esc(p.title)}</b>
       <span class="badge">${esc(catLabel)}</span>
@@ -1251,6 +1251,7 @@ async function viewProductDetail() {
     <a class="back-link" onclick="go('marketplace')">← Back to marketplace</a>
     <div style="display:grid;grid-template-columns:1fr 320px;gap:30px;align-items:start;margin-top:20px">
       <div>
+        ${p.coverImageUrl ? `<img src="${esc(p.coverImageUrl)}" alt="${esc(p.title)} thumbnail" style="width:100%;max-width:620px;aspect-ratio:16/9;object-fit:cover;border-radius:14px;margin-bottom:20px">` : ''}
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
           <h1 style="font-size:26px">${esc(p.title)}</h1>
           <span class="badge">${esc(catLabel)}</span>
@@ -1398,6 +1399,7 @@ function sellModalHtml() {
       </div>
       <div class="field"><label>Price (NGN)</label><input id="prodPrice" type="number" min="1" required placeholder="15000"></div>
       <div class="field"><label>License terms</label><textarea id="prodLicense" placeholder="e.g. Non-exclusive, for use in one commercial release...">Standard non-exclusive license</textarea></div>
+      <div class="field"><label>Thumbnail / cover image <span style="font-weight:400;color:var(--text-faint)">(JPG or PNG)</span></label><input id="prodCover" type="file" accept="image/jpeg,image/png"></div>
       <div class="field"><label>Master file <span style="font-weight:400;color:var(--text-faint)">(audio, zip, or project file — buyers only get this after purchase)</span></label><input id="prodMaster" type="file" required></div>
       <button class="btn btn-brass btn-block" type="submit" id="prodSubmitBtn">List for sale</button>
     </form>
@@ -1421,6 +1423,8 @@ async function submitProduct(e) {
     const f = document.getElementById('prodMaster').files[0];
     if (!f) throw new Error('Please choose a file to upload');
     fd.append('master', f);
+    const cover = document.getElementById('prodCover').files[0];
+    if (cover) fd.append('cover', cover);
     const headers = {}; if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
     const res = await fetch('/api/products', { method:'POST', headers, body: fd });
     const data = await res.json();
@@ -2049,7 +2053,7 @@ async function viewDashboard() {
         ${(u.role==='talent'||u.role==='client') ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:10px">Payout details <span style="font-weight:400;color:var(--text-faint);font-size:11.5px">(needed to withdraw your wallet balance)</span></h4>
-            <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none'">
+            <div class="field"><label>Bank name</label><select id="pfBankCode" onchange="document.getElementById('pfBankOtherWrap').style.display=this.value==='OTHER'?'block':'none';resolvePayoutAccount()">
               <option value="">Select your bank</option>
               <option value="044">Access Bank</option>
               <option value="023">Citibank Nigeria</option>
@@ -2076,9 +2080,9 @@ async function viewDashboard() {
               <option value="120001">9 Payment Service Bank (9PSB)</option>
               <option value="OTHER">Other / not listed</option>
             </select></div>
-            <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058"></div>
-            <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Name on the account"></div>
-            <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" placeholder="0123456789"></div>
+            <div id="pfBankOtherWrap" style="display:none" class="field"><label>Bank code</label><input id="pfBankCodeOther" placeholder="e.g. 058" oninput="resolvePayoutAccount()"></div>
+            <div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Enter bank + account number to verify" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
+            <div class="field"><label>Account number (10 digits)</label><input id="pfAccount" inputmode="numeric" maxlength="10" placeholder="0123456789" oninput="resolvePayoutAccount()"></div>
             <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
           </div>
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
@@ -2201,15 +2205,27 @@ async function withdrawFromWallet() {
     reload();
   } catch(e) { toast(e.message, true); }
 }
+let payoutResolveTimer;
+async function resolvePayoutAccount() {
+  clearTimeout(payoutResolveTimer);
+  const bankEl=document.getElementById('pfBankCode'), acctEl=document.getElementById('pfAccount'), nameEl=document.getElementById('pfAccountName'), statusEl=document.getElementById('pfAccountVerify');
+  if(!bankEl||!acctEl||!nameEl)return;
+  const selected=bankEl.value;const bankCode=selected==='OTHER'?(document.getElementById('pfBankCodeOther')?.value.trim()||''):selected;const accountNumber=acctEl.value.replace(/\D/g,'').slice(0,10);acctEl.value=accountNumber;
+  nameEl.value='';if(statusEl)statusEl.textContent='';
+  if(!/^\d{3,6}$/.test(bankCode)||!/^\d{10}$/.test(accountNumber))return;
+  if(statusEl)statusEl.textContent='Verifying account…';
+  payoutResolveTimer=setTimeout(async()=>{try{const d=await api('/payout/resolve-account?bankCode='+encodeURIComponent(bankCode)+'&accountNumber='+encodeURIComponent(accountNumber));nameEl.value=d.accountName||'';if(statusEl){statusEl.textContent='✓ Account verified';statusEl.style.color='var(--signal)'}}catch(e){nameEl.value='';if(statusEl){statusEl.textContent=e.message||'Account could not be verified';statusEl.style.color='var(--danger)'}}},350);
+}
 async function savePayout() {
   const selected = document.getElementById('pfBankCode').value;
   const bankCode = selected === 'OTHER' ? document.getElementById('pfBankCodeOther').value.trim() : selected;
-  const accountName = document.getElementById('pfAccountName').value.trim();
   const accountNumber = document.getElementById('pfAccount').value.trim();
   if (!bankCode) { toast('Choose your bank first', true); return; }
+  if (!/^\d{10}$/.test(accountNumber)) { toast('Enter a valid 10-digit account number', true); return; }
   try {
-    await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode, accountName, accountNumber }) });
-    toast('Payout details saved.');
+    const d=await api('/me/payout-profile', { method:'PUT', body: JSON.stringify({ bankCode, accountNumber }) });
+    document.getElementById('pfAccountName').value=d.accountName||'';
+    toast('Bank account verified and saved.');
   } catch(e) { toast(e.message, true); }
 }
 async function submitVerificationDoc() {
