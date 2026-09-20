@@ -705,9 +705,20 @@ async function checkForPaymentCallback() {
   if (!window.location.pathname.includes('payment-callback')) return;
   const params = new URLSearchParams(window.location.search);
   const reference = params.get('reference') || params.get('trxref');
-  const type = params.get('type');
-  const jobId = params.get('jobId');
-  const productId = params.get('productId');
+  // Do not rely only on callback query parameters: infer the payment kind from
+  // PRODILIVE's own reference format if Paystack/browser drops custom params.
+  let type = params.get('type');
+  let jobId = params.get('jobId');
+  let productId = params.get('productId');
+  if (!type && reference) {
+    if (reference.startsWith('PRODILIVE_DEPOSIT_')) type = 'deposit';
+    else if (reference.startsWith('PRODILIVE_PRODUCT_')) type = 'product';
+    else if (reference.startsWith('PRODILIVE_')) type = 'job';
+  }
+  if (!productId && type === 'product' && reference) {
+    const m = reference.match(/^PRODILIVE_PRODUCT_([^_]+)_/);
+    if (m) productId = m[1];
+  }
   window.history.replaceState({}, '', '/');
   if (!reference) return;
   if (!state.user) { toast('Sign in to confirm your payment.', true); openAuth('login'); return; }
@@ -719,10 +730,11 @@ async function checkForPaymentCallback() {
       const d = await api('/wallet/deposit/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Deposit confirmed — added to your wallet.' : 'Deposit not yet confirmed — try refreshing in a moment.', d.status !== 'success');
       reload();
-    } else if (jobId) {
+    } else if (type === 'job') {
       const d = await api('/payments/verify/' + encodeURIComponent(reference));
       toast(d.status === 'success' ? 'Payment confirmed — project funded.' : 'Payment not yet confirmed — try refreshing in a moment.', d.status !== 'success');
-      go('jobDetail', { id: jobId });
+      if (jobId) go('jobDetail', { id: jobId });
+      else reload();
     }
   } catch (e) { toast(e.message, true); }
 }
