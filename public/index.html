@@ -325,10 +325,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <form id="authForm" onsubmit="submitAuth(event)">
     <div class="field" id="nameField" style="display:none"><label>Full name</label><input id="authName" placeholder="e.g. Ebi Noel"></div>
     <div class="field" id="nicknameField" style="display:none"><label>Nickname <span style="font-weight:400;color:var(--text-faint)">(what we'll call you on the site)</span></label><input id="authNickname" placeholder="e.g. Ebi"></div>
-    <div class="role-choice" id="roleChoice" style="display:none">
-      <div class="role-opt sel" id="roleClientOpt" onclick="selectRole('client')">🎤 I'm a Client</div>
-      <div class="role-opt" id="roleTalentOpt" onclick="selectRole('talent')">🎛️ I'm a Provider</div>
-    </div>
+    <div id="roleChoice" style="display:none"></div>
     <div class="field"><label>Email address</label><input id="authEmail" type="email" placeholder="you@email.com" required></div>
     <div class="field"><label>Password</label><div style="display:flex;gap:8px"><input id="authPassword" type="password" placeholder="••••••••" minlength="8" required><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('authPassword',this)">Show</button></div></div>
     <div id="regExtraFields" style="display:none">
@@ -610,21 +607,21 @@ function updateNav() {
   document.getElementById('navReviewerLink').style.display = signedIn ? 'none' : 'inline';
   // Reviewers are a separate entity: no marketplace browsing/buying, no job board.
   document.getElementById('navTalentsLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
-  document.getElementById('navJobsLink').style.display = (signedIn && state.user.role==='talent') ? 'inline' : 'none';
+  document.getElementById('navJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navPurchasesLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
-  if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
+  if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + (state.user.role==='member'?'MEMBER':state.user.role.toUpperCase());
   renderMobileNav();
 }
 function openAuth(mode) {
   state.authMode = mode;
   document.getElementById('authTitle').textContent = mode==='login' ? 'Welcome back' : 'Create your account';
-  document.getElementById('authSub').textContent = mode==='login' ? 'Sign in to manage your bookings and messages.' : 'Join as a client looking to hire, or a provider offering services.';
+  document.getElementById('authSub').textContent = mode==='login' ? 'Sign in to manage your bookings and messages.' : 'One account to hire talent, post projects, find work and offer your services.';
   document.getElementById('nameField').style.display = mode==='login' ? 'none' : 'block';
   document.getElementById('nicknameField').style.display = mode==='login' ? 'none' : 'block';
   document.getElementById('regExtraFields').style.display = mode==='login' ? 'none' : 'block';
-  document.getElementById('roleChoice').style.display = mode==='login' ? 'none' : 'grid';
+  document.getElementById('roleChoice').style.display = 'none';
   document.getElementById('authForgotWrap').style.display = mode==='login' ? 'block' : 'none';
   document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Sign in' : 'Create account';
   document.getElementById('authSwitch').innerHTML = mode==='login'
@@ -632,11 +629,7 @@ function openAuth(mode) {
     : `Already have an account? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('login')">Sign in</a>`;
   openModal('authModal');
 }
-function selectRole(role) {
-  state.authRole = role;
-  document.getElementById('roleClientOpt').classList.toggle('sel', role==='client');
-  document.getElementById('roleTalentOpt').classList.toggle('sel', role==='talent');
-}
+function selectRole(role) { state.authRole = 'member'; }
 async function submitAuth(e) {
   e.preventDefault();
   const btn = document.getElementById('authSubmitBtn');
@@ -658,7 +651,7 @@ async function submitAuth(e) {
       if (!name) throw new Error('Please enter your full name');
       if (!nickname) throw new Error('Please enter a nickname');
       if (!phone || !country || !state_ || !city || !address) throw new Error('Please fill in phone, country, state, city and address');
-      data = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password, role: state.authRole, nickname, phone, country, state: state_, city, address }) });
+      data = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password, role: 'member', nickname, phone, country, state: state_, city, address }) });
     }
     state.token = data.token; state.user = data.user;
     localStorage.setItem('prodilive_token', data.token);
@@ -1310,7 +1303,7 @@ async function viewProfile() {
       <button class="btn btn-brass btn-sm" onclick="saveFullProfile()">Save changes</button>
     </div>
 
-    ${u.role==='talent' ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
+    ${['member','talent'].includes(u.role) ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
     <div class="panel" style="margin-top:18px">
       <h4 style="margin-bottom:10px">Change password</h4>
       <div class="field"><label>Current password</label><div style="display:flex;gap:8px"><input id="pwCurrent" type="password"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwCurrent',this)">Show</button></div></div>
@@ -1510,8 +1503,8 @@ function jobRow(j) {
       <div class="jm">${esc(j.category||'General')} · ${fmt(j.budget)} · posted by ${esc(j.clientName||'—')} ${j.talentName?('· assigned to '+esc(j.talentName)):''}</div>
     </div>
     ${canClaim ? `<button class="btn btn-brass btn-sm" style="margin-top:8px" onclick="event.stopPropagation();claimJob('${j.id}')">Claim this job</button>` : ''}
-    ${state.user&&state.user.role==='client'&&j.client_id===state.user.id&&['OPEN','AWAITING_PAYMENT'].includes(j.status)?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();cancelMyJob('${j.id}')">Cancel project</button>`:''}
-    ${state.user&&state.user.role==='talent'&&j.talent_id===state.user.id&&j.status==='AWAITING_PAYMENT'?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();rejectAssignedJob('${j.id}')">Reject job</button>`:''}
+    ${state.user&&['member','client','talent'].includes(state.user.role)&&j.client_id===state.user.id&&['OPEN','AWAITING_PAYMENT'].includes(j.status)?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();cancelMyJob('${j.id}')">Cancel project</button>`:''}
+    ${state.user&&['member','talent'].includes(state.user.role)&&j.talent_id===state.user.id&&j.status==='AWAITING_PAYMENT'?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();rejectAssignedJob('${j.id}')">Reject job</button>`:''}
   </div>`;
 }
 async function cancelMyJob(id){if(!confirm('Cancel this project? It will leave your active dashboard and remain in history.'))return;try{await api('/jobs/'+id+'/cancel-self',{method:'POST'});toast('Project cancelled.');reload()}catch(e){toast(e.message,true)}}
@@ -1638,7 +1631,7 @@ async function viewJobDetail() {
               </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No proposals yet.</p>`}
           </div>` : ''}
 
-        ${job.status==='OPEN' && state.user && state.user.role==='talent' && !isClient ? `
+        ${job.status==='OPEN' && state.user && ['member','talent'].includes(state.user.role) && !isClient ? `
           <div class="panel" style="margin-bottom:18px">
             <h4>Apply to this project</h4>
             <div class="field"><textarea id="applyMsg" placeholder="Tell the client why you're a fit..."></textarea></div>
@@ -1971,7 +1964,7 @@ async function viewDashboard() {
   const done = mine.filter(j=>j.status==='RELEASED').length;
 
   let services = [];
-  if (u.role === 'talent') { try { services = (await api('/services/mine')).services; } catch {} }
+  if (['member','talent'].includes(u.role)) { try { services = (await api('/services/mine')).services; } catch {} }
   let wallet = { balance: 0, heldFunds: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
   try { wallet = await api('/wallet/balance'); } catch {}
 
@@ -1986,7 +1979,7 @@ async function viewDashboard() {
     </div>` : ''}
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
       <div><div class="eyebrow">${esc(u.role.charAt(0).toUpperCase()+u.role.slice(1))} dashboard</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
-      ${u.role==='client' ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
+      ${['member','client','talent'].includes(u.role) ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
     </div>
 
     <div class="dash-stats">
@@ -2010,7 +2003,7 @@ async function viewDashboard() {
         <h4>Active projects <span>${activeMine.length}</span></h4>
         ${activeMine.length ? activeMine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
 
-        ${u.role==='talent' ? `
+        ${['member','talent'].includes(u.role) ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:10px">My services <span>${services.length}</span></h4>
             <div id="servicesList">${renderServicesList(services)}</div>
@@ -2034,7 +2027,7 @@ async function viewDashboard() {
           <div id="specPickerBox">${renderSpecPicker()}</div>
         </div>
         <button class="btn btn-brass btn-sm" onclick="saveProfile()">Save profile</button>
-        ${u.role==='talent' ? `
+        ${['member','talent'].includes(u.role) ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
             <h4 style="margin-bottom:6px">Portfolio</h4>
             <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Add at least 2 samples of your past work — clients check this before trusting you with a project.</p>
@@ -2232,11 +2225,11 @@ async function viewAdmin() {
     </div>`;
   } else if (tab==='users') {
     body = `<div class="panel"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>ID Verified</th><th>Actions</th></tr>
-      ${users.map(u=>`<tr><td style="color:var(--text)">${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.status)}</td><td>${u.role==='talent' ? esc(u.verificationStatus||'NONE') : '—'}</td>
+      ${users.map(u=>`<tr><td style="color:var(--text)">${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.status)}</td><td>${u.role==='member' ? esc(u.verificationStatus||'NONE') : '—'}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'userActivity',userId:'${u.id}'})">View activity</button>
           ${u.status!=='DELETED' ? `<select id="roleSel_${u.id}" style="font-size:12px;padding:4px 6px;border-radius:6px">
-            ${['client','talent','reviewer','admin'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
+            ${['member','reviewer','admin'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
           </select><button class="btn btn-ghost btn-sm" onclick="adminChangeRole('${u.id}')">Set role</button>` : ''}
           ${u.status==='SUSPENDED' ? `<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${u.id}')">Reactivate</button>` : u.status==='DELETED' ? '' : `<button class="btn btn-danger btn-sm" onclick="adminSuspend('${u.id}')">Suspend</button>`}
           ${u.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.id}','${esc(u.name)}')">Delete</button>` : ''}
