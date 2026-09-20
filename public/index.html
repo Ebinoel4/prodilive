@@ -576,7 +576,7 @@ function renderMobileNav() {
   if (!el) return;
   if (!state.user) { el.innerHTML = ''; document.body.classList.remove('has-mobnav'); return; }
   document.body.classList.add('has-mobnav');
-  el.innerHTML = MOBILE_NAV_ITEMS.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
+  const items=state.user.role==='admin'?[['admin','⚙️','Admin'],['profile','👤','Profile']]:state.user.role==='reviewer'?[['reviewerHub','⚖️','Cases'],['wallet','💳','Wallet'],['profile','👤','Profile']]:MOBILE_NAV_ITEMS; el.innerHTML = items.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
 }
 
 async function render() {
@@ -609,9 +609,9 @@ function updateNav() {
   document.getElementById('navAdminLink').style.display = isAdmin ? 'inline' : 'none';
   document.getElementById('navReviewerLink').style.display = signedIn ? 'none' : 'inline';
   // Reviewers are a separate entity: no marketplace browsing/buying, no job board.
-  document.getElementById('navTalentsLink').style.display = isReviewer ? 'none' : 'inline';
-  document.getElementById('navJobsLink').style.display = isReviewer ? 'none' : 'inline';
-  document.getElementById('navMarketLink').style.display = isReviewer ? 'none' : 'inline';
+  document.getElementById('navTalentsLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
+  document.getElementById('navJobsLink').style.display = (signedIn && state.user.role==='talent') ? 'inline' : 'none';
+  document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navPurchasesLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + state.user.role.toUpperCase();
@@ -1068,15 +1068,6 @@ async function viewReviewerHub() {
           <p style="font-size:12.5px;color:var(--text-dim)">Available: <b style="color:var(--text)">${fmt(balance.available)}</b> · Withdrawn to date: ${fmt(balance.withdrawn)}</p>
           <button class="btn btn-brass btn-sm" style="margin-top:10px" onclick="withdrawReviewerEarnings()">Withdraw available balance</button>
         </div>
-
-        <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
-          <h4 style="margin-bottom:10px">Payout details</h4>
-          <div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div>
-          <div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div>
-          <div class="field"><label>Account number</label><input id="pfAccount" inputmode="numeric" maxlength="24" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div>
-          <div class="field"><label>Verified account name</label><input id="pfAccountName" placeholder="Account name will appear automatically" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
-          <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
-        </div>
       </div>
     </div>
   </div></section>`;
@@ -1319,6 +1310,7 @@ async function viewProfile() {
       <button class="btn btn-brass btn-sm" onclick="saveFullProfile()">Save changes</button>
     </div>
 
+    ${u.role==='talent' ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
     <div class="panel" style="margin-top:18px">
       <h4 style="margin-bottom:10px">Change password</h4>
       <div class="field"><label>Current password</label><div style="display:flex;gap:8px"><input id="pwCurrent" type="password"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwCurrent',this)">Show</button></div></div>
@@ -1518,8 +1510,12 @@ function jobRow(j) {
       <div class="jm">${esc(j.category||'General')} · ${fmt(j.budget)} · posted by ${esc(j.clientName||'—')} ${j.talentName?('· assigned to '+esc(j.talentName)):''}</div>
     </div>
     ${canClaim ? `<button class="btn btn-brass btn-sm" style="margin-top:8px" onclick="event.stopPropagation();claimJob('${j.id}')">Claim this job</button>` : ''}
+    ${state.user&&state.user.role==='client'&&j.client_id===state.user.id&&['OPEN','AWAITING_PAYMENT'].includes(j.status)?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();cancelMyJob('${j.id}')">Cancel project</button>`:''}
+    ${state.user&&state.user.role==='talent'&&j.talent_id===state.user.id&&j.status==='AWAITING_PAYMENT'?`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="event.stopPropagation();rejectAssignedJob('${j.id}')">Reject job</button>`:''}
   </div>`;
 }
+async function cancelMyJob(id){if(!confirm('Cancel this project? It will leave your active dashboard and remain in history.'))return;try{await api('/jobs/'+id+'/cancel-self',{method:'POST'});toast('Project cancelled.');reload()}catch(e){toast(e.message,true)}}
+async function rejectAssignedJob(id){if(!confirm('Reject this assigned job?'))return;try{await api('/jobs/'+id+'/reject-assignment',{method:'POST'});toast('Job rejected.');reload()}catch(e){toast(e.message,true)}}
 async function claimJob(jobId) {
   try { await api('/jobs/'+jobId+'/claim', { method:'POST' }); toast('Claimed! Waiting for client to fund it.'); reload(); }
   catch(e) { toast(e.message, true); reload(); }
@@ -1677,12 +1673,13 @@ async function viewJobDetail() {
 
         ${job.status==='CLIENT_REVIEW' && isClient ? `
           <div class="panel" style="margin-bottom:18px">
-            <h4>Review delivery</h4>
+            <h4>Delivery ready — listen before you decide</h4>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px">Listen to the protected preview below. The full master stays locked until you accept the delivery and release payment.</p>
             <p style="font-size:12.5px;color:var(--text-faint);margin-bottom:12px">Revisions used: ${job.revisions_used||0} / ${job.revision_count}</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn btn-brass" onclick="approveJob('${job.id}')">Approve &amp; release</button>
+              <button class="btn btn-brass" onclick="approveJob('${job.id}')">Accept delivery &amp; release payment</button>
               <button class="btn btn-ghost" onclick="requestRevision('${job.id}')">Request revision</button>
-              <button class="btn btn-danger" onclick="openDispute('${job.id}')">Open dispute</button>
+              <button class="btn btn-danger" onclick="openDispute('${job.id}')">Dispute &amp; involve reviewer</button>
             </div>
           </div>` : ''}
 
@@ -1950,6 +1947,7 @@ async function viewWallet() {
         <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
       </div>
     </div>
+    ${['talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Used for manual withdrawal processing.</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
     <div class="panel">
       <h4 style="margin-bottom:12px">Transaction history</h4>
       ${history.length ? history.slice(0,100).map(tx=>{const d=new Date(tx.created_at);const type=String(tx.type||'TRANSACTION').replaceAll('_',' ');const state=String(tx.status||'').toUpperCase();const label=state==='PROCESSING'?'PROCESSING':type;return `<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(label)}</strong><div style="color:var(--text-faint);margin-top:3px">${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`}).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
@@ -1968,7 +1966,8 @@ async function viewDashboard() {
   let jobs = [];
   try { jobs = (await api('/jobs')).jobs; } catch(e) { toast(e.message, true); }
   const mine = jobs.filter(j => j.client_id===u.id || j.talent_id===u.id);
-  const active = mine.filter(j=>['IN_PROGRESS','QA_PENDING','CLIENT_REVIEW','REVISION_REQUESTED','AWAITING_PAYMENT'].includes(j.status)).length;
+  const activeMine = mine.filter(j=>['OPEN','IN_PROGRESS','QA_PENDING','CLIENT_REVIEW','REVISION_REQUESTED','AWAITING_PAYMENT','DISPUTED'].includes(j.status));
+  const active = activeMine.length;
   const done = mine.filter(j=>j.status==='RELEASED').length;
 
   let services = [];
@@ -2008,8 +2007,8 @@ async function viewDashboard() {
 
     <div class="dash-cols">
       <div class="panel">
-        <h4>My projects <span>${mine.length} total</span></h4>
-        ${mine.length ? mine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
+        <h4>Active projects <span>${activeMine.length}</span></h4>
+        ${activeMine.length ? activeMine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
 
         ${u.role==='talent' ? `
           <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
@@ -2043,25 +2042,7 @@ async function viewDashboard() {
             <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addPortfolioRow()">+ Add another piece</button>
             <button class="btn btn-brass btn-sm" style="margin-top:10px;display:block" onclick="savePortfolio()">Save portfolio</button>
           </div>` : ''}
-        ${(u.role==='talent'||u.role==='client') ? `
-          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:10px">Payout details <span style="font-weight:400;color:var(--text-faint);font-size:11.5px">(needed to withdraw your wallet balance)</span></h4>
-            <div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select><div style="font-size:11.5px;color:var(--text-faint);margin-top:5px">PRODILIVE is global. Bank payouts shown here depend on the payout countries enabled by Paystack.</div></div>
-            <div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div>
-            <div class="field"><label>Account number</label><input id="pfAccount" inputmode="numeric" maxlength="24" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div>
-            <div class="field"><label>Verified account name</label><input id="pfAccountName" placeholder="Account name will appear automatically" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div>
-            <button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button>
-          </div>
-          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:6px">Identity verification</h4>
-            ${u.verificationStatus==='APPROVED' ? `
-              <p style="font-size:12.5px;color:var(--signal)">✓ Verified — you can apply to and claim projects.</p>` : `
-              ${u.verificationStatus==='REJECTED' ? `<p style="font-size:12.5px;color:var(--danger);margin-bottom:10px">Your submission was flagged by an admin — please upload a clearer copy.</p>` : `<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID plus a quick selfie so clients know you're a real, verified provider. Both are required before you can apply to or claim projects.</p>`}
-              <div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID (NIN)</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div>
-              <div class="field"><label>ID document (PDF, JPG or PNG)</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div>
-              <div class="field"><label>Selfie <span style="font-weight:400;color:var(--text-faint)">(clear photo of your face, JPG or PNG)</span></label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div>
-              <button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Upload document &amp; selfie</button>`}
-          </div>` : ''}
+
       </div>
     </div>
   </div></section>`;
@@ -2213,11 +2194,12 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
+  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='users') users = (await api('/admin/users')).users;
     if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
+    if (tab==='products') products = (await api('/admin/products')).products;
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
     if (tab==='withdrawals') withdrawals = (await api('/admin/withdrawals')).withdrawals;
     if (tab==='verifications') verifications = (await api('/admin/verifications')).verifications;
@@ -2239,7 +2221,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Jobs'],['payments','Payments'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -2260,6 +2242,8 @@ async function viewAdmin() {
           ${u.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.id}','${esc(u.name)}')">Delete</button>` : ''}
         </td></tr>`).join('')}
       </table></div>`;
+  } else if (tab==='products') {
+    body = `<div class="panel"><h4 style="margin-bottom:12px">Marketplace listings <span>${products.length}</span></h4>${products.length?products.map(p=>`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--hair)"><div><b>${esc(p.title)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(p.category)} · ${fmt(p.price)} · ${esc(p.sellerName||'')} · ${p.salesCount||0} sales</div></div><button class="btn btn-danger btn-sm" onclick="adminDeleteProduct('${p.id}','${esc(p.title).replace(/'/g,'&#39;')}')">Delete permanently</button></div>`).join(''):'<p style="color:var(--text-faint)">No marketplace listings.</p>'}</div>`;
   } else if (tab==='withdrawals') {
     body = `<div class="panel">${withdrawals.length ? withdrawals.map(w=>`<div style="border-top:1px solid var(--hair);padding:14px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>${esc(w.user_name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(w.user_email)} · ${esc(w.currency)} ${Number(w.payout_amount).toLocaleString()} · ${esc(w.status)}</div><div style="font-size:12px;margin-top:5px">${esc(w.account_name||'')} · ${esc(w.account_number||'')} · Bank code: ${esc(w.bank_code||'')}</div></div>${w.status==='PROCESSING'?`<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><input id="wdRef_${w.id}" placeholder="Payment reference" style="width:170px"><button class="btn btn-brass btn-sm" onclick="adminMarkWithdrawalPaid('${w.id}')">Mark paid</button><button class="btn btn-danger btn-sm" onclick="adminRejectWithdrawal('${w.id}')">Reject</button></div>`:`<span class="badge">${esc(w.status)}</span>`}</div></div>`).join('') : '<p style="color:var(--text-faint);font-size:13px">No withdrawal requests yet.</p>'}</div>`;
   } else if (tab==='verifications') {
@@ -2395,6 +2379,7 @@ async function viewAdmin() {
 }
 
 async function adminMarkWithdrawalPaid(id){const reference=document.getElementById('wdRef_'+id)?.value.trim();if(!reference){toast('Enter the payment/reference number first',true);return}if(!confirm('Mark this withdrawal as paid?'))return;try{await api('/admin/withdrawals/'+id+'/paid',{method:'POST',body:JSON.stringify({reference})});toast('Withdrawal marked paid.');reload()}catch(e){toast(e.message,true)}}
+async function adminDeleteProduct(id,title){if(!confirm(`Permanently delete “${title}”? The listing, purchases tied to it, preview, thumbnail and master file will be removed. This cannot be undone.`))return;try{await api('/admin/products/'+id,{method:'DELETE'});toast('Listing permanently deleted.');reload()}catch(e){toast(e.message,true)}}
 async function adminRejectWithdrawal(id){const note=prompt('Reason for rejection?','Unable to process payout');if(note===null)return;try{await api('/admin/withdrawals/'+id+'/reject',{method:'POST',body:JSON.stringify({note})});toast('Withdrawal rejected and funds returned.');reload()}catch(e){toast(e.message,true)}}
 async function adminChangeRole(userId) {
   const role = document.getElementById('roleSel_'+userId).value;
@@ -2447,7 +2432,7 @@ async function adminSuspend(id) { try { await api('/admin/users/'+id+'/suspend',
 async function adminReactivate(id) { try { await api('/admin/users/'+id+'/reactivate', { method:'POST' }); toast('User reactivated.'); reload(); } catch(e){ toast(e.message, true); } }
 async function adminDeleteUser(id, name) {
   if (!confirm(`Delete ${name}'s account? Their name/email will be scrubbed and they'll be logged out everywhere. This can't be undone from the dashboard.`)) return;
-  try { await api('/admin/users/'+id, { method:'DELETE' }); toast('Account deleted.'); reload(); } catch(e){ toast(e.message, true); }
+  try { await api('/admin/users/'+id, { method:'DELETE' }); toast('Account permanently deleted.'); reload(); } catch(e){ toast(e.message, true); }
 }
 async function adminViewDocument(userId) {
   try {
