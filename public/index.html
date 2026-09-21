@@ -119,15 +119,17 @@ tr:first-child td{border-top:none}
 .msg b{font-size:11.5px;color:var(--brass-soft);display:block;margin-bottom:3px}
 
 /* ===== Chat bubbles (project messages + support widget) ===== */
-.chat-scroll{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px;margin-bottom:10px}
-.chat-bubble{max-width:82%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;position:relative}
-.chat-bubble .who{font-size:10.5px;color:var(--text-faint);margin-bottom:2px;display:block}
-.chat-bubble.own{align-self:flex-end;background:var(--brass);color:#1a1508;border-bottom-right-radius:4px}
-.chat-bubble.own .who{color:#3a2f10}
-.chat-bubble.other{align-self:flex-start;background:var(--paper-2);border-bottom-left-radius:4px}
-.chat-bubble.admin-msg{align-self:flex-start;background:var(--signal);color:#0a1f14;border-bottom-left-radius:4px}
-.chat-input-row{display:flex;gap:8px;align-items:flex-end}
-.chat-input-row textarea{flex:1;min-height:38px;max-height:100px;resize:none;padding:9px 12px}
+.chat-shell{border:1px solid var(--hair);border-radius:18px;overflow:hidden;background:var(--paper)}
+.chat-safety{padding:10px 14px;background:rgba(180,139,49,.10);border-bottom:1px solid var(--hair);font-size:11.5px;line-height:1.45;color:var(--text-dim)}
+.chat-scroll{height:420px;max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:18px;background:linear-gradient(180deg,var(--paper),var(--paper-2));margin:0}
+.chat-line{display:flex;gap:8px;align-items:flex-end;max-width:86%}.chat-line.own{align-self:flex-end;flex-direction:row-reverse}.chat-line.other{align-self:flex-start}
+.chat-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper);font-size:10px;font-weight:800;flex:0 0 auto}
+.chat-bubble{padding:9px 12px;border-radius:16px;font-size:13px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.chat-bubble .who{font-size:10.5px;color:var(--text-faint);margin-bottom:3px;display:block;font-weight:600}.chat-bubble .stamp{font-size:9.5px;opacity:.65;margin-top:4px;display:block;text-align:right}
+.chat-line.own .chat-bubble{background:var(--brass);color:#1a1508;border-bottom-right-radius:5px}.chat-line.own .who{color:#4a3a10}
+.chat-line.other .chat-bubble{background:var(--paper);border:1px solid var(--hair);border-bottom-left-radius:5px}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end;padding:12px;background:var(--paper);border-top:1px solid var(--hair)}
+.chat-input-row textarea{flex:1;min-height:42px;max-height:120px;resize:none;padding:10px 12px;border-radius:14px}
 
 /* ===== Support chat widget ===== */
 #supportBubbleBtn{position:fixed;bottom:22px;right:22px;z-index:150;width:54px;height:54px;border-radius:50%;background:var(--brass);color:#1a1508;border:none;font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -1180,28 +1182,26 @@ function debounceSearch(v) {
 
 /* ============================ VIEW: MARKETPLACE (beats/tracks/templates) ============================ */
 async function viewMarketplace() {
+  if (state.user && state.user.role === 'admin') return `<section style="padding-top:36px"><div class="wrap"><div class="empty"><h3>Marketplace management is in Admin</h3><p>Admin accounts cannot buy or sell marketplace products.</p><button class="btn btn-brass" onclick="go('admin')">Open Admin</button></div></div></section>`;
+  const tab = state.params.tab || 'shop';
   const cat = state.params.cat || '';
   const q = state.params.q || '';
-  let products = [];
-  try { products = (await api('/products' + (cat||q ? '?'+new URLSearchParams({...(cat?{category:cat}:{}) ,...(q?{q}:{})}) : ''))).products; } catch(e) { toast(e.message, true); }
-  const cats = [['','All'],['BEAT','Beats'],['TRACK','Tracks'],['TEMPLATE','Templates'],['SAMPLE_PACK','Sample Packs']];
-  return `
-  <section style="padding-top:36px"><div class="wrap">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-      <div><div class="eyebrow">Marketplace</div><h1 style="font-size:28px">Beats, tracks &amp; templates</h1></div>
-      ${state.user ? `<button class="btn btn-brass" onclick="openSellModal()">+ Sell your work</button>` : ''}
-    </div>
-    <div class="searchbar" style="max-width:100%;margin-bottom:14px">
-      <input value="${esc(q)}" placeholder="Search beats, tracks, templates..." oninput="debounceMarketSearch(this.value)">
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
-      ${cats.map(([k,l])=>`<button class="btn ${cat===k?'btn-brass':'btn-ghost'} btn-sm" onclick="go('marketplace',{cat:'${k}'})">${l}</button>`).join('')}
-    </div>
-    <div class="mono" style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${products.length} LISTINGS</div>
-    ${products.length ? `<div class="grid-3" id="liveProductsList">${products.map(productCard).join('')}</div>` :
-      `<div class="empty"><div class="n">🎧</div><h3>Nothing listed yet</h3><p>Be the first to sell a beat, track or template.</p></div>`}
-  </div></section>
-  ${sellModalHtml()}`;
+  const tabs = [['shop','Shop'],['sell','Sell'],['listings','My Listings'],['purchases','Purchases']];
+  let body='';
+  if(tab==='sell'){
+    body=`<div class="panel" style="max-width:720px"><h3 style="margin-bottom:6px">Sell on PRODILIVE</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Upload a beat, track, production template, sample pack or other approved digital music product.</p><button class="btn btn-brass" onclick="openSellModal()">+ Create Listing</button></div>`;
+  } else if(tab==='listings'){
+    let mine=[]; try{mine=(await api('/products/mine')).products}catch(e){toast(e.message,true)}
+    body=mine.length?`<div class="grid-3">${mine.map(productCard).join('')}</div>`:`<div class="empty"><h3>No listings yet</h3><p>Products you sell will appear here.</p><button class="btn btn-brass" onclick="go('marketplace',{tab:'sell'})">Create a listing</button></div>`;
+  } else if(tab==='purchases'){
+    let orders=[]; try{orders=(await api('/products/mine/orders')).orders}catch(e){toast(e.message,true)}
+    body=`<div class="panel">${orders.length?orders.map(o=>`<div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><div><b>${esc(o.title)}</b><div style="font-size:12px;color:var(--text-faint)">${fmt(o.amount)} · ${new Date(o.paid_at).toLocaleDateString()}</div></div><button class="btn btn-brass btn-sm" onclick="downloadProduct('${o.product_id}','${esc(o.title)}')">Download</button></div>`).join(''):`<p style="color:var(--text-faint)">You haven't bought anything yet.</p>`}</div>`;
+  } else {
+    let products=[]; try{products=(await api('/products'+(cat||q?'?'+new URLSearchParams({...(cat?{category:cat}:{}),...(q?{q}:{})}):''))).products}catch(e){toast(e.message,true)}
+    const cats=[['','All'],['BEAT','Beats'],['TRACK','Tracks'],['TEMPLATE','Templates'],['SAMPLE_PACK','Sample Packs']];
+    body=`<div class="searchbar" style="max-width:100%;margin-bottom:14px"><input value="${esc(q)}" placeholder="Search beats, tracks, templates..." oninput="debounceMarketSearch(this.value)"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">${cats.map(([k,l])=>`<button class="btn ${cat===k?'btn-brass':'btn-ghost'} btn-sm" onclick="go('marketplace',{tab:'shop',cat:'${k}'})">${l}</button>`).join('')}</div><div class="mono" style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${products.length} LISTINGS</div>${products.length?`<div class="grid-3" id="liveProductsList">${products.map(productCard).join('')}</div>`:`<div class="empty"><h3>Nothing listed yet</h3><p>Marketplace products will appear here.</p></div>`}`;
+  }
+  return `<section style="padding-top:36px"><div class="wrap"><div class="eyebrow">Marketplace</div><h1 style="font-size:28px;margin-bottom:16px">Buy &amp; sell digital music products</h1>${state.user?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">${tabs.map(([k,l])=>`<button class="btn ${tab===k?'btn-brass':'btn-ghost'} btn-sm" onclick="go('marketplace',{tab:'${k}'})">${l}</button>`).join('')}</div>`:''}${body}</div></section>${state.user?sellModalHtml():''}`;
 }
 let marketSearchTimer;
 function debounceMarketSearch(v) { clearTimeout(marketSearchTimer); marketSearchTimer = setTimeout(()=> go('marketplace', {...state.params, q:v}), 350); }
@@ -1307,7 +1307,15 @@ async function viewProfile() {
       <div class="field"><label>City</label><input id="profCity" value="${esc(u.city||'')}"></div>
       <div class="field"><label>Address</label><input id="profAddress" value="${esc(u.address||'')}"></div>
       <div class="field"><label>Bio</label><textarea id="profBio">${esc(u.bio||'')}</textarea></div>
-      <button class="btn btn-brass btn-sm" onclick="saveFullProfile()">Save changes</button>
+      <div style="border-top:1px solid var(--hair);padding-top:14px;margin-top:14px"><h4 style="margin-bottom:8px">Notifications</h4>
+        <label style="display:flex;gap:9px;align-items:center;margin:9px 0;font-size:12.5px"><input id="profEmailJobs" type="checkbox" ${u.emailJobAlerts!==false?'checked':''}> Email me when a job matches my skills</label>
+        <label style="display:flex;gap:9px;align-items:center;margin:9px 0;font-size:12.5px"><input id="profSmsJobs" type="checkbox" ${u.smsJobAlerts?'checked':''}> SMS me about matching jobs</label>
+        <label style="display:flex;gap:9px;align-items:center;margin:9px 0;font-size:12.5px"><input id="profSmsDeadline" type="checkbox" ${u.smsDeadlineAlerts?'checked':''}> SMS me when project deadlines are approaching</label>
+        <label style="display:flex;gap:9px;align-items:center;margin:9px 0;font-size:12.5px"><input id="profSmsTx" type="checkbox" ${u.smsTransactionAlerts?'checked':''}> SMS me about important project/payment events</label>
+        <div style="font-size:11px;color:var(--text-faint);margin:8px 0">SMS is optional and user-funded. Each alert is charged from your Prodilive Wallet only when the SMS provider accepts the send. Email and in-app alerts remain free.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge">Phone: ${u.phoneVerified?'Verified':'Not verified'}</span>${!u.phoneVerified?`<button class="btn btn-ghost btn-sm" type="button" onclick="verifyPhone()">Verify phone for SMS</button>`:''}</div>
+      </div>
+      <button class="btn btn-brass btn-sm" style="margin-top:14px" onclick="saveFullProfile()">Save changes</button>
     </div>
 
     ${['member','talent'].includes(u.role) ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
@@ -1330,11 +1338,19 @@ async function saveFullProfile() {
       state: document.getElementById('profState').value.trim(),
       city: document.getElementById('profCity').value.trim(),
       address: document.getElementById('profAddress').value.trim(),
-      bio: document.getElementById('profBio').value
+      bio: document.getElementById('profBio').value,
+      emailJobAlerts: document.getElementById('profEmailJobs').checked,
+      smsJobAlerts: document.getElementById('profSmsJobs').checked,
+      smsDeadlineAlerts: document.getElementById('profSmsDeadline').checked,
+      smsTransactionAlerts: document.getElementById('profSmsTx').checked
     }) });
     state.user = d.user; updateNav();
     toast('Profile saved.');
   } catch(e) { toast(e.message, true); }
+}
+async function verifyPhone(){
+  const phone=document.getElementById('profPhone').value.trim(); if(!phone){toast('Enter your phone number first.',true);return;}
+  try{await api('/me/phone-verification/request',{method:'POST',body:JSON.stringify({phone})});const code=prompt('We sent a 6-digit code by SMS. Enter it here:');if(!code)return;const d=await api('/me/phone-verification/confirm',{method:'POST',body:JSON.stringify({code})});state.user=d.user;toast('Phone verified for SMS alerts.');reload();}catch(e){toast(e.message,true)}
 }
 async function changePassword() {
   const current = document.getElementById('pwCurrent').value;
@@ -1681,6 +1697,8 @@ async function viewJobDetail() {
             <button class="btn btn-brass btn-block" onclick="deliverJob('${job.id}')">Submit delivery</button>
           </div>` : ''}
 
+        ${isTalent && !job.submitted_at && ['AWAITING_PAYMENT','IN_PROGRESS','REVISION_REQUESTED','DISPUTED'].includes(job.status) ? `<div class="panel" style="margin-bottom:18px"><h4>Can't continue?</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Withdraw from this project if you can no longer meet the commitment. If payment is already held, it will be returned to the client.</p><button class="btn btn-danger btn-sm" onclick="withdrawTalent('${job.id}')">Withdraw from project</button></div>` : ''}
+
         ${job.status==='QA_PENDING' && isStaff ? `
           <div class="panel" style="margin-bottom:18px">
             <h4>Technical QA</h4>
@@ -1734,12 +1752,13 @@ async function viewJobDetail() {
 
         ${isClient || isTalent || isStaff ? `
           <div class="panel">
-            <h4>Messages</h4>
+            <h4>Project chat</h4>
+            <div class="chat-shell"><div class="chat-safety"><b>Stay protected:</b> Keep payments, file delivery and project communication on PRODILIVE. Transactions made outside the platform are not protected.</div>
             <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
             <div class="chat-input-row">
-              <textarea id="msgBody" placeholder="Write a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
+              <textarea id="msgBody" placeholder="Message about this project…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
               <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
-            </div>
+            </div></div>
           </div>` : ''}
       </div>
 
@@ -1797,6 +1816,10 @@ async function cancelOverdueJob(id) {
   try { await api('/jobs/'+id+'/cancel-overdue', { method:'POST' }); toast('Project cancelled — refund initiated.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
+async function withdrawTalent(id){
+  const reason=prompt('Why are you withdrawing from this project?'); if(reason===null)return; if(!confirm('Withdraw from this project? If payment is already held, it will be returned to the client.'))return;
+  try{const d=await api('/jobs/'+id+'/withdraw-talent',{method:'POST',body:JSON.stringify({reason})});toast(d.funded?'You withdrew. The client refund is being processed.':'You withdrew. The project is open again.');go('myJobs');}catch(e){toast(e.message,true)}
+}
 async function deliverJob(id) {
   const input = document.getElementById('deliverFiles');
   if (!input.files.length) { toast('Choose at least one file.', true); return; }
@@ -1846,10 +1869,12 @@ async function sendMessage(jobId) {
   catch(e) { toast(e.message, true); }
 }
 function renderJobChat(messages, currentUser) {
-  if (!messages.length) return `<p style="color:var(--text-faint);font-size:13px">No messages yet — say hello.</p>`;
+  if (!messages.length) return `<div style="margin:auto;color:var(--text-faint);font-size:13px;text-align:center">No messages yet.<br>Keep project communication here for protection.</div>`;
   return messages.map(m => {
     const own = currentUser && m.sender_id === currentUser.id;
-    return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${m.sender_role==='admin'?'<b>PRODILIVE ADMIN</b>':m.sender_role==='reviewer'?'<b>PRODILIVE REVIEWER</b>':esc(m.sender_name)} · ${timeAgo(m.created_at)}</span>${esc(m.body)}</div>`;
+    const label=m.sender_role==='admin'?'PRODILIVE ADMIN':m.sender_role==='reviewer'?'PRODILIVE REVIEWER':m.sender_name;
+    const initials=label.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+    return `<div class="chat-line ${own?'own':'other'}"><div class="chat-avatar">${esc(initials)}</div><div class="chat-bubble"><span class="who">${esc(label)}</span><div>${esc(m.body)}</div><span class="stamp">${new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div></div>`;
   }).join('');
 }
 async function refreshJobChat(jobId) {
@@ -2257,6 +2282,7 @@ async function viewAdmin() {
       <div class="field"><label>Marketplace commission (%)</label><input id="setMarketplaceCommission" type="number" min="0" max="100" value="${settings.marketplaceCommissionPercent ?? 10}"></div>
       <div class="field"><label>Dispute self-settlement window (hours)</label><input id="setSettlementHours" type="number" min="1" value="${settings.disputeSettlementHours ?? 24}"></div>
       <div class="field"><label>Reviewer resolution SLA (hours)</label><input id="setReviewerResolutionHours" type="number" min="1" value="${settings.reviewerResolutionHours ?? 48}"></div>
+      <div class="field"><label>User-funded SMS price (₦ per alert)</label><input id="setSmsPrice" type="number" min="0" step="0.01" value="${settings.smsUserPriceNgn ?? 10}"><div style="font-size:11px;color:var(--text-faint);margin-top:5px">Deducted from the recipient's Prodilive Wallet only when an opted-in SMS is accepted for sending.</div></div>
       <button class="btn btn-brass btn-sm" onclick="adminSaveSettings()">Save settings</button>
     </div>
     <div class="panel" style="margin-top:18px">
@@ -2373,7 +2399,7 @@ async function adminSaveSettings() {
       autoApproveHours: Number(document.getElementById('setAutoApprove').value),
       reviewerFeePercent: Number(document.getElementById('setReviewerFee').value),
       depositFeePercent: Number(document.getElementById('setDepositFee').value),
-      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value),marketplaceCommissionPercent: Number(document.getElementById('setMarketplaceCommission').value),disputeSettlementHours: Number(document.getElementById('setSettlementHours').value),reviewerResolutionHours: Number(document.getElementById('setReviewerResolutionHours').value)
+      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value),marketplaceCommissionPercent: Number(document.getElementById('setMarketplaceCommission').value),disputeSettlementHours: Number(document.getElementById('setSettlementHours').value),reviewerResolutionHours: Number(document.getElementById('setReviewerResolutionHours').value),smsUserPriceNgn: Number(document.getElementById('setSmsPrice').value)
     }) });
     toast('Settings saved.');
   } catch(e) { toast(e.message, true); }

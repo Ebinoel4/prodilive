@@ -185,3 +185,13 @@ CREATE TABLE IF NOT EXISTS reviewer_invites (
   used_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_job_alerts boolean NOT NULL DEFAULT true;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sms_job_alerts boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sms_deadline_alerts boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS sms_transaction_alerts boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified boolean NOT NULL DEFAULT false;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS talent_withdrawn_at timestamptz;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS talent_withdrawal_reason text;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS deadline_alerts_sent jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verify_hash text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verify_expires_at timestamptz;
