@@ -260,7 +260,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <a onclick="go('jobs')" id="navJobsLink">Find Jobs</a>
       <a onclick="go('myJobs')" id="navMyJobsLink" style="display:none">My Jobs</a>
       <a onclick="go('wallet')" id="navWalletLink" style="display:none">Wallet</a>
-      <a onclick="go('marketplace')" id="navMarketLink">Market</a>
+      <a onclick="go('marketplace')" id="navMarketLink">Marketplace</a>
       <a onclick="go('pricing')">Pricing</a>
       <a onclick="openModal('reviewerRegisterModal')" id="navReviewerLink">Become a Reviewer</a>
       <a onclick="go('myPurchases')" id="navPurchasesLink" style="display:none">My Purchases</a>
@@ -479,6 +479,7 @@ const MOBILE_NAV_ITEMS = [
   ['dashboard','🏠','Home'],
   ['jobs','🔎','Find Jobs'],
   ['myJobs','💼','My Jobs'],
+  ['marketplace','🛍️','Market'],
   ['wallet','💳','Wallet'],
   ['profile','👤','Profile'],
 ];
@@ -618,7 +619,7 @@ function updateNav() {
   document.getElementById('navMyJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navWalletLink').style.display = (signedIn && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
-  document.getElementById('navPurchasesLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
+  document.getElementById('navPurchasesLink').style.display = 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + (state.user.role==='member'?'MEMBER':state.user.role.toUpperCase());
   renderMobileNav();
@@ -1622,7 +1623,7 @@ async function submitJob(e) {
 /* ============================ VIEW: JOB DETAIL ============================ */
 async function viewJobDetail() {
   const id = state.params.id;
-  let job, files = [], proposals = [], messages = [], reviews = [];
+  let job, files = [], proposals = [], messages = [], reviews = [], attachments = [];
   try {
     const d = await api('/jobs/' + id);
     job = d.job; files = d.files || [];
@@ -1634,6 +1635,7 @@ async function viewJobDetail() {
 
   if (isClient && job.status === 'OPEN') { try { proposals = (await api('/jobs/'+id+'/proposals')).proposals; } catch {} }
   if (isClient || isTalent || isStaff) { try { messages = (await api('/messages/'+id)).messages; } catch {} }
+  if (isClient || isTalent) { try { attachments = (await api('/jobs/'+id+'/attachments')).attachments || []; } catch {} }
   if (job.status === 'RELEASED') { try { reviews = (await api('/talents/'+job.talent_id+'/reviews')).reviews; } catch {} }
   const alreadyReviewed = isClient && reviews.some(r=>r.reviewer_id === state.user.id);
 
@@ -1755,8 +1757,11 @@ async function viewJobDetail() {
             <h4>Project chat</h4>
             <div class="chat-shell"><div class="chat-safety"><b>Stay protected:</b> Keep payments, file delivery and project communication on PRODILIVE. Transactions made outside the platform are not protected.</div>
             <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
+            ${attachments.length ? `<div style="padding:10px 14px;border-top:1px solid var(--hair);background:var(--paper-2)"><div class="mono" style="font-size:9.5px;color:var(--text-faint);margin-bottom:6px">SHARED PROJECT FILES</div>${attachments.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:12px"><span>${esc(a.sender_name)} · ${esc(a.original_name)}</span>${String(a.mime||'').startsWith('audio/')?`<audio controls src="/api/project-attachments/${a.id}/file" style="width:180px;height:30px"></audio>`:`<a class="btn btn-ghost btn-sm" target="_blank" href="/api/project-attachments/${a.id}/file">Open</a>`}</div>`).join('')}</div>` : ''}
             <div class="chat-input-row">
+              <input id="projectAttach" type="file" accept="audio/*,.zip,.pdf,image/*" style="max-width:180px" title="Share audio or reference file">
               <textarea id="msgBody" placeholder="Message about this project…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
+              <button class="btn btn-ghost btn-sm" onclick="shareProjectFile('${job.id}')">Attach</button>
               <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
             </div></div>
           </div>` : ''}
@@ -1857,6 +1862,11 @@ async function submitReview(id) {
     await api('/jobs/'+id+'/review', { method:'POST', body: JSON.stringify({ rating: Number(document.getElementById('reviewRating').value), comment: document.getElementById('reviewComment').value }) });
     toast('Review submitted. Thank you!'); reload();
   } catch(e) { toast(e.message, true); }
+}
+async function shareProjectFile(jobId){
+  const input=document.getElementById('projectAttach');if(!input||!input.files.length){toast('Choose a file to share.',true);return;}
+  const fd=new FormData();fd.append('file',input.files[0]);
+  try{await api('/jobs/'+jobId+'/attachments',{method:'POST',body:fd});toast('Project file shared.');reload();}catch(e){toast(e.message,true)}
 }
 async function sendMessage(jobId) {
   const body = document.getElementById('msgBody').value.trim();
