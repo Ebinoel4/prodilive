@@ -3,8 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="PRODILIVE — trusted marketplace for music and creative production services">
-<title>PRODILIVE — Music Production Marketplace</title>
+<meta name="description" content="PRODILIVE is the Live Creative Network — connect, collaborate, find opportunities, sell digital work and get paid securely.">
+<title>PRODILIVE — Live Creative Network</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PRODILIVE">
+<meta property="og:title" content="PRODILIVE — Live Creative Network">
+<meta property="og:description" content="A global creative network where talent and clients connect, collaborate, create, sell and get paid securely.">
+<meta property="og:url" content="https://www.prodilive.com/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PRODILIVE — Live Creative Network">
+<meta name="twitter:description" content="A global creative network where talent and clients connect, collaborate, create, sell and get paid securely.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -290,6 +298,24 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
 @media(max-width:900px){.hero{min-height:auto;padding:64px 0 44px}.hero h1{font-size:clamp(40px,12vw,58px)}.hero-grid{grid-template-columns:1fr}.hero-visual{display:flex;height:220px;transform:none;margin-top:12px}.hero-visual:hover{transform:translateY(-3px)}.hero-visual svg{padding-top:42px}.mobile-nav{background:color-mix(in srgb,var(--ink) 88%,transparent);backdrop-filter:blur(22px) saturate(150%)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.reveal{opacity:1;transform:none}}
 
+
+/* v5.53 — cinematic landing + reliable action states */
+.visual-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.visual-cat{position:relative;min-height:220px;border:1px solid var(--hair);border-radius:20px;overflow:hidden;cursor:pointer;background:var(--paper);isolation:isolate;transform:translateZ(0);transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .35s}
+.visual-cat::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(4,5,8,.88) 100%);z-index:1}
+.visual-cat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.88) contrast(1.04);transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .35s}
+.visual-cat .vc-copy{position:absolute;z-index:2;left:18px;right:18px;bottom:16px;color:#fff}
+.visual-cat .vc-copy b{display:block;font-size:16px;margin-bottom:4px}.visual-cat .vc-copy span{font-size:11px;opacity:.72}
+.visual-cat .vc-arrow{position:absolute;z-index:3;right:15px;top:15px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(8,9,13,.55);backdrop-filter:blur(12px);color:#fff;border:1px solid rgba(255,255,255,.18);transition:transform .3s,background .3s}
+.visual-cat:hover{transform:translateY(-6px);border-color:color-mix(in srgb,var(--brass) 55%,var(--hair));box-shadow:0 24px 55px rgba(0,0,0,.22)}
+.visual-cat:hover img{transform:scale(1.06);filter:saturate(1.04) contrast(1.06)}.visual-cat:hover .vc-arrow{transform:rotate(45deg);background:var(--brass)}
+.living-marquee{overflow:hidden;border-block:1px solid var(--hair);background:var(--paper);padding:11px 0}.living-track{display:flex;width:max-content;gap:34px;animation:prodiliveMarquee 28s linear infinite;color:var(--text-faint);font-size:11px;letter-spacing:.12em;text-transform:uppercase}.living-track span::before{content:'✦';color:var(--brass-soft);margin-right:34px}@keyframes prodiliveMarquee{to{transform:translateX(-50%)}}
+.sms-card{position:relative;overflow:hidden}.sms-card::before{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-55px;top:-70px;background:color-mix(in srgb,var(--brass) 16%,transparent);filter:blur(4px)}.sms-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--hair);border-radius:999px;padding:5px 9px}.sms-status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}.sms-status.on{color:#4ecb8d}.sms-status.low{color:#e5b85c}.sms-status.off{color:var(--danger)}
+.action-link{position:relative;overflow:hidden}.action-link::after{content:"";position:absolute;inset:0;transform:translateX(-120%);background:linear-gradient(100deg,transparent,rgba(255,255,255,.12),transparent);transition:transform .55s}.action-link:hover::after{transform:translateX(120%)}
+@media(max-width:900px){.visual-cat-grid{grid-template-columns:repeat(2,1fr)}.visual-cat{min-height:190px}}
+@media(max-width:540px){.visual-cat-grid{grid-template-columns:1fr 1fr;gap:9px}.visual-cat{min-height:160px;border-radius:16px}.visual-cat .vc-copy{left:12px;bottom:12px}.visual-cat .vc-copy b{font-size:13px}.visual-cat .vc-copy span{display:none}.visual-cat .vc-arrow{width:29px;height:29px;right:10px;top:10px}}
+@media(prefers-reduced-motion:reduce){.living-track{animation:none}.visual-cat,.visual-cat img,.visual-cat .vc-arrow{transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -311,16 +337,16 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     <div class="nav-cta">
       <button onclick="toggleTheme()" id="themeToggleBtn" title="Toggle light/dark theme" style="background:none;border:1px solid var(--hair);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--text);font-size:15px;margin-right:8px">🌙</button>
       <div id="signedOutBtns">
-        <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Sign in</button>
-        <button class="btn btn-brass btn-sm" onclick="openAuth('register')">Join PRODILIVE</button>
+        <button class="btn btn-ghost btn-sm action-link" onclick="openAuth('login')">Sign in</button>
+        <button class="btn btn-brass btn-sm" onclick="state.user ? go('dashboard') : openAuth('register')">Join PRODILIVE</button>
       </div>
       <div id="signedInBtns" style="display:none;align-items:center;gap:10px">
         <div style="position:relative">
-          <button class="btn btn-ghost btn-sm" onclick="toggleNotif()" style="position:relative">🔔<span id="notifDot" class="notif-dot" style="display:none"></span></button>
+          <button class="btn btn-ghost btn-sm action-link" onclick="toggleNotif()" style="position:relative">🔔<span id="notifDot" class="notif-dot" style="display:none"></span></button>
           <div class="notif-drop" id="notifDrop"></div>
         </div>
         <span class="mono" id="navUserName" style="font-size:12px;color:var(--text-faint)"></span>
-        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Log out</button>
+        <button class="btn btn-ghost btn-sm action-link" onclick="doLogout()">Log out</button>
       </div>
     </div>
   </div>
@@ -451,7 +477,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     <div class="field">
       <label>Milestones <span style="font-weight:400;color:var(--text-faint)">(optional — for your own tracking, breakdown only)</span></label>
       <div id="msRowsBox"></div>
-      <button type="button" class="btn btn-ghost btn-sm" onclick="addMsRow()">+ Add milestone</button>
+      <button type="button" class="btn btn-ghost btn-sm action-link" onclick="addMsRow()">+ Add milestone</button>
     </div>
     <button class="btn btn-brass btn-block" type="submit" id="jobSubmitBtn">Publish project</button>
   </form>
@@ -874,7 +900,7 @@ async function viewHome() {
   try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
   let stats = null;
   try { stats = await api('/stats/public'); } catch {}
-  const cats = ['Mixing','Mastering','Session Musicians','Vocal Coaching','Songwriting','Recording Studios','Beat Making','Arrangement'];
+  const cats = ['Music Production','Graphic Design','Video & Content','Photography','Voice & Audio','Session Musicians','Songwriting','Digital Products'];
   const iconCats = [
     ['🎚','Production',['Music Producer','Beat Making']],
     ['🎹','Keys & Session',['Session Musicians']],
@@ -889,20 +915,21 @@ async function viewHome() {
   <section class="hero"><div class="wrap">
     <div class="hero-grid">
       <div>
-        <div class="eyebrow">Global music production marketplace</div>
-        <h1>Bring your ideas to life — with the right creative professional.</h1>
-        <p class="lead">Discover, message and hire trusted producers, engineers, session musicians and vocal coaches — with protected files and payment held safely until you approve the work.</p>
-        <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
+        <div class="eyebrow">PRODILIVE · LIVE CREATIVE NETWORK</div>
+        <h1>Where creativity goes live.</h1>
+        <p class="lead">Connect with creative talent, find opportunities, collaborate securely, sell digital work and get paid — all in one global network.</p>
+        <div class="searchbar"><input id="homeSearch" placeholder="Try 'video editor', 'producer' or 'graphic designer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
         <div class="hero-actions" style="margin-top:22px">
-          <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
-          <button class="btn btn-ghost" onclick="go('jobs')">Find Jobs</button>
-          <button class="btn btn-ghost" onclick="go('marketplace')">Browse Beats &amp; Templates</button>
+          <button class="btn btn-brass" onclick="go('talents')">Explore Creatives</button>
+          <button class="btn btn-ghost" onclick="go('jobs')">Find Opportunities</button>
+          <button class="btn btn-ghost" onclick="go('marketplace')">Creative Marketplace</button>
         </div>
       </div>
       <div class="hero-visual">${heroWaveformSvg()}</div>
     </div>
     <div class="cat-row">${cats.map(c=>`<span class="cat-pill" onclick="go('talents',{q:'${esc(c)}'})">${c}</span>`).join('')}</div>
   </div></section>
+  <div class="living-marquee"><div class="living-track"><span>Produce</span><span>Record</span><span>Collaborate</span><span>Review</span><span>Protect</span><span>Deliver</span><span>Get paid</span><span>Produce</span><span>Record</span><span>Collaborate</span><span>Review</span><span>Protect</span><span>Deliver</span><span>Get paid</span></div></div>
 
   ${stats ? `
   <section style="border-bottom:1px solid var(--hair)"><div class="wrap" style="padding-top:22px;padding-bottom:22px">
@@ -916,15 +943,23 @@ async function viewHome() {
 
   <section><div class="wrap">
     <div class="section-head"><div><div class="eyebrow">Explore</div><h2>Explore creative talent</h2></div></div>
-    <div class="icon-cat-grid">
-      ${iconCats.map(([ic,label,qs])=>`
-        <div class="icon-cat-card" onclick="go('talents',{q:'${esc(qs[0])}'})"><div class="ic">${ic}</div><div class="lb">${esc(label)}</div></div>`).join('')}
+    <div class="visual-cat-grid">
+      ${[
+        ['Music Producers','Production & arrangement','Music Production','https://images.pexels.com/photos/8197290/pexels-photo-8197290.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Vocalists','Session & lead vocals','Vocal Coaching','https://images.pexels.com/photos/7087169/pexels-photo-7087169.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Mix Engineers','Mixing & mastering','Mixing','https://images.pexels.com/photos/8198124/pexels-photo-8198124.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Session Musicians','Keys, drums, bass & guitar','Session Musicians','https://images.pexels.com/photos/5650549/pexels-photo-5650549.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Recording Studios','Professional recording spaces','Recording Studios','https://images.pexels.com/photos/8132970/pexels-photo-8132970.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Songwriters','Lyrics, toplines & composition','Songwriting','https://images.pexels.com/photos/8133324/pexels-photo-8133324.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Beat Makers','Original beats & instrumentals','Beat Production','https://images.pexels.com/photos/8132964/pexels-photo-8132964.jpeg?auto=compress&cs=tinysrgb&w=900'],
+        ['Creative Audio','Sound design & specialist work','Sound Design','https://images.pexels.com/photos/7173393/pexels-photo-7173393.jpeg?auto=compress&cs=tinysrgb&w=900']
+      ].map(([label,sub,q,img])=>`<article class="visual-cat reveal" role="button" tabindex="0" onclick="go('talents',{q:'${esc(q)}'})" onkeydown="if(event.key==='Enter'||event.key===' ')go('talents',{q:'${esc(q)}'})"><img loading="lazy" src="${img}" alt="${esc(label)}"><span class="vc-arrow">↗</span><div class="vc-copy"><b>${esc(label)}</b><span>${esc(sub)}</span></div></article>`).join('')}
     </div>
   </div></section>
 
   <section style="background:var(--paper);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)"><div class="wrap">
     <div class="eyebrow" id="howItWorks">How it works</div>
-    <h2 style="font-size:clamp(30px,4vw,48px);margin-bottom:8px">From an idea to a finished record.</h2>
+    <h2 style="font-size:clamp(30px,4vw,48px);margin-bottom:8px">From an idea to finished creative work.</h2>
     <p class="lead" style="max-width:680px">A visual workflow built around collaboration — not forms. Every stage stays connected, protected and easy to follow.</p>
     <div class="flow-motion">
       ${[['01','Discover','Find the right creative professional for the sound you have in mind.'],['02','Build the brief','Share references, audio, voice notes and a clear delivery deadline.'],['03','Fund securely','Your project payment is protected while the work is being completed.'],['04','Create together','Chat, exchange references, review watermarked deliveries and request revisions.'],['05','Approve & release','Approve the final work, release payment and unlock the downloadable master.']].map(([n,t,d])=>`<div class="flow-step reveal"><div class="orb">${n}</div><h4>${t}</h4><p>${d}</p><span class="pulse"></span></div>`).join('')}
@@ -934,7 +969,7 @@ async function viewHome() {
   <section><div class="wrap">
     <div class="story-stage reveal">
       <div class="story-grid">
-        <div class="story-copy"><div class="eyebrow">About PRODILIVE</div><h2>Where creative work moves.</h2><p>PRODILIVE brings the people, conversation, files, protected payments and final delivery of a creative project into one living workspace. Built for music and creative professionals working across borders, it is designed to feel closer to a studio session than a traditional freelance board.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:22px"><span class="studio-chip"><b></b> Live collaboration</span><span class="studio-chip">♫ Audio-first workflow</span><span class="studio-chip">☁ Cloud delivery</span></div></div>
+        <div class="story-copy"><div class="eyebrow">About PRODILIVE</div><h2>Where creative work moves.</h2><p>PRODILIVE brings the people, conversation, files, protected payments and final delivery of a creative project into one living workspace. Built for creative professionals working across borders, it is designed to feel closer to a live creative workspace than a traditional freelance board.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:22px"><span class="studio-chip"><b></b> Live collaboration</span><span class="studio-chip">♫ Audio-first workflow</span><span class="studio-chip">☁ Cloud delivery</span></div></div>
         <div class="motion-studio">
           <div class="motion-card one"><div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:12px">Protected preview</strong><span class="studio-chip">LIVE</span></div><div class="mini-wave">${Array.from({length:48},(_,i)=>`<i style="animation-duration:${.7+(i%7)*.09}s"></i>`).join('')}</div><div style="font-size:10px;color:var(--text-faint)">Prodilive.com · protected review</div></div>
           <div class="motion-card two"><div style="font-size:11px;color:var(--text-faint);margin-bottom:12px">PROJECT WORKSPACE</div><div style="display:flex;gap:9px;align-items:center"><div class="chat-avatar">P</div><div style="padding:9px 12px;background:var(--paper-2);border-radius:14px;font-size:11px">Here’s the reference and a voice note 🎙</div></div><div style="margin:14px 0 0 36px;padding:9px 12px;border:1px solid var(--hair);border-radius:12px;font-size:10px">▶  Voice note &nbsp; 0:18</div></div>
@@ -983,7 +1018,7 @@ async function viewHome() {
         <div class="eyebrow">For providers</div>
         <h2>Your next opportunity could come from anywhere.</h2>
         <p class="lead">Build your profile, show your work, and find opportunities with clients on PRODILIVE. Get paid securely once your work is approved.</p>
-        <button class="btn btn-brass" onclick="state.user ? go('dashboard') : openAuth('register')">Start Earning</button>
+        <button class="btn btn-brass" onclick="state.user ? go('jobs') : openAuth('register')">Start Earning</button>
       </div>
       <div class="split-visual">
         <div class="row"><span>Open projects this week</span><span class="mono">Growing daily</span></div>
@@ -2155,7 +2190,8 @@ async function viewDashboard() {
       <div class="panel"><h4>Wallet</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Deposits, withdrawals, payout details and transaction history.</p><button class="btn btn-ghost btn-sm" onclick="go('wallet')">Open Wallet</button></div>
       <div class="panel"><h4>Explore</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Discover professionals and services.</p><button class="btn btn-ghost btn-sm" onclick="go('talents')">Explore Talent</button></div>
       <div class="panel"><h4>Marketplace</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Browse beats, tracks and templates.</p><button class="btn btn-ghost btn-sm" onclick="go('marketplace')">Open Market</button></div>
-      <div class="panel"><h4>Profile</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Your personal details, specialties, portfolio and identity verification.</p><button class="btn btn-ghost btn-sm" onclick="go('profile')">Open Profile</button></div>
+      <div class="panel"><h4>Profile</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Your personal details, specialties, portfolio and identity verification.</p><button class="btn btn-ghost btn-sm action-link" onclick="go('profile')">Open Profile</button></div>
+      ${(()=>{const price=Number(wallet.smsPriceNgn||10), bal=Number(wallet.balance||0), remaining=price>0?Math.floor(Math.max(0,bal)/price):0, enabled=!!(u.smsJobAlerts||u.smsDeadlineAlerts||u.smsTransactionAlerts), ready=enabled&&u.phoneVerified&&bal>=price, low=ready&&remaining<10; const cls=ready?(low?'low':'on'):'off'; const label=!enabled?'SMS OFF':!u.phoneVerified?'PHONE NOT VERIFIED':bal<price?'SMS PAUSED':low?'LOW BALANCE':'SMS ACTIVE'; return `<div class="panel sms-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><h4>SMS Notifications</h4><div class="sms-status ${cls}" style="margin-top:8px"><i></i>${label}</div></div><div style="font-size:25px">📱</div></div><p style="color:var(--text-dim);font-size:12.5px;line-height:1.55;margin:14px 0 10px">Paid SMS alerts are deducted from your PRODILIVE Wallet. Keep funds available to continue receiving enabled job, deadline and transaction alerts. Email and in-app notifications remain free.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"><div style="padding:10px;border:1px solid var(--hair);border-radius:10px"><div style="font-size:10px;color:var(--text-faint)">WALLET BALANCE</div><b>${fmt(bal)}</b></div><div style="padding:10px;border:1px solid var(--hair);border-radius:10px"><div style="font-size:10px;color:var(--text-faint)">EST. SMS LEFT</div><b>${remaining}</b> <span style="font-size:10px;color:var(--text-faint)">@ ₦${price}/SMS</span></div></div><button class="btn btn-brass btn-sm action-link" onclick="go('wallet')">${bal<price?'Deposit Funds':'Open Wallet'}</button> <button class="btn btn-ghost btn-sm action-link" onclick="go('profile')">Notification Settings</button></div>`})()}
     </div>
   </div></section>`;
 }
