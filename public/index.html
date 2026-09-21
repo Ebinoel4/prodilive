@@ -262,7 +262,6 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <a onclick="go('wallet')" id="navWalletLink" style="display:none">Wallet</a>
       <a onclick="go('marketplace')" id="navMarketLink">Marketplace</a>
       <a onclick="go('pricing')">Pricing</a>
-      <a onclick="openModal('reviewerRegisterModal')" id="navReviewerLink">Become a Reviewer</a>
       <a onclick="go('myPurchases')" id="navPurchasesLink" style="display:none">My Purchases</a>
       <a onclick="go('profile')" id="navProfileLink" style="display:none">Profile</a>
       <a onclick="go(state.user && state.user.role==='reviewer' ? 'reviewerHub' : 'dashboard')" id="navDashLink" style="display:none">Dashboard</a>
@@ -308,7 +307,6 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
       <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
       <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
       <a onclick="go('terms')">Terms &amp; Conditions</a>
-      <a onclick="openModal('reviewerRegisterModal')">Become a Reviewer</a>
     </div>
     <div class="foot-col">
       <h5>Account</h5>
@@ -612,7 +610,6 @@ function updateNav() {
   document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
   document.getElementById('navDashLink').textContent = isReviewer ? 'Reviewer Hub' : 'Home';
   document.getElementById('navAdminLink').style.display = isAdmin ? 'inline' : 'none';
-  document.getElementById('navReviewerLink').style.display = signedIn ? 'none' : 'inline';
   // Reviewers are a separate entity: no marketplace browsing/buying, no job board.
   document.getElementById('navTalentsLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
@@ -636,7 +633,7 @@ function openAuth(mode) {
   document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Sign in' : 'Create account';
   document.getElementById('authSwitch').innerHTML = mode==='login'
     ? `New to Prodilive? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('register')">Create an account</a>`
-    : `Already have an account? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('login')">Sign in</a>`;
+    : `Already have an account? <a style="color:var(--brass-soft);cursor:pointer" onclick="openAuth('login')">Sign in</a><div style="margin-top:12px">Applying as a dispute reviewer? <a style="color:var(--brass-soft);cursor:pointer" onclick="closeModal('authModal');openModal('reviewerRegisterModal')">Become a Reviewer</a></div>`;
   openModal('authModal');
 }
 function selectRole(role) { state.authRole = 'member'; }
@@ -1731,6 +1728,7 @@ async function viewJobDetail() {
                 <div style="display:flex;gap:8px">
                   ${f.preview_name ? `<div style="margin:4px 0"><audio src="/api/files/${f.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : ''}
                   ${job.status==='RELEASED' && isClient ? `<a class="btn btn-brass btn-sm" href="/api/files/${f.id}/master" target="_blank">Download master</a>` : ''}
+                  ${isTalent && ['IN_PROGRESS','REVISION_REQUESTED','CLIENT_REVIEW'].includes(job.status) ? `<button class="btn btn-danger btn-sm" onclick="deleteDeliveryFile('${f.id}')">Delete</button>` : ''}
                 </div>
               </div>`).join('')}
           </div>` : ''}
@@ -1757,7 +1755,7 @@ async function viewJobDetail() {
             <h4>Project chat</h4>
             <div class="chat-shell"><div class="chat-safety"><b>Stay protected:</b> Keep payments, file delivery and project communication on PRODILIVE. Transactions made outside the platform are not protected.</div>
             <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
-            ${attachments.length ? `<div style="padding:10px 14px;border-top:1px solid var(--hair);background:var(--paper-2)"><div class="mono" style="font-size:9.5px;color:var(--text-faint);margin-bottom:6px">SHARED PROJECT FILES</div>${attachments.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:12px"><span>${esc(a.sender_name)} · ${esc(a.original_name)}</span>${String(a.mime||'').startsWith('audio/')?`<audio controls src="/api/project-attachments/${a.id}/file" style="width:180px;height:30px"></audio>`:`<a class="btn btn-ghost btn-sm" target="_blank" href="/api/project-attachments/${a.id}/file">Open</a>`}</div>`).join('')}</div>` : ''}
+            ${attachments.length ? `<div style="padding:10px 14px;border-top:1px solid var(--hair);background:var(--paper-2)"><div class="mono" style="font-size:9.5px;color:var(--text-faint);margin-bottom:6px">SHARED PROJECT FILES</div>${attachments.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:12px"><span>${esc(a.sender_name)} · ${esc(a.original_name)}</span>${String(a.mime||'').startsWith('audio/')?`<audio controls src="/api/project-attachments/${a.id}/file" style="width:180px;height:30px"></audio>`:`<a class="btn btn-ghost btn-sm" target="_blank" href="/api/project-attachments/${a.id}/file">Open</a>`}${String(a.sender_id)===String(state.user?.id)?`<button class="btn btn-danger btn-sm" onclick="deleteProjectAttachment('${a.id}')">Delete</button>`:''}</div>`).join('')}</div>` : ''}
             <div class="chat-input-row">
               <input id="projectAttach" type="file" accept="audio/*,.zip,.pdf,image/*" style="max-width:180px" title="Share audio or reference file">
               <textarea id="msgBody" placeholder="Message about this project…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
@@ -1825,6 +1823,8 @@ async function withdrawTalent(id){
   const reason=prompt('Why are you withdrawing from this project?'); if(reason===null)return; if(!confirm('Withdraw from this project? If payment is already held, it will be returned to the client.'))return;
   try{const d=await api('/jobs/'+id+'/withdraw-talent',{method:'POST',body:JSON.stringify({reason})});toast(d.funded?'You withdrew. The client refund is being processed.':'You withdrew. The project is open again.');go('myJobs');}catch(e){toast(e.message,true)}
 }
+async function deleteDeliveryFile(id){if(!confirm('Delete this delivery file? This also removes it from Cloudflare storage.'))return;try{await api('/files/'+id,{method:'DELETE'});toast('Delivery file deleted');reload()}catch(e){toast(e.message,true)}}
+async function deleteProjectAttachment(id){if(!confirm('Delete this shared file?'))return;try{await api('/project-attachments/'+id,{method:'DELETE'});toast('File deleted');reload()}catch(e){toast(e.message,true)}}
 async function deliverJob(id) {
   const input = document.getElementById('deliverFiles');
   if (!input.files.length) { toast('Choose at least one file.', true); return; }
