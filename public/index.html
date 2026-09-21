@@ -254,9 +254,11 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   <div class="wrap nav-inner">
     <div class="logo" onclick="go('home')"><span class="dot"></span>PRODILIVE</div>
     <nav class="nav-links">
-      <a onclick="go('talents')" id="navTalentsLink">Find Talent</a>
-      <a onclick="go('jobs')" id="navJobsLink">Find Work</a>
-      <a onclick="go('marketplace')" id="navMarketLink">Beats &amp; Templates</a>
+      <a onclick="go('talents')" id="navTalentsLink">Explore</a>
+      <a onclick="go('jobs')" id="navJobsLink">Find Jobs</a>
+      <a onclick="go('myJobs')" id="navMyJobsLink" style="display:none">My Jobs</a>
+      <a onclick="go('wallet')" id="navWalletLink" style="display:none">Wallet</a>
+      <a onclick="go('marketplace')" id="navMarketLink">Market</a>
       <a onclick="go('pricing')">Pricing</a>
       <a onclick="openModal('reviewerRegisterModal')" id="navReviewerLink">Become a Reviewer</a>
       <a onclick="go('myPurchases')" id="navPurchasesLink" style="display:none">My Purchases</a>
@@ -294,9 +296,9 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
     <div class="foot-col">
       <h5>Platform</h5>
       <a onclick="go('talents')">Find Talent</a>
-      <a onclick="go('jobs')">Find Work</a>
+      <a onclick="go('jobs')">Find Jobs</a>
       <a onclick="go('marketplace')">Beats &amp; Templates</a>
-      <a onclick="state.user ? openJobModal('open') : openAuth('register')">Post a Project</a>
+      <a onclick="state.user?.role==='admin'?go('admin'):(state.user ? openJobModal('open') : openAuth('register'))">Post a Project</a>
       <a onclick="go('pricing')">Pricing</a>
     </div>
     <div class="foot-col">
@@ -398,6 +400,9 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
     <div class="field"><label>Category</label><input id="jobCategory" placeholder="Mixing, Production, Session Musician..."></div>
     <div class="field"><label>Budget (NGN)</label><input id="jobBudget" type="number" min="1" required placeholder="150000"></div>
     <div class="field"><label>Included revisions</label><input id="jobRevisions" type="number" min="0" max="20" value="2"></div>
+    <div class="field"><label>Delivery deadline</label><input id="jobDeadline" type="datetime-local"></div>
+    <div class="field" style="display:flex;align-items:center;gap:8px"><input id="jobAutoCancel" type="checkbox" style="width:auto"><label style="margin:0" for="jobAutoCancel">Auto-cancel if delivery is still missing after the grace period</label></div>
+    <div class="field"><label>Overdue grace period (hours)</label><input id="jobGraceHours" type="number" min="1" max="720" value="24"></div>
     <div class="field" id="instantClaimField" style="display:flex;align-items:center;gap:8px">
       <input id="jobInstantClaim" type="checkbox" style="width:auto">
       <label style="margin:0" for="jobInstantClaim">First come, first served — any provider can claim this instantly (no proposal review)</label>
@@ -469,11 +474,11 @@ const SPECIALTY_GROUPS = {
   'Visual & Creative': ['Graphic Designer','Artwork Designer','Photographer','Videographer','Video Editor','Motion Designer','Animator'],
 };
 const MOBILE_NAV_ITEMS = [
-  ['home','🏠','Home'],
-  ['talents','🔍','Explore'],
-  ['jobs','💼','Jobs'],
-  ['marketplace','🎵','Market'],
-  ['dashboard','👤','Profile'],
+  ['dashboard','🏠','Home'],
+  ['jobs','🔎','Find Jobs'],
+  ['myJobs','💼','My Jobs'],
+  ['wallet','💳','Wallet'],
+  ['profile','👤','Profile'],
 ];
 
 /* ============================ API HELPERS ============================ */
@@ -517,7 +522,7 @@ function go(view, params = {}) {
   renderMobileNav();
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function needsAuth(view){ return ['dashboard','wallet','admin','jobDetail','reviewerHub','jobs','myPurchases','profile'].includes(view); }
+function needsAuth(view){ return ['dashboard','wallet','admin','jobDetail','reviewerHub','jobs','myJobs','myPurchases','profile'].includes(view); }
 
 /* ============================ REAL-TIME LIVE FEED ============================ */
 let _socket = null;
@@ -580,7 +585,7 @@ async function render() {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="wrap" style="padding:80px 0;text-align:center;color:var(--text-faint)">Loading…</div>';
   try {
-    const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen,
+    const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen, myJobs:viewMyJobs,
       jobDetail:viewJobDetail, dashboard:viewDashboard, wallet:viewWallet, admin:viewAdmin, pricing:viewPricing,
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
       marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms };
@@ -602,12 +607,14 @@ function updateNav() {
   document.getElementById('signedOutBtns').style.display = signedIn ? 'none' : 'block';
   document.getElementById('signedInBtns').style.display = signedIn ? 'flex' : 'none';
   document.getElementById('navDashLink').style.display = signedIn ? 'inline' : 'none';
-  document.getElementById('navDashLink').textContent = isReviewer ? 'Reviewer Hub' : 'Dashboard';
+  document.getElementById('navDashLink').textContent = isReviewer ? 'Reviewer Hub' : 'Home';
   document.getElementById('navAdminLink').style.display = isAdmin ? 'inline' : 'none';
   document.getElementById('navReviewerLink').style.display = signedIn ? 'none' : 'inline';
   // Reviewers are a separate entity: no marketplace browsing/buying, no job board.
   document.getElementById('navTalentsLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
+  document.getElementById('navMyJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
+  document.getElementById('navWalletLink').style.display = (signedIn && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navPurchasesLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
@@ -792,7 +799,7 @@ async function viewHome() {
         <div class="searchbar"><input id="homeSearch" placeholder="Try 'mixing engineer'" onkeydown="if(event.key==='Enter')go('talents',{q:this.value})"><button class="btn btn-brass btn-sm" onclick="go('talents',{q:document.getElementById('homeSearch').value})">Search</button></div>
         <div class="hero-actions" style="margin-top:22px">
           <button class="btn btn-brass" onclick="go('talents')">Find Talent</button>
-          <button class="btn btn-ghost" onclick="go('jobs')">Find Work</button>
+          <button class="btn btn-ghost" onclick="go('jobs')">Find Jobs</button>
           <button class="btn btn-ghost" onclick="go('marketplace')">Browse Beats &amp; Templates</button>
         </div>
       </div>
@@ -1494,8 +1501,27 @@ async function viewJobsOpen() {
     ${jobs.length ? `<div id="liveJobsList">${jobs.map(jobRow).join('')}</div>` : `<div class="empty"><div class="n">📭</div><h3>No open projects right now</h3><p>Check back soon, or post one yourself.</p></div>`}
   </div></section>`;
 }
+async function viewMyJobs() {
+  if (!state.user) { openAuth('login'); return ''; }
+  const u=state.user;
+  let jobs=[];
+  try { jobs=(await api('/jobs')).jobs||[]; } catch(e) { toast(e.message,true); }
+  const mine=jobs.filter(j=>j.client_id===u.id || j.talent_id===u.id);
+  const posted=mine.filter(j=>j.client_id===u.id);
+  const working=mine.filter(j=>j.talent_id===u.id && j.client_id!==u.id);
+  const history=mine.filter(j=>['CANCELLED','APPROVED','RELEASED','RESOLVED_RELEASE','RESOLVED_REFUND'].includes(j.status));
+  const active=x=>!['CANCELLED','APPROVED','RELEASED','RESOLVED_RELEASE','RESOLVED_REFUND'].includes(x.status);
+  return `<section style="padding-top:32px"><div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:12px;flex-wrap:wrap"><div><div class="eyebrow">Workspace</div><h1 style="font-size:28px">My Jobs</h1></div><button class="btn btn-brass" onclick="openJobModal('open')">+ Post a job</button></div>
+    <div class="dash-cols">
+      <div class="panel"><h4>Jobs I posted <span>${posted.filter(active).length}</span></h4>${posted.filter(active).length?posted.filter(active).map(jobRow).join(''):'<p style="color:var(--text-faint)">No active jobs posted by you.</p>'}</div>
+      <div class="panel"><h4>Jobs I’m working on <span>${working.filter(active).length}</span></h4>${working.filter(active).length?working.filter(active).map(jobRow).join(''):'<p style="color:var(--text-faint)">No active assigned jobs.</p>'}</div>
+    </div>
+    <div class="panel" style="margin-top:22px"><h4>Job history <span>${history.length}</span></h4>${history.length?history.map(jobRow).join(''):'<p style="color:var(--text-faint)">No completed, cancelled or resolved jobs yet.</p>'}</div>
+  </div></section>`;
+}
 function jobRow(j) {
-  const canClaim = j.instant_claim && j.status === 'OPEN' && state.user && ['talent','reviewer'].includes(state.user.role);
+  const canClaim = j.instant_claim && j.status === 'OPEN' && state.user && ['member','talent','client'].includes(state.user.role);
   return `
   <div class="job-row" id="jobrow_${j.id}">
     <div onclick="go('jobDetail',{id:'${j.id}'})" style="cursor:pointer">
@@ -1527,7 +1553,7 @@ function openJobModal(mode, talentId, talentName) {
   document.getElementById('jobDesc').value = '';
   document.getElementById('jobCategory').value = '';
   document.getElementById('jobBudget').value = '';
-  document.getElementById('jobRevisions').value = 2;
+  document.getElementById('jobRevisions').value = 2;document.getElementById('jobDeadline').value='';document.getElementById('jobAutoCancel').checked=false;document.getElementById('jobGraceHours').value=24;
   document.getElementById('jobInstantClaim').checked = false;
   document.getElementById('instantClaimField').style.display = mode==='hire' ? 'none' : 'flex';
   state.msRows = [];
@@ -1557,7 +1583,7 @@ async function submitJob(e) {
       description: document.getElementById('jobDesc').value.trim(),
       category: document.getElementById('jobCategory').value.trim() || undefined,
       budget: Number(document.getElementById('jobBudget').value),
-      revisionCount: Number(document.getElementById('jobRevisions').value || 2),
+      revisionCount: Number(document.getElementById('jobRevisions').value || 2),deadline: document.getElementById('jobDeadline').value ? new Date(document.getElementById('jobDeadline').value).toISOString() : undefined,autoCancelOverdue: document.getElementById('jobAutoCancel').checked,overdueGraceHours: Number(document.getElementById('jobGraceHours').value||24),
       instantClaim: state.jobModalMode !== 'hire' && document.getElementById('jobInstantClaim').checked,
       milestones,
     };
@@ -1800,7 +1826,7 @@ async function openDispute(id) {
   catch(e) { toast(e.message, true); }
 }
 async function decideDispute(id, outcome) {
-  try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome }) }); toast('Dispute resolved.'); reload(); }
+  try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome }) }); toast('Dispute decision processed successfully.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
 async function submitReview(id) {
@@ -1823,7 +1849,7 @@ function renderJobChat(messages, currentUser) {
   if (!messages.length) return `<p style="color:var(--text-faint);font-size:13px">No messages yet — say hello.</p>`;
   return messages.map(m => {
     const own = currentUser && m.sender_id === currentUser.id;
-    return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${esc(m.sender_name)} · ${timeAgo(m.created_at)}</span>${esc(m.body)}</div>`;
+    return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${m.sender_role==='admin'?'<b>PRODILIVE ADMIN</b>':m.sender_role==='reviewer'?'<b>PRODILIVE REVIEWER</b>':esc(m.sender_name)} · ${timeAgo(m.created_at)}</span>${esc(m.body)}</div>`;
   }).join('');
 }
 async function refreshJobChat(jobId) {
@@ -1940,7 +1966,7 @@ async function viewWallet() {
         <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
       </div>
     </div>
-    ${['talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Used for manual withdrawal processing.</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
+    ${['member','talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Used for manual withdrawal processing.</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
     <div class="panel">
       <h4 style="margin-bottom:12px">Transaction history</h4>
       ${history.length ? history.slice(0,100).map(tx=>{const d=new Date(tx.created_at);const type=String(tx.type||'TRANSACTION').replaceAll('_',' ');const state=String(tx.status||'').toUpperCase();const label=state==='PROCESSING'?'PROCESSING':type;return `<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(label)}</strong><div style="color:var(--text-faint);margin-top:3px">${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`}).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
@@ -1950,93 +1976,22 @@ async function viewWallet() {
 
 /* ============================ VIEW: DASHBOARD ============================ */
 async function viewDashboard() {
-  const u = state.user;
-  state.pickedSpecs = (u.skills || []).slice();
-  if (!state.portfolioRows) {
-    const existing = Array.isArray(u.portfolio) ? u.portfolio : [];
-    state.portfolioRows = existing.length ? existing.map(p=>({ title:p.title||'', url:p.url||'', description:p.description||'' })) : [{title:'',url:'',description:''},{title:'',url:'',description:''}];
-  }
-  let jobs = [];
-  try { jobs = (await api('/jobs')).jobs; } catch(e) { toast(e.message, true); }
-  const mine = jobs.filter(j => j.client_id===u.id || j.talent_id===u.id);
-  const activeMine = mine.filter(j=>['OPEN','IN_PROGRESS','QA_PENDING','CLIENT_REVIEW','REVISION_REQUESTED','AWAITING_PAYMENT','DISPUTED'].includes(j.status));
-  const active = activeMine.length;
-  const done = mine.filter(j=>j.status==='RELEASED').length;
-
-  let services = [];
-  if (['member','talent'].includes(u.role)) { try { services = (await api('/services/mine')).services; } catch {} }
-  let wallet = { balance: 0, heldFunds: 0, totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 };
-  try { wallet = await api('/wallet/balance'); } catch {}
-
-  if (u.role === 'reviewer') { go('reviewerHub'); return ''; }
-  if (u.role === 'admin') { go('admin'); return ''; }
-
-  return `
-  <section style="padding-top:32px"><div class="wrap">
-    ${!u.emailVerified ? `<div class="panel" style="background:rgba(230,180,80,.1);border-color:rgba(230,180,80,.4);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <span style="font-size:13px">⚠️ Your email isn't verified yet. Some actions (posting jobs, applying, messaging, payments) are blocked until you verify.</span>
-      <button class="btn btn-ghost btn-sm" onclick="resendVerification()">Resend verification email</button>
-    </div>` : ''}
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-      <div><div class="eyebrow">${esc(u.role.charAt(0).toUpperCase()+u.role.slice(1))} dashboard</div><h1 style="font-size:26px">Welcome back, ${esc(u.name.split(' ')[0])}</h1></div>
-      ${['member','client','talent'].includes(u.role) ? `<button class="btn btn-brass" onclick="openJobModal('open')">+ Post a project</button>` : ''}
-    </div>
-
-    <div class="dash-stats">
-      <div class="stat-card"><div class="l">Total projects</div><div class="v">${mine.length}</div></div>
-      <div class="stat-card"><div class="l">Active</div><div class="v" style="color:var(--brass-soft)">${active}</div></div>
-      <div class="stat-card"><div class="l">Completed</div><div class="v" style="color:var(--signal)">${done}</div></div>
-      <div class="stat-card"><div class="l">Wallet balance</div><div class="v" style="font-size:18px;color:var(--brass-soft)">${fmt(wallet.balance)}</div></div>
-    </div>
-
-    <div class="panel" style="margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-      <div>
-        <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase">Wallet</div>
-        <div style="font-size:20px;font-weight:700;color:var(--brass-soft);margin-top:3px">${fmt(wallet.balance)}</div>
-        ${Number(wallet.heldFunds||0)>0 ? `<div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">${fmt(wallet.heldFunds)} on hold</div>` : ''}
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="go('wallet')">Open Wallet →</button>
-    </div>
-
+  const u=state.user;if(!u)return '';
+  if(u.role==='reviewer'){go('reviewerHub');return ''} if(u.role==='admin'){go('admin');return ''}
+  let jobs=[];try{jobs=(await api('/jobs')).jobs||[]}catch{}
+  const mine=jobs.filter(j=>j.client_id===u.id||j.talent_id===u.id);
+  const active=mine.filter(j=>!['RELEASED','CANCELLED','RESOLVED_RELEASE','RESOLVED_REFUND'].includes(j.status));
+  let wallet={balance:0,heldFunds:0};try{wallet=await api('/wallet/balance')}catch{}
+  return `<section style="padding-top:32px"><div class="wrap">
+    ${!u.emailVerified?`<div class="panel" style="margin-bottom:18px"><span style="font-size:13px">⚠️ Verify your email to unlock all account actions.</span> <button class="btn btn-ghost btn-sm" onclick="resendVerification()">Resend verification email</button></div>`:''}
+    <div style="margin-bottom:24px"><div class="eyebrow">Dashboard</div><h1 style="font-size:28px">Welcome back, ${esc(u.name.split(' ')[0])}</h1><p style="color:var(--text-dim);margin-top:6px">Choose where you want to go.</p></div>
+    <div class="dash-stats"><div class="stat-card"><div class="l">Active jobs</div><div class="v">${active.length}</div></div><div class="stat-card"><div class="l">Wallet balance</div><div class="v" style="font-size:18px">${fmt(wallet.balance)}</div></div></div>
     <div class="dash-cols">
-      <div class="panel">
-        <h4>Active projects <span>${activeMine.length}</span></h4>
-        ${activeMine.length ? activeMine.map(jobRow).join('') : `<p style="color:var(--text-faint);font-size:13px">No projects yet.</p>`}
-
-        ${['member','talent'].includes(u.role) ? `
-          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:10px">My services <span>${services.length}</span></h4>
-            <div id="servicesList">${renderServicesList(services)}</div>
-            <div style="border-top:1px solid var(--hair);margin-top:14px;padding-top:14px">
-              <div class="field"><label>Service title</label><input id="svTitle" placeholder="e.g. I'll mix and master your song"></div>
-              <div class="field"><label>Description</label><textarea id="svDesc" placeholder="What's included, turnaround, etc."></textarea></div>
-              <div style="display:flex;gap:10px">
-                <div class="field" style="flex:1"><label>Price (₦)</label><input id="svPrice" type="number" placeholder="150000"></div>
-                <div class="field" style="flex:1"><label>Delivery (days)</label><input id="svDays" type="number" value="5"></div>
-              </div>
-              <button class="btn btn-ghost btn-sm" onclick="addService()">+ Add service</button>
-            </div>
-          </div>` : ''}
-      </div>
-      <div class="panel">
-        <h4>Profile</h4>
-        <div class="field"><label>Name</label><input id="pfName" value="${esc(u.name)}"></div>
-        <div class="field"><label>Bio</label><textarea id="pfBio">${esc(u.bio||'')}</textarea></div>
-        <div class="field">
-          <label>Specialties</label>
-          <div id="specPickerBox">${renderSpecPicker()}</div>
-        </div>
-        <button class="btn btn-brass btn-sm" onclick="saveProfile()">Save profile</button>
-        ${['member','talent'].includes(u.role) ? `
-          <div style="border-top:1px solid var(--hair);margin-top:18px;padding-top:16px">
-            <h4 style="margin-bottom:6px">Portfolio</h4>
-            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px">Add at least 2 samples of your past work — clients check this before trusting you with a project.</p>
-            <div id="portfolioRowsBox">${renderPortfolioRows()}</div>
-            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addPortfolioRow()">+ Add another piece</button>
-            <button class="btn btn-brass btn-sm" style="margin-top:10px;display:block" onclick="savePortfolio()">Save portfolio</button>
-          </div>` : ''}
-
-      </div>
+      <div class="panel"><h4>Jobs</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Manage jobs you posted and work assigned to you.</p><button class="btn btn-brass btn-sm" onclick="go('myJobs')">Open My Jobs</button> <button class="btn btn-ghost btn-sm" onclick="go('jobs')">Find Jobs</button></div>
+      <div class="panel"><h4>Wallet</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Deposits, withdrawals, payout details and transaction history.</p><button class="btn btn-ghost btn-sm" onclick="go('wallet')">Open Wallet</button></div>
+      <div class="panel"><h4>Explore</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Discover professionals and services.</p><button class="btn btn-ghost btn-sm" onclick="go('talents')">Explore Talent</button></div>
+      <div class="panel"><h4>Marketplace</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Browse beats, tracks and templates.</p><button class="btn btn-ghost btn-sm" onclick="go('marketplace')">Open Market</button></div>
+      <div class="panel"><h4>Profile</h4><p style="color:var(--text-dim);font-size:13px;margin-bottom:14px">Your personal details, specialties, portfolio and identity verification.</p><button class="btn btn-ghost btn-sm" onclick="go('profile')">Open Profile</button></div>
     </div>
   </div></section>`;
 }
@@ -2187,9 +2142,10 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {};
+  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {}, platformWallet = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
+    if (tab==='platformWallet') platformWallet = await api('/admin/platform-wallet');
     if (tab==='users') users = (await api('/admin/users')).users;
     if (tab==='jobs') jobs = (await api('/admin/jobs')).jobs;
     if (tab==='products') products = (await api('/admin/products')).products;
@@ -2214,7 +2170,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['platformWallet','Platform Wallet'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -2237,6 +2193,8 @@ async function viewAdmin() {
       </table></div>`;
   } else if (tab==='products') {
     body = `<div class="panel"><h4 style="margin-bottom:12px">Marketplace listings <span>${products.length}</span></h4>${products.length?products.map(p=>`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--hair)"><div><b>${esc(p.title)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(p.category)} · ${fmt(p.price)} · ${esc(p.sellerName||'')} · ${p.salesCount||0} sales</div></div><button class="btn btn-danger btn-sm" onclick="adminDeleteProduct('${p.id}','${esc(p.title).replace(/'/g,'&#39;')}')">Delete permanently</button></div>`).join(''):'<p style="color:var(--text-faint)">No marketplace listings.</p>'}</div>`;
+  } else if (tab==='platformWallet') {
+    body = `<div class="dash-stats"><div class="stat-card"><div class="l">Available platform revenue</div><div class="v mono">${fmt(platformWallet.balance||0)}</div></div><div class="stat-card"><div class="l">Total revenue</div><div class="v mono">${fmt(platformWallet.totalRevenue||0)}</div></div><div class="stat-card"><div class="l">Withdrawn</div><div class="v mono">${fmt(platformWallet.withdrawn||0)}</div></div></div><div class="panel" style="margin-top:18px"><h4>Withdraw platform revenue</h4><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><div class="field" style="margin:0"><label>Amount</label><input id="platformWdAmount" type="number" min="1"></div><button class="btn btn-brass btn-sm" onclick="adminWithdrawPlatformRevenue()">Record withdrawal</button></div></div><div class="panel" style="margin-top:18px"><h4>Revenue ledger</h4>${(platformWallet.history||[]).map(x=>`<div style="padding:10px 0;border-top:1px solid var(--hair);display:flex;justify-content:space-between"><div><b>${esc(x.type)}</b><div style="font-size:11px;color:var(--text-faint)">${new Date(x.created_at).toLocaleString()}</div></div><div class="mono">${fmt(Number(x.amount))}</div></div>`).join('')||'<p>No platform revenue yet.</p>'}</div>`;
   } else if (tab==='withdrawals') {
     body = `<div class="panel">${withdrawals.length ? withdrawals.map(w=>`<div style="border-top:1px solid var(--hair);padding:14px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>${esc(w.user_name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(w.user_email)} · ${esc(w.currency)} ${Number(w.payout_amount).toLocaleString()} · ${esc(w.status)}</div><div style="font-size:12px;margin-top:5px">${esc(w.account_name||'')} · ${esc(w.account_number||'')} · Bank code: ${esc(w.bank_code||'')}</div></div>${w.status==='PROCESSING'?`<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><input id="wdRef_${w.id}" placeholder="Payment reference" style="width:170px"><button class="btn btn-brass btn-sm" onclick="adminMarkWithdrawalPaid('${w.id}')">Mark paid</button><button class="btn btn-danger btn-sm" onclick="adminRejectWithdrawal('${w.id}')">Reject</button></div>`:`<span class="badge">${esc(w.status)}</span>`}</div></div>`).join('') : '<p style="color:var(--text-faint);font-size:13px">No withdrawal requests yet.</p>'}</div>`;
   } else if (tab==='verifications') {
@@ -2296,6 +2254,9 @@ async function viewAdmin() {
       <div class="field"><label>Reviewer case fee (%) <span style="font-weight:400;color:var(--text-faint)">— % of a job's budget a reviewer earns for resolving its dispute</span></label><input id="setReviewerFee" type="number" min="0" max="100" value="${settings.reviewerFeePercent ?? 5}"></div>
       <div class="field"><label>Wallet deposit fee (%)</label><input id="setDepositFee" type="number" min="0" max="100" value="${settings.depositFeePercent ?? 0}"></div>
       <div class="field"><label>Wallet withdrawal fee (%)</label><input id="setWithdrawalFee" type="number" min="0" max="100" value="${settings.withdrawalFeePercent ?? 2}"></div>
+      <div class="field"><label>Marketplace commission (%)</label><input id="setMarketplaceCommission" type="number" min="0" max="100" value="${settings.marketplaceCommissionPercent ?? 10}"></div>
+      <div class="field"><label>Dispute self-settlement window (hours)</label><input id="setSettlementHours" type="number" min="1" value="${settings.disputeSettlementHours ?? 24}"></div>
+      <div class="field"><label>Reviewer resolution SLA (hours)</label><input id="setReviewerResolutionHours" type="number" min="1" value="${settings.reviewerResolutionHours ?? 48}"></div>
       <button class="btn btn-brass btn-sm" onclick="adminSaveSettings()">Save settings</button>
     </div>
     <div class="panel" style="margin-top:18px">
@@ -2412,11 +2373,13 @@ async function adminSaveSettings() {
       autoApproveHours: Number(document.getElementById('setAutoApprove').value),
       reviewerFeePercent: Number(document.getElementById('setReviewerFee').value),
       depositFeePercent: Number(document.getElementById('setDepositFee').value),
-      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value)
+      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value),marketplaceCommissionPercent: Number(document.getElementById('setMarketplaceCommission').value),disputeSettlementHours: Number(document.getElementById('setSettlementHours').value),reviewerResolutionHours: Number(document.getElementById('setReviewerResolutionHours').value)
     }) });
     toast('Settings saved.');
   } catch(e) { toast(e.message, true); }
 }
+
+async function adminWithdrawPlatformRevenue(){const amount=Number(document.getElementById('platformWdAmount').value);if(!confirm('Record a platform revenue withdrawal of '+fmt(amount)+'? Only do this after moving the corresponding real funds to your external account.'))return;try{await api('/admin/platform-wallet/withdraw',{method:'POST',body:JSON.stringify({amount})});toast('Platform withdrawal recorded.');reload()}catch(e){toast(e.message,true)}}
 async function adminRefund(jobId) {
   if (!confirm('Refund the client for this project? This reverses the payment via Paystack and cannot be undone.')) return;
   try { await api('/admin/payments/'+jobId+'/refund', { method:'POST' }); toast('Refund initiated.'); reload(); } catch(e) { toast(e.message, true); }
