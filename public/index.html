@@ -249,6 +249,30 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
   .mobile-nav .ic{font-size:18px}
   body.has-mobnav main{padding-bottom:64px}
 }
+
+/* ===== v5.51 Cinematic Motion System ===== */
+:root{--glow:rgba(201,162,39,.18);--glow2:rgba(79,209,165,.10);--glass:rgba(30,32,43,.72);--shadow:0 24px 70px rgba(0,0,0,.26)}
+:root[data-theme="light"]{--glow:rgba(166,127,20,.14);--glow2:rgba(31,143,104,.09);--glass:rgba(255,255,255,.76);--shadow:0 22px 55px rgba(67,55,24,.10)}
+html{scroll-behavior:smooth} body{overflow-x:hidden;background-image:radial-gradient(circle at 12% 8%,var(--glow),transparent 28rem),radial-gradient(circle at 88% 18%,var(--glow2),transparent 32rem);background-attachment:fixed}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(to bottom,black,transparent 68%)}
+:root[data-theme="light"] body::before{opacity:.16;background-size:72px 72px}
+header.nav{background:color-mix(in srgb,var(--ink) 82%,transparent);backdrop-filter:blur(22px) saturate(150%);transition:background .35s,border-color .35s,box-shadow .35s}
+.logo .dot{animation:brandPulse 2.8s ease-in-out infinite}.nav-links a{position:relative;transition:color .25s}.nav-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-8px;height:1px;background:var(--brass);transition:right .25s}.nav-links a:hover::after,.nav-links a.active::after{right:0}
+.hero{position:relative;min-height:620px;display:flex;align-items:center;isolation:isolate;overflow:hidden}.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;filter:blur(4px);z-index:-1;pointer-events:none}.hero::before{width:480px;height:480px;right:-110px;top:-100px;background:radial-gradient(circle,var(--glow),transparent 68%);animation:orbFloat 10s ease-in-out infinite}.hero::after{width:360px;height:360px;left:-180px;bottom:-170px;background:radial-gradient(circle,var(--glow2),transparent 68%);animation:orbFloat 13s ease-in-out infinite reverse}
+.hero h1{font-size:clamp(44px,5.2vw,72px);line-height:.98;letter-spacing:-.045em;max-width:800px}.hero p.lead{font-size:17px;max-width:600px}.hero-grid{grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:54px}.hero-visual{height:430px;border:1px solid color-mix(in srgb,var(--hair) 80%,transparent);border-radius:32px;background:linear-gradient(145deg,color-mix(in srgb,var(--paper) 78%,transparent),color-mix(in srgb,var(--paper-2) 56%,transparent));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(18px);overflow:hidden;transform:perspective(900px) rotateY(-5deg) rotateX(2deg);transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .4s}.hero-visual:hover{transform:perspective(900px) rotateY(0) rotateX(0) translateY(-5px);box-shadow:0 32px 90px var(--glow)}.hero-visual::before{content:'LIVE CREATIVE NETWORK';position:absolute;top:22px;left:24px;font:500 10px 'IBM Plex Mono';letter-spacing:.18em;color:var(--text-faint)}.hero-visual::after{content:'';position:absolute;inset:-40%;background:linear-gradient(110deg,transparent 43%,rgba(255,255,255,.08) 50%,transparent 57%);animation:glassSweep 7s linear infinite;pointer-events:none}.hero-visual svg{padding:52px 22px 20px;filter:drop-shadow(0 0 12px var(--glow))}
+.searchbar{background:color-mix(in srgb,var(--paper) 78%,transparent);backdrop-filter:blur(18px);box-shadow:0 14px 42px rgba(0,0,0,.10);transition:border-color .25s,transform .25s,box-shadow .25s}.searchbar:focus-within{border-color:var(--brass);transform:translateY(-2px);box-shadow:0 18px 55px var(--glow)}
+.btn{transition:transform .22s,box-shadow .22s,background .22s,border-color .22s}.btn:hover{transform:translateY(-2px)}.btn-brass{box-shadow:0 8px 28px color-mix(in srgb,var(--brass) 20%,transparent)}.btn-brass:hover{box-shadow:0 13px 36px color-mix(in srgb,var(--brass) 32%,transparent)}
+.cat-row{mask-image:linear-gradient(90deg,transparent,black 4%,black 96%,transparent)}.cat-pill{transition:transform .25s,border-color .25s,background .25s;backdrop-filter:blur(10px)}.cat-pill:hover{transform:translateY(-3px);border-color:var(--brass);background:var(--paper-2)}
+.p-card,.job-row,.panel,.stat-card,.icon-cat-card,.step-card,.market-card{position:relative;overflow:hidden;box-shadow:0 10px 35px rgba(0,0,0,.06);transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s,background .3s}.p-card::before,.panel::before,.stat-card::before,.icon-cat-card::before,.step-card::before{content:'';position:absolute;inset:0;background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),var(--glow),transparent 42%);opacity:0;transition:opacity .35s;pointer-events:none}.p-card:hover::before,.panel:hover::before,.stat-card:hover::before,.icon-cat-card:hover::before,.step-card:hover::before{opacity:1}.p-card:hover,.job-row:hover,.stat-card:hover,.icon-cat-card:hover,.step-card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.025em}.eyebrow{letter-spacing:.04em}
+.site-foot{position:relative;overflow:hidden}.site-foot::before{content:'';position:absolute;width:520px;height:220px;right:-100px;top:-120px;background:radial-gradient(circle,var(--glow),transparent 70%);pointer-events:none}
+:root[data-theme="light"] .hero-visual{background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(241,237,224,.72));border-color:rgba(166,127,20,.18)}
+:root[data-theme="light"] .btn-brass{color:#fff;background:#8f6d12}:root[data-theme="light"] .btn-brass:hover{background:#76590d}:root[data-theme="light"] .hero::before{background:radial-gradient(circle,rgba(224,184,67,.20),transparent 68%)}
+@keyframes brandPulse{0%,100%{box-shadow:0 0 8px var(--brass);transform:scale(1)}50%{box-shadow:0 0 24px var(--brass);transform:scale(1.16)}}@keyframes orbFloat{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-32px,38px,0) scale(1.08)}}@keyframes glassSweep{0%{transform:translateX(-55%) rotate(8deg)}55%,100%{transform:translateX(55%) rotate(8deg)}}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}.reveal.in{opacity:1;transform:none}
+@media(max-width:900px){.hero{min-height:auto;padding:64px 0 44px}.hero h1{font-size:clamp(40px,12vw,58px)}.hero-grid{grid-template-columns:1fr}.hero-visual{display:flex;height:220px;transform:none;margin-top:12px}.hero-visual:hover{transform:translateY(-3px)}.hero-visual svg{padding-top:42px}.mobile-nav{background:color-mix(in srgb,var(--ink) 88%,transparent);backdrop-filter:blur(22px) saturate(150%)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.reveal{opacity:1;transform:none}}
+
 </style>
 </head>
 <body>
@@ -492,6 +516,61 @@ async function api(path, opt = {}) {
   try { body = await res.json(); } catch {}
   if (!res.ok) { const err = new Error(body.error || ('Request failed (' + res.status + ')')); err.status = res.status; throw err; }
   return body;
+}
+// ---- Protected media (audio / video / project files) ----
+// <audio>, <video> and <a> tags cannot send our Authorization header, so a plain src="/api/..." was rejected with 401 and never played.
+// Elements marked data-media="/api/..." get a short-lived signed URL from the server and play/stream from that.
+async function signMediaUrls(paths){ const d = await api('/media/sign', { method:'POST', body: JSON.stringify({ paths }) }); return d.urls || {}; }
+function mediaKind(name, mime){
+  const m = String(mime||'').toLowerCase(), ext = String(name||'').split('.').pop().toLowerCase();
+  if (m.startsWith('audio/') || ['mp3','wav','wave','m4a','aac','flac','ogg','oga','opus','weba','aif','aiff','aifc'].includes(ext)) return 'audio';
+  if (m.startsWith('video/') || ['mp4','m4v','mov','webm'].includes(ext)) return 'video';
+  return 'file';
+}
+async function hydrateMedia(){
+  if (!state.token) return;
+  const els = [...document.querySelectorAll('[data-media]:not([data-media-ready])')];
+  if (!els.length) return;
+  els.forEach(e => e.setAttribute('data-media-ready','1'));
+  try {
+    const urls = await signMediaUrls([...new Set(els.map(e => e.getAttribute('data-media')))]);
+    els.forEach(e => { const u = urls[e.getAttribute('data-media')]; if (u) { e.src = u; if (e.load) e.load(); } });
+  } catch { els.forEach(e => e.removeAttribute('data-media-ready')); }
+}
+async function openMedia(path, download){
+  const w = download ? null : window.open('', '_blank');
+  try {
+    const u = (await signMediaUrls([path]))[path];
+    if (!u) throw new Error('This file is not available.');
+    if (download) { const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+    else if (w) w.location.href = u; else window.location.href = u;
+  } catch(e) { if (w) w.close(); toast(e.message || 'Could not open file.', true); }
+}
+// If a player errors: refresh its signed URL once (tokens expire), then show the real reason instead of a silent dead player.
+document.addEventListener('error', ev => {
+  const e = ev.target;
+  if (!e || !e.matches || !e.matches('[data-media]') || !e.getAttribute('src')) return;
+  if (!e.dataset.mediaRetried) {
+    e.dataset.mediaRetried = '1';
+    signMediaUrls([e.dataset.media]).then(u => { if (u[e.dataset.media]) { e.src = u[e.dataset.media]; e.load(); } }).catch(()=>{});
+    return;
+  }
+  if (e.dataset.mediaFailShown) return;
+  e.dataset.mediaFailShown = '1';
+  fetch(e.currentSrc || e.src, { headers: { Range: 'bytes=0-0' } })
+    .then(async r => { if (r.ok) return 'This browser could not decode this file format.'; let m=''; try { m=(await r.json()).error||''; } catch {} return m || ('Could not load this file (' + r.status + ').'); })
+    .catch(() => 'Network error while loading this file.')
+    .then(msg => e.insertAdjacentHTML('afterend', '<span style="display:block;font-size:11px;color:var(--danger);margin-top:2px">' + esc(msg) + '</span>'));
+}, true);
+(function(){
+  const start = () => { let t; new MutationObserver(() => { clearTimeout(t); t = setTimeout(hydrateMedia, 40); }).observe(document.body, { childList:true, subtree:true }); hydrateMedia(); };
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
+function renderAttachmentMedia(a){
+  const p = '/api/project-attachments/' + a.id + '/file', k = mediaKind(a.original_name, a.mime);
+  if (k === 'audio') return `<audio controls preload="metadata" data-media="${p}" style="width:min(260px,100%);height:32px"></audio>`;
+  if (k === 'video') return `<video controls playsinline preload="metadata" data-media="${p}" style="width:min(260px,100%);max-height:180px;background:#000"></video>`;
+  return `<button class="btn btn-ghost btn-sm" onclick="openMedia('${p}')">Open</button>`;
 }
 function esc(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function togglePassword(id,btn){const el=document.getElementById(id);if(!el)return;el.type=el.type==='password'?'text':'password';if(btn)btn.textContent=el.type==='password'?'Show':'Hide';}
@@ -1632,7 +1711,7 @@ async function viewJobDetail() {
 
   if (isClient && job.status === 'OPEN') { try { proposals = (await api('/jobs/'+id+'/proposals')).proposals; } catch {} }
   if (isClient || isTalent || isStaff) { try { messages = (await api('/messages/'+id)).messages; } catch {} }
-  if (isClient || isTalent) { try { attachments = (await api('/jobs/'+id+'/attachments')).attachments || []; } catch {} }
+  if (isClient || isTalent || isStaff) { try { attachments = (await api('/jobs/'+id+'/attachments')).attachments || []; } catch {} }
   if (job.status === 'RELEASED') { try { reviews = (await api('/talents/'+job.talent_id+'/reviews')).reviews; } catch {} }
   const alreadyReviewed = isClient && reviews.some(r=>r.reviewer_id === state.user.id);
 
@@ -1723,11 +1802,11 @@ async function viewJobDetail() {
           <div class="panel" style="margin-bottom:18px">
             <h4>Files <span>${files.length}</span></h4>
             ${files.map(f=>`
-              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding:10px 0;font-size:13px">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid var(--hair);padding:10px 0;font-size:13px">
                 <span>${esc(f.original_name)}</span>
-                <div style="display:flex;gap:8px">
-                  ${f.preview_name ? `<div style="margin:4px 0"><audio src="/api/files/${f.id}/preview" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : ''}
-                  ${job.status==='RELEASED' && isClient ? `<a class="btn btn-brass btn-sm" href="/api/files/${f.id}/master" target="_blank">Download master</a>` : ''}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  ${f.preview_name ? `<div style="margin:4px 0"><audio data-media="/api/files/${f.id}/preview" preload="metadata" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : (mediaKind(f.original_name,f.mime)==='audio' ? `<span style="font-size:11px;color:var(--text-faint);max-width:260px">No preview could be generated for this file — ask for a WAV or MP3 re-upload.</span>` : '')}
+                  ${job.status==='RELEASED' && isClient ? `<button class="btn btn-brass btn-sm" onclick="openMedia('/api/files/${f.id}/master',true)">Download master</button>` : ''}
                   ${isTalent && ['IN_PROGRESS','REVISION_REQUESTED','CLIENT_REVIEW'].includes(job.status) ? `<button class="btn btn-danger btn-sm" onclick="deleteDeliveryFile('${f.id}')">Delete</button>` : ''}
                 </div>
               </div>`).join('')}
@@ -1755,11 +1834,12 @@ async function viewJobDetail() {
             <h4>Project chat</h4>
             <div class="chat-shell"><div class="chat-safety"><b>Stay protected:</b> Keep payments, file delivery and project communication on PRODILIVE. Transactions made outside the platform are not protected.</div>
             <div class="chat-scroll" id="messageList">${renderJobChat(messages, state.user)}</div>
-            ${attachments.length ? `<div style="padding:10px 14px;border-top:1px solid var(--hair);background:var(--paper-2)"><div class="mono" style="font-size:9.5px;color:var(--text-faint);margin-bottom:6px">SHARED PROJECT FILES</div>${attachments.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:12px"><span>${esc(a.sender_name)} · ${esc(a.original_name)}</span>${String(a.mime||'').startsWith('audio/')?`<audio controls src="/api/project-attachments/${a.id}/file" style="width:180px;height:30px"></audio>`:`<a class="btn btn-ghost btn-sm" target="_blank" href="/api/project-attachments/${a.id}/file">Open</a>`}${String(a.sender_id)===String(state.user?.id)?`<button class="btn btn-danger btn-sm" onclick="deleteProjectAttachment('${a.id}')">Delete</button>`:''}</div>`).join('')}</div>` : ''}
+            ${attachments.length ? `<div style="padding:10px 14px;border-top:1px solid var(--hair);background:var(--paper-2)"><div class="mono" style="font-size:9.5px;color:var(--text-faint);margin-bottom:6px">SHARED PROJECT FILES</div>${attachments.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:5px 0;font-size:12px"><span>${esc(a.sender_name)} · ${esc(a.original_name)}</span>${renderAttachmentMedia(a)}${String(a.sender_id)===String(state.user?.id)?`<button class="btn btn-danger btn-sm" onclick="deleteProjectAttachment('${a.id}')">Delete</button>`:''}</div>`).join('')}</div>` : ''}
             <div class="chat-input-row">
-              <input id="projectAttach" type="file" accept="audio/*,.zip,.pdf,image/*" style="max-width:180px" title="Share audio or reference file">
+              <input id="projectAttach" type="file" multiple accept="audio/*,video/*,image/*,.pdf,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.weba,.webm,.aif,.aiff,.mid,.midi" style="max-width:180px" title="Share audio, video, images or reference documents">
               <textarea id="msgBody" placeholder="Message about this project…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${job.id}')}"></textarea>
               <button class="btn btn-ghost btn-sm" onclick="shareProjectFile('${job.id}')">Attach</button>
+              <button id="voiceNoteBtn" class="btn btn-ghost btn-sm" onclick="toggleVoiceNote('${job.id}')" title="Record a voice note">🎙 Voice note</button>
               <button class="btn btn-brass btn-sm" onclick="sendMessage('${job.id}')">Send</button>
             </div></div>
           </div>` : ''}
@@ -1863,10 +1943,27 @@ async function submitReview(id) {
     toast('Review submitted. Thank you!'); reload();
   } catch(e) { toast(e.message, true); }
 }
+async function uploadProjectAttachment(jobId,file){
+  const fd=new FormData(); fd.append('file',file,file.name||('voice-note-'+Date.now()+'.webm'));
+  return api('/jobs/'+jobId+'/attachments',{method:'POST',body:fd});
+}
 async function shareProjectFile(jobId){
-  const input=document.getElementById('projectAttach');if(!input||!input.files.length){toast('Choose a file to share.',true);return;}
-  const fd=new FormData();fd.append('file',input.files[0]);
-  try{await api('/jobs/'+jobId+'/attachments',{method:'POST',body:fd});toast('Project file shared.');reload();}catch(e){toast(e.message,true)}
+  const input=document.getElementById('projectAttach');if(!input||!input.files.length){toast('Choose one or more files to share.',true);return;}
+  try{for(const file of [...input.files].slice(0,10)) await uploadProjectAttachment(jobId,file);toast('Project file'+(input.files.length>1?'s':'')+' shared.');reload();}catch(e){toast(e.message,true)}
+}
+let voiceRecorder=null,voiceChunks=[],voiceStream=null;
+async function toggleVoiceNote(jobId){
+  const btn=document.getElementById('voiceNoteBtn');
+  if(voiceRecorder&&voiceRecorder.state==='recording'){ voiceRecorder.stop(); if(btn){btn.textContent='Uploading…';btn.disabled=true;} return; }
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Voice recording is not supported by this browser.',true);return;}
+  try{
+    voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const preferred=['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(t=>MediaRecorder.isTypeSupported?.(t))||'';
+    voiceChunks=[]; voiceRecorder=new MediaRecorder(voiceStream,preferred?{mimeType:preferred}:undefined);
+    voiceRecorder.ondataavailable=e=>{if(e.data?.size)voiceChunks.push(e.data)};
+    voiceRecorder.onstop=async()=>{try{const type=voiceRecorder.mimeType||voiceChunks[0]?.type||'audio/webm';const ext=type.includes('mp4')?'m4a':'webm';const blob=new Blob(voiceChunks,{type});const file=new File([blob],`voice-note-${Date.now()}.${ext}`,{type});await uploadProjectAttachment(jobId,file);toast('Voice note sent.');reload();}catch(e){toast(e.message||'Could not send voice note.',true)}finally{voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;voiceRecorder=null;if(btn){btn.textContent='🎙 Voice note';btn.disabled=false;}}};
+    voiceRecorder.start(250); if(btn)btn.textContent='⏹ Stop';
+  }catch(e){voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;toast('Microphone permission is required for voice notes.',true)}
 }
 async function sendMessage(jobId) {
   const body = document.getElementById('msgBody').value.trim();
@@ -2550,6 +2647,28 @@ applyTheme();
 checkForResetLink();
 checkForReviewerInvite();
 bootstrap();
+</script>
+
+<script>
+/* v5.51 motion enhancement: progressive, reduced-motion safe */
+(function(){
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce)return;
+  const reveal=()=>{
+    document.querySelectorAll('main section, .p-card, .job-row, .panel, .stat-card, .icon-cat-card, .step-card').forEach(el=>{
+      if(!el.classList.contains('reveal')) el.classList.add('reveal');
+    });
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08,rootMargin:'0px 0px -30px'});
+    document.querySelectorAll('.reveal:not(.in)').forEach(el=>io.observe(el));
+  };
+  const app=document.getElementById('app');
+  if(app)new MutationObserver(()=>requestAnimationFrame(reveal)).observe(app,{childList:true,subtree:true});
+  document.addEventListener('pointermove',e=>{
+    const card=e.target.closest('.p-card,.panel,.stat-card,.icon-cat-card,.step-card'); if(!card)return;
+    const r=card.getBoundingClientRect(); card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%'); card.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+  },{passive:true});
+  requestAnimationFrame(reveal);
+})();
 </script>
 </body>
 </html>
