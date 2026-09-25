@@ -2829,22 +2829,23 @@ async function submitSuggestion(ev){
 }
 
 /* ============================ FREE LIVE CHAT (TAWK.TO) ============================ */
-async function initExternalLiveChat(){
-  try{
-    const cfg=await api('/public-config');
-    if(!cfg.tawkPropertyId||!cfg.tawkWidgetId)return; // built-in support chat remains the fallback
-    const oldBtn=document.getElementById('supportBubbleBtn'),oldPanel=document.getElementById('supportPanel');if(oldBtn)oldBtn.style.display='none';if(oldPanel)oldPanel.style.display='none';
-    window.Tawk_API=window.Tawk_API||{};window.Tawk_LoadStart=new Date();
-    const s=document.createElement('script');s.async=true;s.src='https://embed.tawk.to/'+encodeURIComponent(cfg.tawkPropertyId)+'/'+encodeURIComponent(cfg.tawkWidgetId);s.charset='UTF-8';s.setAttribute('crossorigin','*');document.body.appendChild(s);
-  }catch(e){ /* keep built-in support chat if external chat is not configured */ }
+/* v5.60.1: direct Tawk.to embed. No Render TAWK_* variables are required. */
+function prepareTawkChat(){
+  window.Tawk_API=window.Tawk_API||{};
+  window.Tawk_API.onLoad=function(){
+    const oldBtn=document.getElementById('supportBubbleBtn');
+    const oldPanel=document.getElementById('supportPanel');
+    if(oldBtn)oldBtn.style.display='none';
+    if(oldPanel)oldPanel.style.display='none';
+  };
 }
+prepareTawkChat();
 
 /* ============================ INIT ============================ */
 applyTheme();
 checkForResetLink();
 checkForReviewerInvite();
 bootstrap();
-initExternalLiveChat();
 </script>
 
 <script>
@@ -2868,5 +2869,20 @@ initExternalLiveChat();
   requestAnimationFrame(reveal);
 })();
 </script>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6ab6df185a25be34409cfd1a/1k3d5eu8l';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+
 </body>
 </html>
