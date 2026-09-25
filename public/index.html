@@ -316,6 +316,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
 @media(max-width:540px){.visual-cat-grid{grid-template-columns:1fr 1fr;gap:9px}.visual-cat{min-height:160px;border-radius:16px}.visual-cat .vc-copy{left:12px;bottom:12px}.visual-cat .vc-copy b{font-size:13px}.visual-cat .vc-copy span{display:none}.visual-cat .vc-arrow{width:29px;height:29px;right:10px;top:10px}}
 @media(prefers-reduced-motion:reduce){.living-track{animation:none}.visual-cat,.visual-cat img,.visual-cat .vc-arrow{transition:none!important}}
 
+@media(max-width:700px){.wallet-filter-grid{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -361,7 +362,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
       <div class="logo"><span class="dot"></span>PRODILIVE</div>
       <p>A trusted marketplace for musicians and creators — hire talent, sell beats, tracks and templates — with protected files, secure payments and independent dispute review.</p>
     </div>
-    <div class="foot-col">
+    <div class="foot-col" id="footerPlatformCol">
       <h5>Platform</h5>
       <a onclick="go('talents')">Find Talent</a>
       <a onclick="go('jobs')">Find Jobs</a>
@@ -377,8 +378,14 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     </div>
     <div class="foot-col">
       <h5>Account</h5>
-      <a onclick="state.user ? go('dashboard') : openAuth('login')">Sign in</a>
-      <a onclick="openAuth('register')">Join PRODILIVE</a>
+      <div id="footerSignedOutAccount">
+        <a onclick="openAuth('login')">Sign in</a>
+        <a onclick="openAuth('register')">Join PRODILIVE</a>
+      </div>
+      <div id="footerSignedInAccount" style="display:none">
+        <a onclick="go('profile')">My Profile</a>
+        <a onclick="go(state.user?.role==='admin'?'admin':(state.user?.role==='reviewer'?'reviewerHub':'dashboard'))">My Dashboard</a>
+      </div>
       <a onclick="openSuggestion()">Send a suggestion</a>
     </div>
   </div>
@@ -541,6 +548,10 @@ const state = {
   notifications: [],
   pickedSpecs: [],
   msRows: [],
+  walletHistory: [],
+  walletWithdrawals: [],
+  walletHistoryExpanded: false,
+  walletWithdrawalsExpanded: false,
 };
 
 /* Predefined specialty taxonomy — grouped for the multi-select picker.
@@ -726,6 +737,7 @@ async function render() {
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
       marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms, howItWorks:viewHowItWorks, paymentProtection:viewPaymentProtection };
     app.innerHTML = await (views[state.view] || viewHome)();
+    if (state.view === 'wallet') initWalletView();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
       startJobChatPolling(state.params.id);
@@ -753,6 +765,10 @@ function updateNav() {
   document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navPurchasesLink').style.display = 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
+  const footerOut=document.getElementById('footerSignedOutAccount'),footerIn=document.getElementById('footerSignedInAccount'),footerPlatform=document.getElementById('footerPlatformCol');
+  if(footerOut)footerOut.style.display=signedIn?'none':'block';
+  if(footerIn)footerIn.style.display=signedIn?'block':'none';
+  if(footerPlatform)footerPlatform.style.display=isAdmin?'none':'block';
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + (state.user.role==='member'?'MEMBER':state.user.role.toUpperCase());
   renderMobileNav();
 }
@@ -1056,7 +1072,8 @@ async function viewHome() {
 
 /* ============================ VIEW: HOW IT WORKS ============================ */
 async function viewHowItWorks() {
-  return `<section style="padding-top:50px"><div class="wrap">
+  return `<section style="padding-top:36px"><div class="wrap">
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:22px" onclick="go('home')">← Back to Home</button>
     <div class="eyebrow">How PRODILIVE works</div>
     <h1 style="font-size:34px;max-width:760px;margin-bottom:12px">From idea to delivery, everything stays inside one protected project.</h1>
     <p class="lead" style="max-width:760px">PRODILIVE connects clients with creative talent and gives both sides a clear workflow for hiring, payment, delivery, revisions and disputes.</p>
@@ -1076,7 +1093,8 @@ async function viewHowItWorks() {
 
 /* ============================ VIEW: PAYMENT PROTECTION ============================ */
 async function viewPaymentProtection() {
-  return `<section style="padding-top:50px"><div class="wrap">
+  return `<section style="padding-top:36px"><div class="wrap">
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:22px" onclick="go('home')">← Back to Home</button>
     <div class="eyebrow">Payment protection</div>
     <h1 style="font-size:34px;max-width:760px;margin-bottom:12px">Payments, project records and deliverables are tied to the project workflow.</h1>
     <p class="lead" style="max-width:780px">PRODILIVE is designed so clients do not simply send money directly to talent and talent do not have to rely only on promises of payment.</p>
@@ -2208,10 +2226,14 @@ function stopSupportPolling() {
 async function viewWallet() {
   const u = state.user;
   let wallet = { balance:0, heldFunds:0, totalDeposits:0, totalEarnings:0, totalWithdrawals:0 };
-  let history = [], withdrawals = [];
+  let history = [], withdrawals = [], payout = null;
   try { wallet = await api('/wallet/balance'); } catch(e) { toast(e.message,true); }
   try { history = (await api('/wallet/history')).history || []; } catch(e) { toast(e.message,true); }
   try { withdrawals = (await api('/wallet/withdrawals')).withdrawals || []; } catch(e) { toast(e.message,true); }
+  try { payout = (await api('/me/payout-profile')).payout || null; } catch(e) {}
+  state.walletHistory = history; state.walletWithdrawals = withdrawals;
+  const payoutStatus = payout?.verified ? '<span style="color:var(--signal)">✓ Verified withdrawal account</span>' : '<span style="color:var(--warning)">Not yet verified</span>';
+  const payoutSummary = payout ? `<div style="padding:14px;border:1px solid var(--hair);border-radius:12px;margin-bottom:14px;background:var(--paper)"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em">Saved withdrawal account</div><b style="display:block;margin-top:5px">${esc(payout.bankName||'Bank account')}</b><div style="font-size:13px;color:var(--text-dim);margin-top:3px">${esc(payout.accountName||'')} · ${esc(payout.accountNumber||'')}</div><div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">${esc(payout.country||'')} ${esc(payout.currency||'')}</div></div><div>${payoutStatus}</div></div></div>` : `<div style="padding:14px;border:1px dashed var(--hair);border-radius:12px;margin-bottom:14px;font-size:12.5px;color:var(--text-dim)">No withdrawal account has been saved yet.</div>`;
   return `<section style="padding-top:32px"><div class="wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:12px;flex-wrap:wrap">
       <div><div class="eyebrow">Account</div><h1 style="font-size:28px">Wallet</h1></div>
@@ -2231,16 +2253,32 @@ async function viewWallet() {
         <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
       </div>
     </div>
-    ${['member','talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Your payout account must be verified before a withdrawal can be submitted. ${u.payoutAccountVerified?'<span style="color:var(--signal)">✓ Verified withdrawal account</span>':'<span style="color:var(--warning)">Not yet verified</span>'}</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
+    ${['member','talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Your payout account must be verified before a withdrawal can be submitted. ${payoutStatus}</p>${payoutSummary}<div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG" ${payout?.country==='NG'?'selected':''}>Nigeria</option><option value="GH" ${payout?.country==='GH'?'selected':''}>Ghana</option><option value="ZA" ${payout?.country==='ZA'?'selected':''}>South Africa</option><option value="KE" ${payout?.country==='KE'?'selected':''}>Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">${payout?.bankName?'Current: '+esc(payout.bankName):'Select your bank'}</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" value="${esc(payout?.accountNumber||'')}" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" value="${esc(payout?.accountName||'')}" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px">${payout?.verified?'✓ Saved account is verified':''}</div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Verify & save payout details</button></div>` : ''}
     <div class="panel" style="margin-bottom:22px">
-      <h4 style="margin-bottom:12px">Withdrawal requests</h4>
-      ${withdrawals.length ? withdrawals.map(w=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(w.status)}</strong><div style="color:var(--text-faint);margin-top:3px">${new Date(w.created_at).toLocaleString()} · ${esc(w.reference)}</div>${w.admin_note?`<div style="color:var(--text-dim);margin-top:4px">${esc(w.admin_note)}</div>`:''}</div><div style="text-align:right;font-weight:700">${fmt(w.payout_amount,w.currency||'NGN')}</div></div>`).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No withdrawal requests yet.</p>`}
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><h4>Withdrawal requests</h4><button id="withdrawalViewAllBtn" class="btn btn-ghost btn-sm" style="display:none" onclick="toggleWalletWithdrawals()">View all</button></div>
+      <div id="walletWithdrawalsList" style="margin-top:8px"></div>
     </div>
     <div class="panel">
-      <h4 style="margin-bottom:12px">Transaction history</h4>
-      ${history.length ? history.slice(0,100).map(tx=>{const d=new Date(tx.created_at);const type=String(tx.type||'TRANSACTION').replaceAll('_',' ');const state=String(tx.status||'').toUpperCase();const label=state==='PROCESSING'?'PROCESSING':type;return `<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(label)}</strong><div style="color:var(--text-faint);margin-top:3px">${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`}).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><h4>Transaction history</h4><button id="txViewAllBtn" class="btn btn-ghost btn-sm" style="display:none" onclick="toggleWalletHistory()">View all</button></div>
+      <div style="display:grid;grid-template-columns:minmax(180px,1fr) 150px 150px;gap:8px;margin-bottom:12px" class="wallet-filter-grid"><input id="txSearch" placeholder="Search deposit, withdrawal, reference..." oninput="renderWalletHistoryList()"><select id="txFilter" onchange="renderWalletHistoryList()"><option value="ALL">All transactions</option><option value="DEPOSIT">Deposits</option><option value="WITHDRAWAL">Withdrawals</option><option value="JOB_EARNING">Earnings</option><option value="REFUND">Refunds</option></select><select id="txSort" onchange="renderWalletHistoryList()"><option value="DATE_DESC">Newest first</option><option value="DATE_ASC">Oldest first</option><option value="NAME_ASC">Name A–Z</option><option value="NAME_DESC">Name Z–A</option></select></div>
+      <div id="walletHistoryList"></div>
     </div>
   </div></section>`;
+}
+function initWalletView(){ state.walletHistoryExpanded=false; state.walletWithdrawalsExpanded=false; renderWalletWithdrawalsList(); renderWalletHistoryList(); }
+function toggleWalletHistory(){ state.walletHistoryExpanded=!state.walletHistoryExpanded; renderWalletHistoryList(); }
+function toggleWalletWithdrawals(){ state.walletWithdrawalsExpanded=!state.walletWithdrawalsExpanded; renderWalletWithdrawalsList(); }
+function renderWalletWithdrawalsList(){
+  const el=document.getElementById('walletWithdrawalsList'),btn=document.getElementById('withdrawalViewAllBtn');if(!el)return;const rows=state.walletWithdrawals||[];const shown=state.walletWithdrawalsExpanded?rows:rows.slice(0,4);
+  el.innerHTML=shown.length?shown.map(w=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(w.status)}</strong><div style="color:var(--text-faint);margin-top:3px">${new Date(w.created_at).toLocaleString()} · ${esc(w.reference)}</div>${w.admin_note?`<div style="color:var(--text-dim);margin-top:4px">${esc(w.admin_note)}</div>`:''}</div><div style="text-align:right;font-weight:700">${fmt(w.payout_amount,w.currency||'NGN')}</div></div>`).join(''):`<p style="color:var(--text-faint);font-size:12.5px">No withdrawal requests yet.</p>`;
+  if(btn){btn.style.display=rows.length>4?'inline-flex':'none';btn.textContent=state.walletWithdrawalsExpanded?'Show less':'View all';}
+}
+function renderWalletHistoryList(){
+  const el=document.getElementById('walletHistoryList'),btn=document.getElementById('txViewAllBtn');if(!el)return;const q=(document.getElementById('txSearch')?.value||'').trim().toLowerCase(),filter=document.getElementById('txFilter')?.value||'ALL',sort=document.getElementById('txSort')?.value||'DATE_DESC';let rows=[...(state.walletHistory||[])];
+  rows=rows.filter(tx=>{const type=String(tx.type||'TRANSACTION').toUpperCase();if(filter!=='ALL'&&type!==filter)return false;const hay=[type,tx.reference,tx.status,tx.currency,tx.meta&&JSON.stringify(tx.meta)].filter(Boolean).join(' ').toLowerCase();return !q||hay.includes(q)});
+  rows.sort((a,b)=>{if(sort==='DATE_ASC')return new Date(a.created_at)-new Date(b.created_at);if(sort==='NAME_ASC')return String(a.type||'').localeCompare(String(b.type||''));if(sort==='NAME_DESC')return String(b.type||'').localeCompare(String(a.type||''));return new Date(b.created_at)-new Date(a.created_at)});
+  const shown=state.walletHistoryExpanded?rows:rows.slice(0,6);el.innerHTML=shown.length?shown.map(tx=>{const d=new Date(tx.created_at),type=String(tx.type||'TRANSACTION').replaceAll('_',' '),status=String(tx.status||'').toUpperCase(),label=status==='PROCESSING'?'WITHDRAWAL · PROCESSING':type;return `<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(label)}</strong><div style="color:var(--text-faint);margin-top:3px">${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}${tx.reference?' · '+esc(tx.reference):''}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`}).join(''):`<p style="color:var(--text-faint);font-size:12.5px">No matching transactions.</p>`;
+  if(btn){btn.style.display=rows.length>6?'inline-flex':'none';btn.textContent=state.walletHistoryExpanded?'Show less':'View all';}
 }
 
 /* ============================ VIEW: DASHBOARD ============================ */
@@ -2384,9 +2422,9 @@ async function resolvePayoutAccount() {
   if(statusEl)statusEl.textContent='Verifying account…';payoutResolveTimer=setTimeout(async()=>{try{const d=await api('/payout/resolve-account?country='+encodeURIComponent(country)+'&bankCode='+encodeURIComponent(bankCode)+'&accountNumber='+encodeURIComponent(accountNumber));nameEl.value=d.accountName||'';if(statusEl){statusEl.textContent='✓ Account verified';statusEl.style.color='var(--signal)'}}catch(e){nameEl.value='';if(statusEl){statusEl.textContent=e.message||'Account could not be verified';statusEl.style.color='var(--danger)'}}},350);
 }
 async function savePayout() {
-  const country=document.getElementById('pfPayoutCountry')?.value||'NG',bankCode=document.getElementById('pfBankCode')?.value||'',accountNumber=document.getElementById('pfAccount')?.value.trim()||'';
+  const country=document.getElementById('pfPayoutCountry')?.value||'NG',bankEl=document.getElementById('pfBankCode'),bankCode=bankEl?.value||'',bankName=bankEl?.selectedOptions?.[0]?.textContent||'',accountNumber=document.getElementById('pfAccount')?.value.trim()||'';
   if(!bankCode){toast('Choose your bank first',true);return}if(accountNumber.length<5){toast('Enter a valid account number',true);return}
-  try{const d=await api('/me/payout-profile',{method:'PUT',body:JSON.stringify({country,bankCode,accountNumber})});document.getElementById('pfAccountName').value=d.accountName||'';state.user.payoutAccountVerified=true;toast('Withdrawal account verified and saved.');reload()}catch(e){toast(e.message,true)}
+  try{const d=await api('/me/payout-profile',{method:'PUT',body:JSON.stringify({country,bankCode,bankName,accountNumber})});document.getElementById('pfAccountName').value=d.accountName||'';state.user.payoutAccountVerified=true;toast('Withdrawal account verified and saved.');reload()}catch(e){toast(e.message,true)}
 }
 async function submitVerificationDoc() {
   const input = document.getElementById('verifDocInput');
@@ -2790,11 +2828,23 @@ async function submitSuggestion(ev){
   try{await api('/suggestions',{method:'POST',body:JSON.stringify({name:document.getElementById('suggestName').value.trim(),email:document.getElementById('suggestEmail').value.trim(),body:document.getElementById('suggestBody').value.trim()})});document.getElementById('suggestBody').value='';closeModal('suggestionModal');toast('Thanks — your suggestion was sent to PRODILIVE Admin.')}catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent=orig;}
 }
 
+/* ============================ FREE LIVE CHAT (TAWK.TO) ============================ */
+async function initExternalLiveChat(){
+  try{
+    const cfg=await api('/public-config');
+    if(!cfg.tawkPropertyId||!cfg.tawkWidgetId)return; // built-in support chat remains the fallback
+    const oldBtn=document.getElementById('supportBubbleBtn'),oldPanel=document.getElementById('supportPanel');if(oldBtn)oldBtn.style.display='none';if(oldPanel)oldPanel.style.display='none';
+    window.Tawk_API=window.Tawk_API||{};window.Tawk_LoadStart=new Date();
+    const s=document.createElement('script');s.async=true;s.src='https://embed.tawk.to/'+encodeURIComponent(cfg.tawkPropertyId)+'/'+encodeURIComponent(cfg.tawkWidgetId);s.charset='UTF-8';s.setAttribute('crossorigin','*');document.body.appendChild(s);
+  }catch(e){ /* keep built-in support chat if external chat is not configured */ }
+}
+
 /* ============================ INIT ============================ */
 applyTheme();
 checkForResetLink();
 checkForReviewerInvite();
 bootstrap();
+initExternalLiveChat();
 </script>
 
 <script>
