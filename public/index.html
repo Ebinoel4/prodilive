@@ -371,14 +371,15 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     </div>
     <div class="foot-col">
       <h5>Trust &amp; Safety</h5>
-      <a onclick="go('home');setTimeout(()=>document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'}),80)">How it works</a>
-      <a onclick="go('home');setTimeout(()=>document.getElementById('protection')?.scrollIntoView({behavior:'smooth'}),80)">Payment protection</a>
+      <a onclick="go('howItWorks')">How it works</a>
+      <a onclick="go('paymentProtection')">Payment protection</a>
       <a onclick="go('terms')">Terms &amp; Conditions</a>
     </div>
     <div class="foot-col">
       <h5>Account</h5>
       <a onclick="state.user ? go('dashboard') : openAuth('login')">Sign in</a>
       <a onclick="openAuth('register')">Join PRODILIVE</a>
+      <a onclick="openSuggestion()">Send a suggestion</a>
     </div>
   </div>
   <div class="foot-bottom">
@@ -481,11 +482,24 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
   </form>
 </div></div>
 
+<div class="modal-bg" id="suggestionModal"><div class="modal">
+  <button class="modal-close" onclick="closeModal('suggestionModal')">&times;</button>
+  <h3>Send a suggestion</h3>
+  <div class="sub">Tell us what would make PRODILIVE better. Suggestions go directly to the Admin team.</div>
+  <form onsubmit="submitSuggestion(event)">
+    <div class="field"><label>Name <span style="font-weight:400;color:var(--text-faint)">(optional)</span></label><input id="suggestName"></div>
+    <div class="field"><label>Email <span style="font-weight:400;color:var(--text-faint)">(optional)</span></label><input id="suggestEmail" type="email"></div>
+    <div class="field"><label>Your suggestion</label><textarea id="suggestBody" minlength="5" maxlength="5000" required placeholder="What should we improve, add or fix?"></textarea></div>
+    <button class="btn btn-brass btn-block" type="submit" id="suggestSubmitBtn">Send suggestion</button>
+  </form>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <!-- Site-wide support chat widget -->
 <button id="supportBubbleBtn" onclick="toggleSupportPanel()" aria-label="Chat with support">💬</button>
+<button onclick="openSuggestion()" aria-label="Send a suggestion" title="Send a suggestion" style="position:fixed;right:18px;bottom:86px;z-index:81;width:44px;height:44px;border-radius:50%;border:1px solid var(--hair);background:var(--paper);color:var(--text);cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.18)">💡</button>
 <div id="supportPanel">
   <div class="sp-head">
     <h5>PRODILIVE Support</h5>
@@ -710,7 +724,7 @@ async function render() {
     const views = { home:viewHome, talents:viewTalents, talentProfile:viewTalentProfile, jobs:viewJobsOpen, myJobs:viewMyJobs,
       jobDetail:viewJobDetail, dashboard:viewDashboard, wallet:viewWallet, admin:viewAdmin, pricing:viewPricing,
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
-      marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms };
+      marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms, howItWorks:viewHowItWorks, paymentProtection:viewPaymentProtection };
     app.innerHTML = await (views[state.view] || viewHome)();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
@@ -1040,6 +1054,41 @@ async function viewHome() {
   </div></section>`;
 }
 
+/* ============================ VIEW: HOW IT WORKS ============================ */
+async function viewHowItWorks() {
+  return `<section style="padding-top:50px"><div class="wrap">
+    <div class="eyebrow">How PRODILIVE works</div>
+    <h1 style="font-size:34px;max-width:760px;margin-bottom:12px">From idea to delivery, everything stays inside one protected project.</h1>
+    <p class="lead" style="max-width:760px">PRODILIVE connects clients with creative talent and gives both sides a clear workflow for hiring, payment, delivery, revisions and disputes.</p>
+    <div class="grid-3" style="margin-top:30px">
+      ${[
+        ['1','Create your account','Build a profile, choose your specialties and verify your email. Identity verification is only required when financial features such as deposits or withdrawals need it.'],
+        ['2','Find talent or post a project','Search professionals by name, skill or profile. You can also post a project so suitable talent can find the opportunity.'],
+        ['3','Agree on the work','Keep the brief, budget, deadline, revisions and project communication inside PRODILIVE so there is a clear record of what was agreed.'],
+        ['4','Fund the project','The client funds the project through PRODILIVE. The payment is recorded and protected while the work is being completed.'],
+        ['5','Work, preview and revise','Talent uploads work through the project workspace. Protected previews can be used before the project is completed, while original deliverables remain locked.'],
+        ['6','Approve or resolve a dispute','If the client approves the delivery, the project can complete and the talent is paid. If there is a serious disagreement, the dispute process can involve a qualified Reviewer and Admin oversight.']
+      ].map(([n,t,d])=>`<div class="panel"><div class="mono" style="font-size:11px;color:var(--brass-soft);margin-bottom:8px">STEP ${n}</div><h3 style="font-size:17px;margin-bottom:8px">${t}</h3><p style="font-size:13px;color:var(--text-dim);line-height:1.65">${d}</p></div>`).join('')}
+    </div>
+    <div class="panel" style="margin-top:26px;display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap"><div><h3 style="font-size:18px;margin-bottom:6px">Ready to find someone for your project?</h3><p style="font-size:13px;color:var(--text-dim)">Browse the talent directory or create an account to start a project.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-brass" onclick="go('talents')">Find Talent</button><button class="btn btn-ghost" onclick="state.user?openJobModal('open'):openAuth('register')">Post a Project</button></div></div>
+  </div></section>`;
+}
+
+/* ============================ VIEW: PAYMENT PROTECTION ============================ */
+async function viewPaymentProtection() {
+  return `<section style="padding-top:50px"><div class="wrap">
+    <div class="eyebrow">Payment protection</div>
+    <h1 style="font-size:34px;max-width:760px;margin-bottom:12px">Payments, project records and deliverables are tied to the project workflow.</h1>
+    <p class="lead" style="max-width:780px">PRODILIVE is designed so clients do not simply send money directly to talent and talent do not have to rely only on promises of payment.</p>
+    <div class="grid-3" style="margin-top:30px">
+      <div class="panel"><h3 style="font-size:17px;margin-bottom:8px">🔒 Project funding</h3><p style="font-size:13px;color:var(--text-dim);line-height:1.65">Project funding is recorded against the specific job. While work is active or disputed, the platform keeps track of the protected payment state instead of treating it as an informal transfer between users.</p></div>
+      <div class="panel"><h3 style="font-size:17px;margin-bottom:8px">🗂️ Protected delivery</h3><p style="font-size:13px;color:var(--text-dim);line-height:1.65">Talent can submit protected previews for review. Original deliverables stay locked until the project reaches the appropriate completed/released state.</p></div>
+      <div class="panel"><h3 style="font-size:17px;margin-bottom:8px">⚖️ Dispute handling</h3><p style="font-size:13px;color:var(--text-dim);line-height:1.65">If the parties cannot resolve a disagreement, the payment can remain frozen while evidence, the agreed brief and delivery history are reviewed. Reviewers can recommend or decide outcomes within their authority, with Admin escalation for sensitive cases.</p></div>
+    </div>
+    <div class="panel" style="margin-top:26px"><h3 style="font-size:17px;margin-bottom:10px">What keeps you protected</h3><p style="font-size:13px;color:var(--text-dim);line-height:1.7">Keep payment, messages, files, revisions and agreements on PRODILIVE. Off-platform arrangements cannot be protected by PRODILIVE's project records or dispute workflow. Cancellation compensation and dispute settlements do not automatically give a client ownership of rejected or cancelled deliverables unless the applicable project terms say otherwise.</p></div>
+  </div></section>`;
+}
+
 /* ============================ VIEW: PRICING ============================ */
 async function viewPricing() {
   return `
@@ -1296,8 +1345,10 @@ async function viewTalents() {
   try { talents = (await api('/talents?search=' + encodeURIComponent(q))).talents; } catch(e) { toast(e.message, true); }
   return `
   <section style="padding-top:36px"><div class="wrap">
-    <div class="eyebrow">Marketplace</div>
-    <h1 style="font-size:28px;margin-bottom:20px">Browse music professionals</h1>
+    <div class="eyebrow">Find Talent</div>
+    <h1 style="font-size:28px;margin-bottom:8px">Find the right creative professional</h1>
+    <p style="color:var(--text-dim);font-size:13px;line-height:1.65;max-width:760px;margin-bottom:18px">Search by name, specialty or profile. Open a profile to review the person's skills and portfolio. ${state.user?'When you are ready, keep the project, files, communication and payment inside PRODILIVE.':'You can browse now. Create an account or sign in when you are ready to hire, post a project or transact.'}</p>
+    ${!state.user?`<div class="panel" style="margin-bottom:20px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><b>How finding talent works</b><p style="font-size:12.5px;color:var(--text-dim);margin-top:5px">Search → open a talent profile → create your account → agree on the brief → fund and manage the project on PRODILIVE.</p></div><div><button class="btn btn-brass btn-sm" onclick="openAuth('register')">Create Account</button> <button class="btn btn-ghost btn-sm" onclick="go('howItWorks')">How It Works</button></div></div>`:''}
     <div class="searchbar" style="max-width:100%;margin-bottom:26px">
       <input id="talentSearch" value="${esc(q)}" placeholder="Search name, skill or bio..." oninput="debounceSearch(this.value)">
     </div>
@@ -2157,9 +2208,10 @@ function stopSupportPolling() {
 async function viewWallet() {
   const u = state.user;
   let wallet = { balance:0, heldFunds:0, totalDeposits:0, totalEarnings:0, totalWithdrawals:0 };
-  let history = [];
+  let history = [], withdrawals = [];
   try { wallet = await api('/wallet/balance'); } catch(e) { toast(e.message,true); }
   try { history = (await api('/wallet/history')).history || []; } catch(e) { toast(e.message,true); }
+  try { withdrawals = (await api('/wallet/withdrawals')).withdrawals || []; } catch(e) { toast(e.message,true); }
   return `<section style="padding-top:32px"><div class="wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:12px;flex-wrap:wrap">
       <div><div class="eyebrow">Account</div><h1 style="font-size:28px">Wallet</h1></div>
@@ -2179,7 +2231,11 @@ async function viewWallet() {
         <button class="btn btn-ghost btn-sm" onclick="withdrawFromWallet()">Withdraw</button>
       </div>
     </div>
-    ${['member','talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Used for manual withdrawal processing.</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
+    ${['member','talent','reviewer'].includes(u.role) ? `<div class="panel" style="margin-bottom:22px"><h4 style="margin-bottom:10px">Payout details</h4><p style="font-size:12px;color:var(--text-faint);margin-bottom:12px">Your payout account must be verified before a withdrawal can be submitted. ${u.payoutAccountVerified?'<span style="color:var(--signal)">✓ Verified withdrawal account</span>':'<span style="color:var(--warning)">Not yet verified</span>'}</p><div class="field"><label>Payout country</label><select id="pfPayoutCountry" onchange="loadPayoutBanks()"><option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="KE">Kenya</option></select></div><div class="field"><label>Bank name</label><select id="pfBankCode" onfocus="if(this.options.length<2)loadPayoutBanks()" onchange="resolvePayoutAccount()"><option value="">Select your bank</option></select></div><div class="field"><label>Account number</label><input id="pfAccount" maxlength="34" placeholder="Enter account number" oninput="resolvePayoutAccount()"></div><div class="field"><label>Account name</label><input id="pfAccountName" placeholder="Verified account name" readonly><div id="pfAccountVerify" style="font-size:11.5px;color:var(--text-dim);margin-top:5px"></div></div><button class="btn btn-ghost btn-sm" onclick="savePayout()">Save payout details</button></div>` : ''}
+    <div class="panel" style="margin-bottom:22px">
+      <h4 style="margin-bottom:12px">Withdrawal requests</h4>
+      ${withdrawals.length ? withdrawals.map(w=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(w.status)}</strong><div style="color:var(--text-faint);margin-top:3px">${new Date(w.created_at).toLocaleString()} · ${esc(w.reference)}</div>${w.admin_note?`<div style="color:var(--text-dim);margin-top:4px">${esc(w.admin_note)}</div>`:''}</div><div style="text-align:right;font-weight:700">${fmt(w.payout_amount,w.currency||'NGN')}</div></div>`).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No withdrawal requests yet.</p>`}
+    </div>
     <div class="panel">
       <h4 style="margin-bottom:12px">Transaction history</h4>
       ${history.length ? history.slice(0,100).map(tx=>{const d=new Date(tx.created_at);const type=String(tx.type||'TRANSACTION').replaceAll('_',' ');const state=String(tx.status||'').toUpperCase();const label=state==='PROCESSING'?'PROCESSING':type;return `<div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:12.5px"><div><strong>${esc(label)}</strong><div style="color:var(--text-faint);margin-top:3px">${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div><div style="text-align:right;font-weight:700">${Number(tx.amount)>=0?'+':''}${fmt(tx.amount,tx.currency||'NGN')}</div></div>`}).join('') : `<p style="color:var(--text-faint);font-size:12.5px">No wallet transactions yet.</p>`}
@@ -2311,7 +2367,7 @@ async function withdrawFromWallet() {
   if (!confirm(amount ? `Request withdrawal of ₦${amount}? The amount will be reserved while an admin processes the payout.` : 'Request withdrawal of your full available balance? The amount will be reserved while an admin processes the payout.')) return;
   try {
     const d = await api('/wallet/withdraw', { method:'POST', body: JSON.stringify(amount ? { amount } : {}) });
-    toast(`Withdrawal initiated: ₦${d.payout} sent (₦${d.fee} fee deducted).`);
+    toast(`Withdrawal request submitted. ${d.currency} ${Number(d.payout).toLocaleString()} is pending Admin processing.`);
     reload();
   } catch(e) { toast(e.message, true); }
 }
@@ -2330,7 +2386,7 @@ async function resolvePayoutAccount() {
 async function savePayout() {
   const country=document.getElementById('pfPayoutCountry')?.value||'NG',bankCode=document.getElementById('pfBankCode')?.value||'',accountNumber=document.getElementById('pfAccount')?.value.trim()||'';
   if(!bankCode){toast('Choose your bank first',true);return}if(accountNumber.length<5){toast('Enter a valid account number',true);return}
-  try{const d=await api('/me/payout-profile',{method:'PUT',body:JSON.stringify({country,bankCode,accountNumber})});document.getElementById('pfAccountName').value=d.accountName||'';toast('Bank account verified and saved.')}catch(e){toast(e.message,true)}
+  try{const d=await api('/me/payout-profile',{method:'PUT',body:JSON.stringify({country,bankCode,accountNumber})});document.getElementById('pfAccountName').value=d.accountName||'';state.user.payoutAccountVerified=true;toast('Withdrawal account verified and saved.');reload()}catch(e){toast(e.message,true)}
 }
 async function submitVerificationDoc() {
   const input = document.getElementById('verifDocInput');
@@ -2356,7 +2412,7 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {}, platformWallet = {};
+  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], suggestions = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {}, platformWallet = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='platformWallet') platformWallet = await api('/admin/platform-wallet');
@@ -2366,6 +2422,7 @@ async function viewAdmin() {
     if (tab==='payments') payments = (await api('/admin/payments')).payments;
     if (tab==='withdrawals') withdrawals = (await api('/admin/withdrawals')).withdrawals;
     if (tab==='verifications') verifications = (await api('/admin/verifications')).verifications;
+    if (tab==='suggestions') suggestions = (await api('/admin/suggestions')).suggestions;
     if (tab==='audit') auditLog = (await api('/admin/audit')).audit;
     if (tab==='settings') settings = (await api('/admin/settings')).settings;
     if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
@@ -2384,7 +2441,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['platformWallet','Platform Wallet'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['audit','Audit Log'],['settings','Settings']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['platformWallet','Platform Wallet'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['suggestions','Suggestions'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -2411,6 +2468,8 @@ async function viewAdmin() {
     body = `<div class="dash-stats"><div class="stat-card"><div class="l">Available platform revenue</div><div class="v mono">${fmt(platformWallet.balance||0)}</div></div><div class="stat-card"><div class="l">Total revenue</div><div class="v mono">${fmt(platformWallet.totalRevenue||0)}</div></div><div class="stat-card"><div class="l">Withdrawn</div><div class="v mono">${fmt(platformWallet.withdrawn||0)}</div></div></div><div class="panel" style="margin-top:18px"><h4>Withdraw platform revenue</h4><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><div class="field" style="margin:0"><label>Amount</label><input id="platformWdAmount" type="number" min="1"></div><button class="btn btn-brass btn-sm" onclick="adminWithdrawPlatformRevenue()">Record withdrawal</button></div></div><div class="panel" style="margin-top:18px"><h4>Revenue ledger</h4>${(platformWallet.history||[]).map(x=>`<div style="padding:10px 0;border-top:1px solid var(--hair);display:flex;justify-content:space-between"><div><b>${esc(x.type)}</b><div style="font-size:11px;color:var(--text-faint)">${new Date(x.created_at).toLocaleString()}</div></div><div class="mono">${fmt(Number(x.amount))}</div></div>`).join('')||'<p>No platform revenue yet.</p>'}</div>`;
   } else if (tab==='withdrawals') {
     body = `<div class="panel">${withdrawals.length ? withdrawals.map(w=>`<div style="border-top:1px solid var(--hair);padding:14px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>${esc(w.user_name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(w.user_email)} · ${esc(w.currency)} ${Number(w.payout_amount).toLocaleString()} · ${esc(w.status)}</div><div style="font-size:12px;margin-top:5px">${esc(w.account_name||'')} · ${esc(w.account_number||'')} · Bank code: ${esc(w.bank_code||'')}</div></div>${w.status==='PROCESSING'?`<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><input id="wdRef_${w.id}" placeholder="Payment reference" style="width:170px"><button class="btn btn-brass btn-sm" onclick="adminMarkWithdrawalPaid('${w.id}')">Mark paid</button><button class="btn btn-danger btn-sm" onclick="adminRejectWithdrawal('${w.id}')">Reject</button></div>`:`<span class="badge">${esc(w.status)}</span>`}</div></div>`).join('') : '<p style="color:var(--text-faint);font-size:13px">No withdrawal requests yet.</p>'}</div>`;
+  } else if (tab==='suggestions') {
+    body = `<div class="panel"><h4 style="margin-bottom:12px">User suggestions</h4>${suggestions.length?suggestions.map(x=>`<div style="border-top:1px solid var(--hair);padding:14px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>${esc(x.user_name||x.name||'Anonymous')}</b><div style="font-size:12px;color:var(--text-faint)">${esc(x.user_email||x.email||'No email')} · ${new Date(x.created_at).toLocaleString()}</div></div><span class="badge">${esc(x.status||'NEW')}</span></div><p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-top:10px;white-space:pre-wrap">${esc(x.body)}</p></div>`).join(''):'<p style="color:var(--text-faint)">No suggestions yet.</p>'}</div>`;
   } else if (tab==='verifications') {
     body = `<div class="panel">${verifications.length ? verifications.map(v=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
@@ -2720,6 +2779,15 @@ function checkForResetLink() {
     // Strip the token from the visible URL/history once captured.
     window.history.replaceState({}, '', '/reset-password');
   }
+}
+
+function openSuggestion(){
+  const n=document.getElementById('suggestName'),e=document.getElementById('suggestEmail');
+  if(n)n.value=state.user?.name||'';if(e)e.value=state.user?.email||'';openModal('suggestionModal');
+}
+async function submitSuggestion(ev){
+  ev.preventDefault();const btn=document.getElementById('suggestSubmitBtn'),orig=btn.textContent;btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  try{await api('/suggestions',{method:'POST',body:JSON.stringify({name:document.getElementById('suggestName').value.trim(),email:document.getElementById('suggestEmail').value.trim(),body:document.getElementById('suggestBody').value.trim()})});document.getElementById('suggestBody').value='';closeModal('suggestionModal');toast('Thanks — your suggestion was sent to PRODILIVE Admin.')}catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent=orig;}
 }
 
 /* ============================ INIT ============================ */
