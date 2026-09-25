@@ -440,9 +440,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     <div class="field"><label>Email address</label><input id="revRegEmail" type="email" required></div>
     <div class="field"><label>Relevant experience</label><textarea id="revRegExp" placeholder="Music production, audio engineering, project management, dispute resolution, etc." required></textarea></div>
     <div class="field"><label>Specialties <span style="font-weight:400;color:var(--text-faint)">(comma separated)</span></label><input id="revRegSpecialties" placeholder="mixing, mastering, songwriting"></div>
-    <div class="field"><label>ID type</label><select id="revRegDocType"><option value="NIN">National ID (NIN)</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div>
-    <div class="field"><label>ID document (PDF, JPG or PNG)</label><input id="revRegDoc" type="file" accept="application/pdf,image/png,image/jpeg" required></div>
-    <div class="field"><label>Selfie <span style="font-weight:400;color:var(--text-faint)">(clear photo of your face, JPG or PNG)</span></label><input id="revRegSelfie" type="file" accept="image/png,image/jpeg" required></div>
+    <div class="panel" style="margin:12px 0;font-size:12px;line-height:1.55"><b>What happens next?</b><p>Submitting this form is only an application. It does not create a Reviewer account. If shortlisted, PRODILIVE will contact you by email for the qualification process. Successful applicants receive a private registration link.</p></div>
     <button class="btn btn-brass btn-block" type="submit" id="revRegSubmitBtn">Submit application</button>
   </form>
 </div></div>
@@ -568,6 +566,7 @@ function mediaKind(name, mime){
   const m = String(mime||'').toLowerCase(), ext = String(name||'').split('.').pop().toLowerCase();
   if (m.startsWith('audio/') || ['mp3','wav','wave','m4a','aac','flac','ogg','oga','opus','weba','aif','aiff','aifc'].includes(ext)) return 'audio';
   if (m.startsWith('video/') || ['mp4','m4v','mov','webm'].includes(ext)) return 'video';
+  if (m.startsWith('image/') || ['jpg','jpeg','png','webp','gif','bmp','tif','tiff'].includes(ext)) return 'image';
   return 'file';
 }
 async function hydrateMedia(){
@@ -1141,7 +1140,7 @@ async function viewReviewerHub() {
   const available = disputes.filter(d => d.status === 'OPEN');
   const assigned = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'ASSIGNED');
   const decided = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'DECIDED');
-  const locked = u.reviewerLevel !== 'CERTIFIED' && u.reviewerLevel !== 'TRAINEE';
+  const locked = u.verificationStatus !== 'APPROVED' || u.reviewerStatus !== 'ACTIVE';
 
   return `
   <section style="padding-top:32px"><div class="wrap">
@@ -1150,7 +1149,8 @@ async function viewReviewerHub() {
       <span class="badge">${u.reviewerLevel === 'CERTIFIED' ? '✓ Certified' : esc(u.reviewerLevel || 'Pending qualification')}</span>
     </div>
 
-    ${locked ? `<div class="panel" style="margin-bottom:20px;border-color:var(--danger)"><p style="font-size:13px;color:var(--text-dim)">Your reviewer account is still pending admin approval and a qualification test. You'll be able to claim disputes once that's complete — check back soon.</p></div>` : ''}
+    ${locked ? `<div class="panel" style="margin-bottom:20px;border-color:var(--danger)"><p style="font-size:13px;color:var(--text-dim)">Your Reviewer access is locked until your identity is verified and you accept the Reviewer Terms & Code of Conduct. Use Profile to submit your ID and selfie. After Admin approval, return here to accept the terms.</p></div>` : ''}
+    ${u.verificationStatus==='APPROVED' && u.reviewerStatus==='TERMS_PENDING' ? `<div class="panel" style="margin-bottom:20px"><h4>Reviewer Terms & Code of Conduct</h4><p style="font-size:12.5px;color:var(--text-dim)">I agree to act independently, disclose conflicts, reject bribes or gifts, keep case material confidential, use only PRODILIVE channels, base decisions on the agreed brief and evidence, provide written reasons, and accept Admin oversight and audit.</p><button class="btn btn-brass btn-sm" onclick="acceptReviewerTerms()">Accept terms & activate Reviewer access</button></div>` : ''}
 
     <div class="dash-stats">
       <div class="stat-card"><div class="l">Available cases</div><div class="v" style="color:var(--brass-soft)">${available.length}</div></div>
@@ -1178,6 +1178,8 @@ async function viewReviewerHub() {
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn btn-brass btn-sm" onclick="decideDispute('${d.id}','RELEASE_TALENT')">Release to provider</button>
                 <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+                <button class="btn btn-ghost btn-sm" onclick="splitDispute('${d.id}')">Partial settlement</button>
+                <button class="btn btn-danger btn-sm" onclick="escalateDispute('${d.id}')">Report / Escalate to Admin</button>
                 <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
               </div>
             </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
@@ -1199,7 +1201,7 @@ async function viewReviewerHub() {
           <li>Read both sides' messages and the delivered files before deciding.</li>
           <li>You stay anonymous — neither party ever sees your name.</li>
           <li>Release to the provider, refund the client, or (via the API) split the funds — pick whichever the evidence supports.</li>
-          <li>Once you decide, it's final and funds move immediately.</li>
+          <li>Partial settlements are allowed when evidence supports compensating work already completed.</li><li>Report or escalate suspected fraud, bribery, stolen work, off-platform dealing, threats, suspicious evidence, conflicts of interest or any high-risk transaction to Admin. Funds stay frozen during escalation.</li>
         </ul>
 
         <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
@@ -1216,22 +1218,14 @@ async function submitReviewerRegister(e) {
   const btn = document.getElementById('revRegSubmitBtn');
   const orig = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
   try {
-    const docFile = document.getElementById('revRegDoc').files[0];
-    const selfieFile = document.getElementById('revRegSelfie').files[0];
-    if (!docFile || !selfieFile) throw new Error('Please attach both a document and a selfie');
-    const fd = new FormData();
-    fd.append('name', document.getElementById('revRegName').value.trim());
-    fd.append('email', document.getElementById('revRegEmail').value.trim());
-    fd.append('experience', document.getElementById('revRegExp').value.trim());
-    fd.append('specialties', document.getElementById('revRegSpecialties').value.trim());
-    fd.append('docType', document.getElementById('revRegDocType').value);
-    fd.append('document', docFile);
-    fd.append('selfie', selfieFile);
-    const res = await fetch('/api/reviewer/apply-external', { method:'POST', body: fd });
-    const data = await res.json().catch(()=>({}));
-    if (!res.ok) throw new Error(data.error || 'Could not submit application');
+    const data = await api('/reviewer/apply-external', { method:'POST', body: JSON.stringify({
+      name: document.getElementById('revRegName').value.trim(),
+      email: document.getElementById('revRegEmail').value.trim(),
+      experience: document.getElementById('revRegExp').value.trim(),
+      specialties: document.getElementById('revRegSpecialties').value.trim()
+    }) });
     closeModal('reviewerRegisterModal');
-    toast("Application submitted — we'll email you once it's reviewed.");
+    toast(data.message || "Application received — we'll get back to you by email.");
   } catch(err) { toast(err.message, true); }
   finally { btn.disabled = false; btn.textContent = orig; }
 }
@@ -1267,6 +1261,7 @@ async function submitCompleteReviewerRegistration(e) {
   } catch(err) { toast(err.message, true); }
   finally { btn.disabled = false; btn.textContent = orig; }
 }
+async function acceptReviewerTerms(){ try{const d=await api('/reviewer/accept-terms',{method:'POST',body:'{}'});state.user=d.user;toast('Reviewer access activated.');reload();}catch(e){toast(e.message,true)} }
 async function claimDispute(id) {
   try { await api('/reviewer/disputes/'+id+'/claim', { method:'POST' }); toast('Case claimed — it\'s yours to resolve.'); reload(); }
   catch(e) { toast(e.message, true); }
@@ -1455,7 +1450,7 @@ async function viewProfile() {
       <button class="btn btn-brass btn-sm" style="margin-top:14px" onclick="saveFullProfile()">Save changes</button>
     </div>
 
-    ${['member','talent'].includes(u.role) ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
+    ${['member','talent','client','reviewer'].includes(u.role) ? `<div class="panel" style="margin-top:18px"><h4 style="margin-bottom:8px">Identity verification</h4>${u.verificationStatus==='APPROVED'?`<p style="font-size:12.5px;color:var(--signal)">✓ Identity verified</p>`:`<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Upload a government-issued ID and a clear selfie.</p><div class="field"><label>ID type</label><select id="verifDocType"><option value="NIN">National ID</option><option value="PASSPORT">International passport</option><option value="DRIVERS_LICENSE">Driver's license</option><option value="VOTERS_CARD">Voter's card</option><option value="OTHER">Other government ID</option></select></div><div class="field"><label>ID document</label><input id="verifDocInput" type="file" accept="application/pdf,image/png,image/jpeg"></div><div class="field"><label>Selfie</label><input id="verifSelfieInput" type="file" accept="image/png,image/jpeg" capture="user"></div><button class="btn btn-brass btn-sm" onclick="submitVerificationDoc()">Submit verification</button>`}</div>`:''}
     <div class="panel" style="margin-top:18px">
       <h4 style="margin-bottom:10px">Change password</h4>
       <div class="field"><label>Current password</label><div style="display:flex;gap:8px"><input id="pwCurrent" type="password"><button class="btn btn-ghost btn-sm" type="button" onclick="togglePassword('pwCurrent',this)">Show</button></div></div>
@@ -1512,10 +1507,12 @@ async function viewTerms() {
       <h4>3. Fraud &amp; misrepresentation</h4>
       <p>Submitting a fake or stolen identity document, misrepresenting your work in a portfolio or delivery, or attempting to solicit off-platform payment are all grounds for immediate account suspension, forfeiture of any pending payout, and reporting to relevant authorities where applicable.</p>
       <h4>4. Reviewers</h4>
-      <p>Reviewers act as independent, anonymous dispute officers. A reviewer account may not also act as a client or provider, may not purchase marketplace listings, and every dispute decision is logged and visible to PRODILIVE admins.</p>
-      <h4>5. Wallet &amp; fees</h4>
+      <p>Reviewers are independent, anonymous dispute officers and must accept a separate Reviewer Code of Conduct. They must disclose conflicts, reject gifts/bribes, protect confidential material, give evidence-based written reasons, and escalate suspicious transactions to Admin. Decisions and overrides are logged and auditable.</p>
+      <h4>5. Cancellation, compensation &amp; file rights</h4><p>Cancellation reasons may carry default work-compensation recommendations. Reviewers may recommend partial release where evidence shows meaningful work was completed. A voluntary tip/compensation may be offered by the client. Cancellation compensation does not by itself grant the client ownership or download rights to rejected deliverables. Original delivery files remain locked unless the project is completed and the applicable payment is released.</p>
+      <h4>6. Protected previews</h4><p>Audio, video and visual work may be presented through watermarked previews. Source files and masters remain private until the project is completed. PRODILIVE may restrict downloads after cancellation, refund or dispute. Browser controls can deter copying but cannot guarantee prevention of screenshots or screen recording.</p>
+      <h4>7. Wallet &amp; fees</h4>
       <p>Deposits and withdrawals to your PRODILIVE wallet may carry a fee, set by PRODILIVE and shown before you confirm. Marketplace commission is deducted from provider payouts automatically.</p>
-      <h4>6. Changes</h4>
+      <h4>8. Changes</h4>
       <p>These terms may be updated as the platform evolves. Continued use of PRODILIVE after a change means you accept the updated terms.</p>
       <p style="margin-top:18px;color:var(--text-faint);font-size:12px">Questions? Contact <a href="mailto:${SUPPORT_EMAIL}" style="color:var(--brass-soft)">${SUPPORT_EMAIL}</a>.</p>
     </div>
@@ -1865,7 +1862,7 @@ async function viewJobDetail() {
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid var(--hair);padding:10px 0;font-size:13px">
                 <span>${esc(f.original_name)}</span>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                  ${f.preview_name ? `<div style="margin:4px 0"><audio data-media="/api/files/${f.id}/preview" preload="metadata" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected preview — watermarked</span></div>` : (mediaKind(f.original_name,f.mime)==='audio' ? `<span style="font-size:11px;color:var(--text-faint);max-width:260px">No preview could be generated for this file — ask for a WAV or MP3 re-upload.</span>` : '')}
+                  ${f.preview_name ? protectedPreviewHtml(f) : `<span style="font-size:11px;color:var(--text-faint);max-width:260px">Original protected — no downloadable preview available for this file type.</span>`}
                   ${job.status==='RELEASED' && isClient ? `<button class="btn btn-brass btn-sm" onclick="openMedia('/api/files/${f.id}/master',true)">Download master</button>` : ''}
                   ${isTalent && ['IN_PROGRESS','REVISION_REQUESTED','CLIENT_REVIEW'].includes(job.status) ? `<button class="btn btn-danger btn-sm" onclick="deleteDeliveryFile('${f.id}')">Delete</button>` : ''}
                 </div>
@@ -1994,16 +1991,33 @@ async function requestRevision(id) {
   try { await api('/jobs/'+id+'/revision', { method:'POST', body: JSON.stringify({ reason }) }); toast('Revision requested.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
+const CANCEL_REASONS={
+  CHANGE_MIND:{label:'I changed my mind / no longer need the project',talent:20},
+  CREATIVE_DIRECTION:{label:'I want a different creative direction after work started',talent:30},
+  NOT_SATISFIED:{label:'I am not satisfied with the creative result',talent:25},
+  OUTSIDE_BRIEF:{label:'Delivery materially differs from the agreed brief',talent:0},
+  MISSED_DEADLINE:{label:'Talent missed the agreed deadline',talent:0},
+  NON_DELIVERY:{label:'Talent failed to deliver',talent:0},
+  MUTUAL:{label:'Both parties want to cancel',talent:0},
+  OTHER:{label:'Other / requires reviewer assessment',talent:0}
+};
+function protectedPreviewHtml(f){const k=mediaKind(f.original_name,f.mime),url='/api/files/'+f.id+'/preview';if(k==='audio')return `<div style="margin:4px 0"><audio data-media="${url}" preload="metadata" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected audio preview — watermarked</span></div>`;if(k==='video')return `<div oncontextmenu="return false"><video data-media="${url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture style="max-width:320px;max-height:220px;border-radius:8px"></video><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected video preview — moving project watermark</span></div>`;if(k==='image')return `<div oncontextmenu="return false" style="user-select:none"><img data-media="${url}" alt="Protected preview" draggable="false" style="max-width:320px;max-height:260px;object-fit:contain;border-radius:8px"><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected image preview — project/client watermark. Screenshots cannot be fully prevented.</span></div>`;return `<span style="font-size:11px;color:var(--text-faint)">Protected preview</span>`}
 async function openDispute(id) {
-  const reason = prompt('Describe the issue for our review team:');
-  if (reason === null) return;
-  try { await api('/jobs/'+id+'/dispute', { method:'POST', body: JSON.stringify({ reason }) }); toast('Dispute opened — a reviewer will step in.'); reload(); }
+  const choices=Object.entries(CANCEL_REASONS).map(([k,v])=>`${k}: ${v.label}${v.talent?' (default '+v.talent+'% work compensation)':''}`).join('\n');
+  const code=(prompt('Choose the cancellation/dispute reason by typing its code:\n\n'+choices,'NOT_SATISFIED')||'').trim().toUpperCase(); if(!CANCEL_REASONS[code]){toast('Choose a valid cancellation reason.',true);return;}
+  const detail=prompt('Briefly explain what happened and what outcome you are requesting:'); if(detail===null)return;
+  let voluntary=0;if(['CHANGE_MIND','CREATIVE_DIRECTION','NOT_SATISFIED'].includes(code)){const x=prompt('Optional: add extra voluntary compensation/tip for the talent (percentage of project value). Enter 0 for none.','0');if(x===null)return;voluntary=Math.max(0,Math.min(100,Number(x)||0));}
+  const suggested=Math.max(CANCEL_REASONS[code].talent,voluntary);
+  try { await api('/jobs/'+id+'/dispute', { method:'POST', body: JSON.stringify({ reason:CANCEL_REASONS[code].label+' — '+detail,cancellationCode:code,suggestedTalentPercent:suggested,clientVoluntaryPercent:voluntary }) }); toast('Dispute opened — funds are frozen while the case is reviewed.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
 async function decideDispute(id, outcome) {
-  try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome }) }); toast('Dispute decision processed successfully.'); reload(); }
+  const reason=prompt('Give a short written reason for this decision:');if(reason===null||reason.trim().length<5){toast('A written reason is required.',true);return;}
+  try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome,reason }) }); toast('Dispute decision processed successfully.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
+async function splitDispute(id){const talent=Number(prompt('What percentage should be released to the talent?','25'));if(!Number.isFinite(talent)||talent<0||talent>100){toast('Enter a percentage from 0 to 100.',true);return;}const reason=prompt('Explain why this partial settlement is fair:');if(!reason||reason.trim().length<5){toast('A written reason is required.',true);return;}try{await api('/reviewer/disputes/'+id+'/decision',{method:'POST',body:JSON.stringify({outcome:'SPLIT',talentPercent:talent,clientPercent:100-talent,reason})});toast('Partial settlement sent for Admin review.');reload()}catch(e){toast(e.message,true)}}
+async function escalateDispute(id){const reason=prompt('Why are you reporting/escalating this transaction to Admin?\nExamples: suspected fraud, stolen work, bribery, off-platform dealing, threats, suspicious evidence, conflict of interest.');if(!reason||reason.trim().length<5)return;try{await api('/reviewer/disputes/'+id+'/escalate',{method:'POST',body:JSON.stringify({reason})});toast('Transaction escalated. Funds remain frozen for Admin review.');reload()}catch(e){toast(e.message,true)}}
 async function submitReview(id) {
   try {
     await api('/jobs/'+id+'/review', { method:'POST', body: JSON.stringify({ rating: Number(document.getElementById('reviewRating').value), comment: document.getElementById('reviewComment').value }) });
@@ -2333,7 +2347,7 @@ async function submitVerificationDoc() {
     const data = await res.json().catch(()=>({}));
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     toast('Document submitted.');
-    state.user.verificationStatus = 'APPROVED';
+    state.user.verificationStatus = 'PENDING';
     reload();
   } catch(e) { toast(e.message, true); }
 }
@@ -2385,7 +2399,7 @@ async function viewAdmin() {
         <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'userActivity',userId:'${u.id}'})">View activity</button>
           ${u.status!=='DELETED' ? `<select id="roleSel_${u.id}" style="font-size:12px;padding:4px 6px;border-radius:6px">
-            ${['member','reviewer','admin'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
+            ${['member','admin'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
           </select><button class="btn btn-ghost btn-sm" onclick="adminChangeRole('${u.id}')">Set role</button>` : ''}
           ${u.status==='SUSPENDED' ? `<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${u.id}')">Reactivate</button>` : u.status==='DELETED' ? '' : `<button class="btn btn-danger btn-sm" onclick="adminSuspend('${u.id}')">Suspend</button>`}
           ${u.status!=='DELETED' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.id}','${esc(u.name)}')">Delete</button>` : ''}
@@ -2474,9 +2488,7 @@ async function viewAdmin() {
       <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}${a.doc_type ? ' · '+esc(a.doc_type) : ''}</div></div>
         ${a.status==='PENDING' && !a.user_id ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${a.doc_name ? `<button class="btn btn-ghost btn-sm" onclick="adminViewReviewerDoc('${a.id}','document')">View document</button>` : ''}
-          ${a.selfie_name ? `<button class="btn btn-ghost btn-sm" onclick="adminViewReviewerDoc('${a.id}','selfie')">View selfie</button>` : ''}
-          <button class="btn btn-brass btn-sm" onclick="adminSendReviewerInvite('${a.id}')">Send registration invite</button>
+          <button class="btn btn-brass btn-sm" onclick="adminSendReviewerInvite('${a.id}')">Passed my test — send private signup link</button>
           <button class="btn btn-danger btn-sm" onclick="adminRejectReviewerApp('${a.id}')">Reject</button>
         </div>` : ''}
         ${a.status==='INVITED' ? `<span style="font-size:12px;color:var(--text-faint)">Invite sent — waiting for applicant to finish registering</span>` : ''}
