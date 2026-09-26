@@ -115,6 +115,15 @@ section{padding:52px 0}
 .stat-card .v{font-family:'Fraunces',serif;font-size:24px}
 .dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .field{margin-bottom:14px}
+.reason-card{display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border:1px solid var(--hair);border-radius:12px;cursor:pointer;margin-bottom:9px;transition:.18s ease;background:var(--paper)}
+.reason-card:hover{border-color:color-mix(in srgb,var(--brass) 45%,var(--hair))}
+.reason-card input{width:auto;margin-top:3px;accent-color:var(--brass)}
+.reason-card.checked{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 8%,var(--paper))}
+.reason-card .rc-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.reason-card .rc-sub{font-size:11.5px;color:var(--text-faint);margin-top:2px;line-height:1.4}
+.reason-card .rc-pct{font:600 10.5px var(--mono);color:var(--brass-soft);white-space:nowrap;margin-left:auto;padding-left:10px}
+.settle-banner{border:1px solid var(--hair);border-radius:12px;padding:14px 16px;margin-bottom:16px;background:color-mix(in srgb,var(--brass) 7%,var(--paper))}
+.settle-banner .rc-pct{font:700 15px var(--mono);color:var(--brass-soft)}
 .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px}
 .field input,.field select,.field textarea{width:100%;background:var(--ink-2);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:13.5px;outline:none}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brass)}
@@ -523,6 +532,32 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
   </div>
 </div></div>
 
+<div class="modal-bg" id="cancelModal"><div class="modal" style="max-width:560px">
+  <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
+  <h3>Cancel project</h3>
+  <div class="sub">Ending a project this way is for no-fault reasons — nobody did anything wrong, you just need to stop. The other party can accept the terms below instantly, or ask a reviewer to weigh in if they disagree.</div>
+  <form onsubmit="submitCancelRequest(event)">
+    <div id="cancelReasonCards"></div>
+    <div class="field"><label>Briefly explain what's changed</label><textarea id="cancelDetail" required minlength="10" placeholder="A sentence or two is enough."></textarea></div>
+    <div class="field" id="cancelVoluntaryField" style="display:none">
+      <label>Optional — add extra compensation for the talent's time <span style="font-weight:400;color:var(--text-faint)">(% of project value, on top of the default above)</span></label>
+      <input id="cancelVoluntary" type="number" min="0" max="100" value="0">
+    </div>
+    <button class="btn btn-danger btn-block" type="submit" id="cancelSubmitBtn">Request cancellation</button>
+  </form>
+</div></div>
+
+<div class="modal-bg" id="disputeModal"><div class="modal" style="max-width:560px">
+  <button class="modal-close" onclick="closeModal('disputeModal')">&times;</button>
+  <h3>Open a dispute</h3>
+  <div class="sub">Use this when something went wrong — a reviewer will look at the evidence and decide how funds are split. Funds are frozen while the case is open.</div>
+  <form onsubmit="submitDisputeRequest(event)">
+    <div id="disputeReasonCards"></div>
+    <div class="field"><label>What happened, and what outcome are you requesting?</label><textarea id="disputeDetail" required minlength="10" placeholder="Be specific — a reviewer only sees what's written here and in the project chat."></textarea></div>
+    <button class="btn btn-danger btn-block" type="submit" id="disputeSubmitBtn">Open dispute &amp; involve reviewer</button>
+  </form>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -686,6 +721,7 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function go(view, params = {}) {
   if (needsAuth(view) && !state.user) { openAuth('login'); toast('Sign in to continue'); return; }
   stopJobChatPolling();
+  if (state.view === 'jobDetail' && state.params.id) leaveJobRoom(state.params.id);
   state.view = view; state.params = params;
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   render();
@@ -696,11 +732,15 @@ function needsAuth(view){ return ['dashboard','wallet','admin','jobDetail','revi
 
 /* ============================ REAL-TIME LIVE FEED ============================ */
 let _socket = null;
+function joinJobRoom(jobId){ if (_socket && state.token) _socket.emit('join:job', { token: state.token, jobId }); }
+function leaveJobRoom(jobId){ if (_socket) _socket.emit('leave:job', jobId); }
 function initLiveFeed() {
   if (_socket || typeof io === 'undefined') return;
   _socket = io();
   _socket.on('connect', () => {
     if (state.user && state.user.role === 'reviewer') _socket.emit('join:reviewers', state.token);
+    if (state.user && state.token) _socket.emit('join:user', state.token);
+    if (state.view === 'jobDetail' && state.params.id) joinJobRoom(state.params.id);
   });
   _socket.on('dispute:new', (d) => {
     if (state.user && state.user.role === 'reviewer') {
@@ -710,6 +750,24 @@ function initLiveFeed() {
   });
   _socket.on('dispute:claimed', () => {
     if (state.user && state.user.role === 'reviewer' && state.view === 'reviewerHub') reload();
+  });
+  _socket.on('cancellation:requested', (d) => {
+    if (state.view === 'jobDetail' && state.params.id === d.jobId) { toast('The other party proposed a cancellation for this project.'); reload(); }
+    else toast('A cancellation was requested on one of your projects.');
+  });
+  _socket.on('dispute:onyourjob', (d) => {
+    if (state.view === 'jobDetail' && state.params.id === d.jobId) { toast('A dispute was opened on this project.'); reload(); }
+    else toast('A dispute was opened on one of your projects.');
+  });
+  _socket.on('message:new', (m) => {
+    if (state.view === 'jobDetail' && state.params.id === m.job_id) {
+      const el = document.getElementById('messageList');
+      if (el) {
+        state._chatMessages = (state._chatMessages || []).concat([m]);
+        el.innerHTML = renderJobChat(state._chatMessages, state.user);
+        el.scrollTop = el.scrollHeight;
+      }
+    }
   });
   _socket.on('feed:job', (d) => {
     if (state.view === 'jobs') {
@@ -765,6 +823,7 @@ async function render() {
     if (state.view === 'wallet') initWalletView();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
+      joinJobRoom(state.params.id);
       startJobChatPolling(state.params.id);
     }
   } catch (e) {
@@ -1885,10 +1944,10 @@ async function submitJob(e) {
 /* ============================ VIEW: JOB DETAIL ============================ */
 async function viewJobDetail() {
   const id = state.params.id;
-  let job, files = [], proposals = [], messages = [], reviews = [], attachments = [];
+  let job, files = [], proposals = [], messages = [], reviews = [], attachments = [], dispute = null;
   try {
     const d = await api('/jobs/' + id);
-    job = d.job; files = d.files || [];
+    job = d.job; files = d.files || []; dispute = d.dispute || null;
   } catch(e) { return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Project not found</h3><p>${esc(e.message)}</p></div></div>`; }
 
   const isClient = state.user && job.client_id === state.user.id;
@@ -1896,7 +1955,7 @@ async function viewJobDetail() {
   const isStaff = state.user && ['admin','reviewer'].includes(state.user.role);
 
   if (isClient && job.status === 'OPEN') { try { proposals = (await api('/jobs/'+id+'/proposals')).proposals; } catch {} }
-  if (isClient || isTalent || isStaff) { try { messages = (await api('/messages/'+id)).messages; } catch {} }
+  if (isClient || isTalent || isStaff) { try { messages = (await api('/messages/'+id)).messages; state._chatMessages = messages; } catch {} }
   if (isClient || isTalent || isStaff) { try { attachments = (await api('/jobs/'+id+'/attachments')).attachments || []; } catch {} }
   if (job.status === 'RELEASED') { try { reviews = (await api('/talents/'+job.talent_id+'/reviews')).reviews; } catch {} }
   const alreadyReviewed = isClient && reviews.some(r=>r.reviewer_id === state.user.id);
@@ -1961,6 +2020,20 @@ async function viewJobDetail() {
             <button id="deliverBtn" class="btn btn-brass btn-block" onclick="deliverJob('${job.id}')">Submit delivery</button><div id="deliveryProgress" class="delivery-progress"><div class="meta"><span id="deliveryProgressText">Preparing upload…</span><span id="deliveryProgressPct">0%</span></div><div class="track"><div id="deliveryProgressBar" class="bar"></div></div></div>
           </div>` : ''}
 
+        ${dispute && dispute.kind==='CANCELLATION' && !dispute.requires_reviewer && state.user && String(dispute.opened_by)!==String(state.user.id) && (isClient||isTalent) ? `
+          <div class="settle-banner">
+            <h4 style="margin-bottom:6px">The other party wants to cancel this project</h4>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px">${esc(dispute.reason||'')}</p>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Proposed: <span class="rc-pct">${dispute.suggested_talent_percent||0}% to talent · ${100-(dispute.suggested_talent_percent||0)}% refunded</span></p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-brass btn-sm" onclick="respondToSettlement('${dispute.id}','ACCEPT')">Accept these terms</button>
+              <button class="btn btn-ghost btn-sm" onclick="respondToSettlement('${dispute.id}','ESCALATE')">I disagree — ask a reviewer</button>
+            </div>
+          </div>` : dispute && dispute.kind==='CANCELLATION' && !dispute.requires_reviewer && state.user && String(dispute.opened_by)===String(state.user.id) ? `
+          <div class="settle-banner"><h4 style="margin-bottom:4px">Cancellation requested</h4><p style="font-size:12.5px;color:var(--text-dim)">Waiting for the other party to accept your proposed terms, or for the settlement window to pass so a reviewer can step in.</p></div>` : ''}
+
+        ${isClient && ['AWAITING_PAYMENT','IN_PROGRESS','REVISION_REQUESTED'].includes(job.status) && !dispute ? `<div class="panel" style="margin-bottom:18px"><h4>Need to end this project?</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Cancel for a no-fault reason (change of mind, different direction), or open a dispute if something went wrong.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="openCancelModal('${job.id}')">Cancel project</button><button class="btn btn-danger btn-sm" onclick="openDisputeModal('${job.id}')">Open a dispute</button></div></div>` : ''}
+
         ${isTalent && !job.submitted_at && ['AWAITING_PAYMENT','IN_PROGRESS','REVISION_REQUESTED','DISPUTED'].includes(job.status) ? `<div class="panel" style="margin-bottom:18px"><h4>Can't continue?</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Withdraw from this project if you can no longer meet the commitment. If payment is already held, it will be returned to the client.</p><button class="btn btn-danger btn-sm" onclick="withdrawTalent('${job.id}')">Withdraw from project</button></div>` : ''}
 
         ${job.status==='QA_PENDING' && isStaff ? `
@@ -1980,7 +2053,8 @@ async function viewJobDetail() {
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-brass" onclick="approveJob('${job.id}')">Accept delivery &amp; release payment</button>
               <button class="btn btn-ghost" onclick="requestRevision('${job.id}')">Request revision</button>
-              <button class="btn btn-danger" onclick="openDispute('${job.id}')">Dispute &amp; involve reviewer</button>
+              <button class="btn btn-ghost btn-sm" onclick="openCancelModal('${job.id}')">Cancel project</button>
+              <button class="btn btn-danger" onclick="openDisputeModal('${job.id}')">Open a dispute</button>
             </div>
           </div>` : ''}
 
@@ -2121,25 +2195,76 @@ async function requestRevision(id) {
   catch(e) { toast(e.message, true); }
 }
 const CANCEL_REASONS={
-  CHANGE_MIND:{label:'I changed my mind / no longer need the project',talent:20},
-  CREATIVE_DIRECTION:{label:'I want a different creative direction after work started',talent:30},
-  NOT_SATISFIED:{label:'I am not satisfied with the creative result',talent:25},
-  OUTSIDE_BRIEF:{label:'Delivery materially differs from the agreed brief',talent:0},
-  MISSED_DEADLINE:{label:'Talent missed the agreed deadline',talent:0},
-  NON_DELIVERY:{label:'Talent failed to deliver',talent:0},
-  MUTUAL:{label:'Both parties want to cancel',talent:0},
-  OTHER:{label:'Other / requires reviewer assessment',talent:0}
+  CHANGE_MIND:{label:'I changed my mind / no longer need the project',sub:'No one is at fault — you simply don\'t need this anymore.',talent:20},
+  CREATIVE_DIRECTION:{label:'I want a different creative direction',sub:'Work has started, but you\'re taking the project elsewhere.',talent:30},
+  NOT_SATISFIED:{label:'I\'m not satisfied with the creative result',sub:'A matter of taste/fit rather than a broken agreement.',talent:25},
+  MUTUAL:{label:'Both parties have agreed to cancel',sub:'You and the other party already talked and agreed to stop.',talent:0}
 };
-function protectedPreviewHtml(f){const k=mediaKind(f.original_name,f.mime),url='/api/files/'+f.id+'/preview';if(k==='audio')return `<div style="margin:4px 0"><audio data-media="${url}" preload="metadata" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected audio preview — watermarked</span></div>`;if(k==='video')return `<div oncontextmenu="return false"><video data-media="${url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture style="max-width:320px;max-height:220px;border-radius:8px"></video><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected video preview — moving project watermark</span></div>`;if(k==='image')return `<div oncontextmenu="return false" style="user-select:none"><img data-media="${url}" alt="Protected preview" draggable="false" style="max-width:320px;max-height:260px;object-fit:contain;border-radius:8px"><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected image preview — project/client watermark. Screenshots cannot be fully prevented.</span></div>`;return `<span style="font-size:11px;color:var(--text-faint)">Protected preview</span>`}
-async function openDispute(id) {
-  const choices=Object.entries(CANCEL_REASONS).map(([k,v])=>`${k}: ${v.label}${v.talent?' (default '+v.talent+'% work compensation)':''}`).join('\n');
-  const code=(prompt('Choose the cancellation/dispute reason by typing its code:\n\n'+choices,'NOT_SATISFIED')||'').trim().toUpperCase(); if(!CANCEL_REASONS[code]){toast('Choose a valid cancellation reason.',true);return;}
-  const detail=prompt('Briefly explain what happened and what outcome you are requesting:'); if(detail===null)return;
-  let voluntary=0;if(['CHANGE_MIND','CREATIVE_DIRECTION','NOT_SATISFIED'].includes(code)){const x=prompt('Optional: add extra voluntary compensation/tip for the talent (percentage of project value). Enter 0 for none.','0');if(x===null)return;voluntary=Math.max(0,Math.min(100,Number(x)||0));}
-  const suggested=Math.max(CANCEL_REASONS[code].talent,voluntary);
-  try { await api('/jobs/'+id+'/dispute', { method:'POST', body: JSON.stringify({ reason:CANCEL_REASONS[code].label+' — '+detail,cancellationCode:code,suggestedTalentPercent:suggested,clientVoluntaryPercent:voluntary }) }); toast('Dispute opened — funds are frozen while the case is reviewed.'); reload(); }
-  catch(e) { toast(e.message, true); }
+const DISPUTE_REASONS={
+  OUTSIDE_BRIEF:{label:'Delivery materially differs from the agreed brief',sub:'What was delivered doesn\'t match what was agreed.'},
+  MISSED_DEADLINE:{label:'Talent missed the agreed deadline',sub:'Use "Deadline missed — cancel & refund me" instead if it\'s simply overdue with nothing delivered.'},
+  NON_DELIVERY:{label:'Talent failed to deliver',sub:'No delivery was submitted and communication has stalled.'},
+  OTHER:{label:'Other — requires reviewer assessment',sub:'Something else went wrong that a reviewer should look at.'}
+};
+function renderReasonCards(containerId,reasons,groupName,showPct){
+  document.getElementById(containerId).innerHTML=Object.entries(reasons).map(([k,v],i)=>`
+    <label class="reason-card${i===0?' checked':''}">
+      <input type="radio" name="${groupName}" value="${k}" ${i===0?'checked':''} onchange="onReasonPick(this)">
+      <div><div class="rc-title">${esc(v.label)}</div><div class="rc-sub">${esc(v.sub)}</div></div>
+      ${showPct&&v.talent?`<span class="rc-pct">${v.talent}% to talent</span>`:showPct?`<span class="rc-pct">0% default</span>`:''}
+    </label>`).join('');
 }
+function onReasonPick(input){
+  input.closest('div[id]')?.querySelectorAll?.('.reason-card').forEach(c=>c.classList.remove('checked'));
+  document.querySelectorAll(`.reason-card:has(input[name="${input.name}"])`).forEach(c=>c.classList.toggle('checked',c.querySelector('input').checked));
+  if(input.name==='cancelCode'){const f=document.getElementById('cancelVoluntaryField');if(f)f.style.display=input.value==='MUTUAL'?'none':'';}
+}
+let activeCancelJobId=null, activeDisputeJobId=null;
+function openCancelModal(id){
+  activeCancelJobId=id;
+  renderReasonCards('cancelReasonCards',CANCEL_REASONS,'cancelCode',true);
+  document.getElementById('cancelDetail').value='';document.getElementById('cancelVoluntary').value=0;
+  document.getElementById('cancelVoluntaryField').style.display='';
+  openModal('cancelModal');
+}
+function openDisputeModal(id){
+  activeDisputeJobId=id;
+  renderReasonCards('disputeReasonCards',DISPUTE_REASONS,'disputeCode',false);
+  document.getElementById('disputeDetail').value='';
+  openModal('disputeModal');
+}
+async function submitCancelRequest(ev){
+  ev.preventDefault();
+  const code=document.querySelector('input[name="cancelCode"]:checked')?.value;
+  const detail=document.getElementById('cancelDetail').value.trim();
+  const voluntary=Math.max(0,Math.min(100,Number(document.getElementById('cancelVoluntary').value||0)));
+  const btn=document.getElementById('cancelSubmitBtn');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    await api('/jobs/'+activeCancelJobId+'/cancel-request',{method:'POST',body:JSON.stringify({reason:detail,cancellationCode:code,clientVoluntaryPercent:voluntary})});
+    closeModal('cancelModal');toast('Cancellation requested — the other party can accept the terms or ask a reviewer to step in.');reload();
+  }catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent='Request cancellation';}
+}
+async function submitDisputeRequest(ev){
+  ev.preventDefault();
+  const code=document.querySelector('input[name="disputeCode"]:checked')?.value;
+  const detail=document.getElementById('disputeDetail').value.trim();
+  const btn=document.getElementById('disputeSubmitBtn');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    await api('/jobs/'+activeDisputeJobId+'/dispute',{method:'POST',body:JSON.stringify({reason:detail,cancellationCode:code})});
+    closeModal('disputeModal');toast('Dispute opened — funds are frozen while the case is reviewed.');reload();
+  }catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent='Open dispute & involve reviewer';}
+}
+async function respondToSettlement(disputeId,action){
+  if(action==='ESCALATE'){
+    const reason=prompt('Briefly explain why you disagree with the proposed split — a reviewer will see this:');
+    if(!reason||reason.trim().length<5){toast('Please explain your disagreement (at least a few words).',true);return;}
+    try{await api('/disputes/'+disputeId+'/respond',{method:'POST',body:JSON.stringify({action:'ESCALATE',reason})});toast('Sent to a reviewer for a decision.');reload()}catch(e){toast(e.message,true)}
+    return;
+  }
+  if(!confirm('Accept these terms? Funds will be released/refunded immediately according to the split shown.'))return;
+  try{const d=await api('/disputes/'+disputeId+'/respond',{method:'POST',body:JSON.stringify({action:'ACCEPT'})});toast('Settled — '+d.talentPercent+'% released to the talent, '+(100-d.talentPercent)+'% refunded.');reload()}catch(e){toast(e.message,true)}
+}
+function protectedPreviewHtml(f){const k=mediaKind(f.original_name,f.mime),url='/api/files/'+f.id+'/preview';if(k==='audio')return `<div style="margin:4px 0"><audio data-media="${url}" preload="metadata" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false" style="width:100%;max-width:280px;height:32px"></audio><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected audio preview — watermarked</span></div>`;if(k==='video')return `<div oncontextmenu="return false"><video data-media="${url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture style="max-width:320px;max-height:220px;border-radius:8px"></video><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected video preview — moving project watermark</span></div>`;if(k==='image')return `<div oncontextmenu="return false" style="user-select:none"><img data-media="${url}" alt="Protected preview" draggable="false" style="max-width:320px;max-height:260px;object-fit:contain;border-radius:8px"><span style="font-size:10.5px;color:var(--text-faint);display:block">Protected image preview — project/client watermark. Screenshots cannot be fully prevented.</span></div>`;return `<span style="font-size:11px;color:var(--text-faint)">Protected preview</span>`}
 async function decideDispute(id, outcome) {
   const reason=prompt('Give a short written reason for this decision:');if(reason===null||reason.trim().length<5){toast('A written reason is required.',true);return;}
   try { await api('/reviewer/disputes/'+id+'/decision', { method:'POST', body: JSON.stringify({ outcome,reason }) }); toast('Dispute decision processed successfully.'); reload(); }
@@ -2199,13 +2324,16 @@ async function refreshJobChat(jobId) {
   if (!el) return;
   try {
     const d = await api('/messages/'+jobId);
+    state._chatMessages = d.messages;
     el.innerHTML = renderJobChat(d.messages, state.user);
     el.scrollTop = el.scrollHeight;
   } catch {}
 }
 function startJobChatPolling(jobId) {
   stopJobChatPolling();
-  state.chatPollTimer = setInterval(() => refreshJobChat(jobId), 6000);
+  // Live delivery is handled by the message:new socket event; this is just a
+  // slow safety-net resync in case a socket connection drops silently.
+  state.chatPollTimer = setInterval(() => refreshJobChat(jobId), 25000);
 }
 function stopJobChatPolling() {
   if (state.chatPollTimer) { clearInterval(state.chatPollTimer); state.chatPollTimer = null; }
