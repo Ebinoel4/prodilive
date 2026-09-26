@@ -536,6 +536,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
   <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
   <h3>Cancel project</h3>
   <div class="sub">Ending a project this way is for no-fault reasons — nobody did anything wrong, you just need to stop. The other party can accept the terms below instantly, or ask a reviewer to weigh in if they disagree.</div>
+  <div class="sub" id="cancelModalNotice" style="color:var(--text-faint);font-size:11.5px;margin-top:-8px"></div>
   <form onsubmit="submitCancelRequest(event)">
     <div id="cancelReasonCards"></div>
     <div class="field"><label>Briefly explain what's changed</label><textarea id="cancelDetail" required minlength="10" placeholder="A sentence or two is enough."></textarea></div>
@@ -1948,6 +1949,7 @@ async function viewJobDetail() {
   try {
     const d = await api('/jobs/' + id);
     job = d.job; files = d.files || []; dispute = d.dispute || null;
+    state._currentJob = job;
   } catch(e) { return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🚫</div><h3>Project not found</h3><p>${esc(e.message)}</p></div></div>`; }
 
   const isClient = state.user && job.client_id === state.user.id;
@@ -2025,12 +2027,13 @@ async function viewJobDetail() {
             <h4 style="margin-bottom:6px">The other party wants to cancel this project</h4>
             <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px">${esc(dispute.reason||'')}</p>
             <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Proposed: <span class="rc-pct">${dispute.suggested_talent_percent||0}% to talent · ${100-(dispute.suggested_talent_percent||0)}% refunded</span></p>
+            <p style="font-size:11.5px;color:var(--text-faint);margin-bottom:10px">${dispute.settlement_deadline?`If you don't respond by ${new Date(dispute.settlement_deadline).toLocaleString()}, this goes through automatically on these terms.`:`If you don't respond in time, this goes through automatically on these terms.`}</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-brass btn-sm" onclick="respondToSettlement('${dispute.id}','ACCEPT')">Accept these terms</button>
               <button class="btn btn-ghost btn-sm" onclick="respondToSettlement('${dispute.id}','ESCALATE')">I disagree — ask a reviewer</button>
             </div>
           </div>` : dispute && dispute.kind==='CANCELLATION' && !dispute.requires_reviewer && state.user && String(dispute.opened_by)===String(state.user.id) ? `
-          <div class="settle-banner"><h4 style="margin-bottom:4px">Cancellation requested</h4><p style="font-size:12.5px;color:var(--text-dim)">Waiting for the other party to accept your proposed terms, or for the settlement window to pass so a reviewer can step in.</p></div>` : ''}
+          <div class="settle-banner"><h4 style="margin-bottom:4px">Cancellation requested</h4><p style="font-size:12.5px;color:var(--text-dim)">Waiting for the other party to accept or dispute your proposed terms.${dispute.settlement_deadline?` If there's no response by ${new Date(dispute.settlement_deadline).toLocaleString()}, it will go through automatically on the terms you proposed.`:''}</p></div>` : ''}
 
         ${isClient && ['AWAITING_PAYMENT','IN_PROGRESS','REVISION_REQUESTED'].includes(job.status) && !dispute ? `<div class="panel" style="margin-bottom:18px"><h4>Need to end this project?</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px">Cancel for a no-fault reason (change of mind, different direction), or open a dispute if something went wrong.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="openCancelModal('${job.id}')">Cancel project</button><button class="btn btn-danger btn-sm" onclick="openDisputeModal('${job.id}')">Open a dispute</button></div></div>` : ''}
 
@@ -2225,6 +2228,12 @@ function openCancelModal(id){
   renderReasonCards('cancelReasonCards',CANCEL_REASONS,'cancelCode',true);
   document.getElementById('cancelDetail').value='';document.getElementById('cancelVoluntary').value=0;
   document.getElementById('cancelVoluntaryField').style.display='';
+  const job=state._currentJob;
+  const notice=document.getElementById('cancelModalNotice');
+  if(notice){
+    const startedNote=job&&job.started_at?`If work has already been underway for a while, a minimum compensation to the talent applies automatically regardless of reason — you'll see the final % before it's sent. `:'';
+    notice.textContent=startedNote+'Repeatedly cancelling projects may flag your account for review.';
+  }
   openModal('cancelModal');
 }
 function openDisputeModal(id){
@@ -2240,8 +2249,10 @@ async function submitCancelRequest(ev){
   const voluntary=Math.max(0,Math.min(100,Number(document.getElementById('cancelVoluntary').value||0)));
   const btn=document.getElementById('cancelSubmitBtn');btn.disabled=true;btn.textContent='Sending…';
   try{
-    await api('/jobs/'+activeCancelJobId+'/cancel-request',{method:'POST',body:JSON.stringify({reason:detail,cancellationCode:code,clientVoluntaryPercent:voluntary})});
-    closeModal('cancelModal');toast('Cancellation requested — the other party can accept the terms or ask a reviewer to step in.');reload();
+    const d=await api('/jobs/'+activeCancelJobId+'/cancel-request',{method:'POST',body:JSON.stringify({reason:detail,cancellationCode:code,clientVoluntaryPercent:voluntary})});
+    closeModal('cancelModal');
+    toast(d.mandatoryFloorApplied?`Cancellation requested at ${d.suggested_talent_percent}% to the talent — a minimum applied since work has been underway for a while.`:'Cancellation requested — the other party can accept the terms or ask a reviewer to step in.');
+    reload();
   }catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent='Request cancellation';}
 }
 async function submitDisputeRequest(ev){
@@ -2756,6 +2767,11 @@ async function viewAdmin() {
       <div class="field"><label>Marketplace commission (%)</label><input id="setMarketplaceCommission" type="number" min="0" max="100" value="${settings.marketplaceCommissionPercent ?? 10}"></div>
       <div class="field"><label>Dispute self-settlement window (hours)</label><input id="setSettlementHours" type="number" min="1" value="${settings.disputeSettlementHours ?? 24}"></div>
       <div class="field"><label>Reviewer resolution SLA (hours)</label><input id="setReviewerResolutionHours" type="number" min="1" value="${settings.reviewerResolutionHours ?? 48}"></div>
+      <div class="field"><label>Repeat-cancellation limit <span style="font-weight:400;color:var(--text-faint)">— cancellations allowed per account per 30 days before it's forced through reviewer review + flagged</span></label><input id="setSoftCancelLimit" type="number" min="1" value="${settings.softCancelMonthlyLimit ?? 3}"></div>
+      <div class="field"><label>Mandatory compensation after (hours) <span style="font-weight:400;color:var(--text-faint)">— once work has been underway this long, cancelling always pays the talent at least the % below</span></label><input id="setCancelMandatoryHours" type="number" min="1" value="${settings.cancelMandatoryCompensationHours ?? 48}"></div>
+      <div class="field"><label>Mandatory compensation (%)</label><input id="setCancelMandatoryPercent" type="number" min="0" max="100" value="${settings.cancelMandatoryCompensationPercent ?? 20}"></div>
+      <div class="field"><label>Login lockout threshold <span style="font-weight:400;color:var(--text-faint)">— failed attempts before an account is temporarily locked</span></label><input id="setLoginLockoutThreshold" type="number" min="3" value="${settings.loginLockoutThreshold ?? 8}"></div>
+      <div class="field"><label>Login lockout duration (minutes)</label><input id="setLoginLockoutMinutes" type="number" min="1" value="${settings.loginLockoutMinutes ?? 15}"></div>
       <div class="field"><label>User-funded SMS price (₦ per alert)</label><input id="setSmsPrice" type="number" min="0" step="0.01" value="${settings.smsUserPriceNgn ?? 10}"><div style="font-size:11px;color:var(--text-faint);margin-top:5px">Deducted from the recipient's Prodilive Wallet only when an opted-in SMS is accepted for sending.</div></div>
       <button class="btn btn-brass btn-sm" onclick="adminSaveSettings()">Save settings</button>
     </div>
@@ -2885,7 +2901,7 @@ async function adminSaveSettings() {
       autoApproveHours: Number(document.getElementById('setAutoApprove').value),
       reviewerFeePercent: Number(document.getElementById('setReviewerFee').value),
       depositFeePercent: Number(document.getElementById('setDepositFee').value),
-      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value),marketplaceCommissionPercent: Number(document.getElementById('setMarketplaceCommission').value),disputeSettlementHours: Number(document.getElementById('setSettlementHours').value),reviewerResolutionHours: Number(document.getElementById('setReviewerResolutionHours').value),smsUserPriceNgn: Number(document.getElementById('setSmsPrice').value)
+      withdrawalFeePercent: Number(document.getElementById('setWithdrawalFee').value),marketplaceCommissionPercent: Number(document.getElementById('setMarketplaceCommission').value),disputeSettlementHours: Number(document.getElementById('setSettlementHours').value),reviewerResolutionHours: Number(document.getElementById('setReviewerResolutionHours').value),softCancelMonthlyLimit: Number(document.getElementById('setSoftCancelLimit').value),cancelMandatoryCompensationHours: Number(document.getElementById('setCancelMandatoryHours').value),cancelMandatoryCompensationPercent: Number(document.getElementById('setCancelMandatoryPercent').value),loginLockoutThreshold: Number(document.getElementById('setLoginLockoutThreshold').value),loginLockoutMinutes: Number(document.getElementById('setLoginLockoutMinutes').value),smsUserPriceNgn: Number(document.getElementById('setSmsPrice').value)
     }) });
     toast('Settings saved.');
   } catch(e) { toast(e.message, true); }
