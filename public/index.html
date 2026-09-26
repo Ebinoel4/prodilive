@@ -317,12 +317,15 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
 @media(prefers-reduced-motion:reduce){.living-track{animation:none}.visual-cat,.visual-cat img,.visual-cat .vc-arrow{transition:none!important}}
 
 @media(max-width:700px){.wallet-filter-grid{grid-template-columns:1fr!important}}
+#prodiliveChatLauncher{position:fixed;right:18px;bottom:22px;z-index:2147483000;width:54px;height:54px;border:0;border-radius:50%;background:var(--brass);color:#111;font-size:23px;cursor:grab;box-shadow:0 12px 30px rgba(0,0,0,.28);touch-action:none;user-select:none;display:none;place-items:center}
+#prodiliveChatLauncher.dragging{cursor:grabbing;transform:scale(1.04)}
+@media(max-width:700px){#visitorHomeBtn{top:70px;left:10px}#prodiliveChatLauncher{width:50px;height:50px}}
 </style>
 </head>
 <body>
 <header class="nav">
   <div class="wrap nav-inner">
-    <div class="logo" onclick="go('home')"><span class="dot"></span>PRODILIVE</div>
+    <div class="logo" onclick="go(state.user?.role==='admin'?'admin':state.user?.role==='reviewer'?'reviewerHub':'home')"><span class="dot"></span>PRODILIVE</div>
     <nav class="nav-links">
       <a onclick="go('talents')" id="navTalentsLink">Explore</a>
       <a onclick="go('jobs')" id="navJobsLink">Find Jobs</a>
@@ -352,6 +355,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
     </div>
   </div>
 </header>
+<button id="visitorHomeBtn" class="btn btn-ghost btn-sm" onclick="go('home')" style="display:none;position:fixed;left:18px;top:82px;z-index:79;box-shadow:0 8px 24px rgba(0,0,0,.15);backdrop-filter:blur(12px)">← Home</button>
 
 <main id="app"></main>
 <nav class="mobile-nav" id="mobileNav"></nav>
@@ -501,11 +505,30 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
   </form>
 </div></div>
 
+<div class="modal-bg" id="reviewerDirectChatModal"><div class="modal" style="max-width:680px">
+  <button class="modal-close" onclick="closeModal('reviewerDirectChatModal')">&times;</button>
+  <h3 id="reviewerDirectChatTitle">Reviewer chat</h3>
+  <div class="sub" id="reviewerDirectChatSub">Private communication between PRODILIVE Admin and this Reviewer.</div>
+  <div class="chat-scroll" id="reviewerDirectChatMessages" style="height:360px;max-height:52vh"></div>
+  <div class="chat-input-row"><textarea id="reviewerDirectChatBody" placeholder="Write a message..."></textarea><button class="btn btn-brass btn-sm" onclick="sendReviewerDirectChat()">Send</button></div>
+</div></div>
+<div class="modal-bg" id="reviewerAdminChatModal"><div class="modal" style="max-width:680px">
+  <button class="modal-close" onclick="closeModal('reviewerAdminChatModal')">&times;</button>
+  <h3>Reviewer ↔ Admin Case Chat</h3>
+  <div class="sub" id="reviewerAdminChatSub">Private case communication between the assigned Reviewer and PRODILIVE Admin.</div>
+  <div class="chat-scroll" id="reviewerAdminChatMessages" style="height:360px;max-height:52vh"></div>
+  <div class="chat-input-row" style="margin-top:12px">
+    <textarea id="reviewerAdminChatBody" placeholder="Write a case note or message to Admin..."></textarea>
+    <button class="btn btn-brass btn-sm" onclick="sendReviewerAdminMessage()">Send</button>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <!-- Site-wide support chat widget -->
 <button id="supportBubbleBtn" onclick="toggleSupportPanel()" aria-label="Chat with support">💬</button>
+<button id="prodiliveChatLauncher" aria-label="Open live chat" title="Drag anywhere to move · tap to chat">💬</button>
 <button onclick="openSuggestion()" aria-label="Send a suggestion" title="Send a suggestion" style="position:fixed;right:18px;bottom:86px;z-index:81;width:44px;height:44px;border-radius:50%;border:1px solid var(--hair);background:var(--paper);color:var(--text);cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.18)">💡</button>
 <div id="supportPanel">
   <div class="sp-head">
@@ -725,7 +748,7 @@ function renderMobileNav() {
   if (!el) return;
   if (!state.user) { el.innerHTML = ''; document.body.classList.remove('has-mobnav'); return; }
   document.body.classList.add('has-mobnav');
-  const items=state.user.role==='admin'?[['admin','⚙️','Admin'],['profile','👤','Profile']]:state.user.role==='reviewer'?[['reviewerHub','⚖️','Cases'],['wallet','💳','Wallet'],['profile','👤','Profile']]:MOBILE_NAV_ITEMS; el.innerHTML = items.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
+  const items=state.user.role==='admin'?[['admin','⚙️','Admin'],['profile','👤','Profile']]:state.user.role==='reviewer'?[['reviewerHub','⚖️','Cases'],['profile','👤','Profile']]:MOBILE_NAV_ITEMS; el.innerHTML = items.map(([v,ic,lb])=>`<a class="${state.view===v?'active':''}" onclick="go('${v}')"><span class="ic">${ic}</span>${lb}</a>`).join('');
 }
 
 async function render() {
@@ -737,6 +760,8 @@ async function render() {
       reviewerApply:viewReviewerApply, reviewerHub:viewReviewerHub,
       marketplace:viewMarketplace, productDetail:viewProductDetail, myPurchases:viewMyPurchases, profile:viewProfile, terms:viewTerms, howItWorks:viewHowItWorks, paymentProtection:viewPaymentProtection };
     app.innerHTML = await (views[state.view] || viewHome)();
+    const vh=document.getElementById('visitorHomeBtn');
+    if(vh) vh.style.display=(!state.user && state.view!=='home')?'inline-flex':'none';
     if (state.view === 'wallet') initWalletView();
     if (state.view === 'jobDetail' && document.getElementById('messageList')) {
       const el = document.getElementById('messageList'); el.scrollTop = el.scrollHeight;
@@ -761,14 +786,15 @@ function updateNav() {
   document.getElementById('navTalentsLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
   document.getElementById('navMyJobsLink').style.display = (signedIn && !isReviewer && !isAdmin) ? 'inline' : 'none';
-  document.getElementById('navWalletLink').style.display = (signedIn && !isAdmin) ? 'inline' : 'none';
+  document.getElementById('navWalletLink').style.display = (signedIn && !isAdmin && !isReviewer) ? 'inline' : 'none';
   document.getElementById('navMarketLink').style.display = (isReviewer||isAdmin) ? 'none' : 'inline';
   document.getElementById('navPurchasesLink').style.display = 'none';
   document.getElementById('navProfileLink').style.display = signedIn ? 'inline' : 'none';
   const footerOut=document.getElementById('footerSignedOutAccount'),footerIn=document.getElementById('footerSignedInAccount'),footerPlatform=document.getElementById('footerPlatformCol');
   if(footerOut)footerOut.style.display=signedIn?'none':'block';
   if(footerIn)footerIn.style.display=signedIn?'block':'none';
-  if(footerPlatform)footerPlatform.style.display=isAdmin?'none':'block';
+  if(footerPlatform)footerPlatform.style.display=(isAdmin||isReviewer)?'none':'block';
+  syncLiveChatForRole();
   if (signedIn) document.getElementById('navUserName').textContent = state.user.name + ' · ' + (state.user.role==='member'?'MEMBER':state.user.role.toUpperCase());
   renderMobileNav();
 }
@@ -849,6 +875,7 @@ async function bootstrap() {
     }
   }
   await checkForPaymentCallback();
+  window.__authResolved=true;
   updateNav();
   render();
   initLiveFeed();
@@ -925,8 +952,8 @@ function heroWaveformSvg() {
   return `<svg viewBox="0 0 ${n*14+12} 340" preserveAspectRatio="xMidYMid meet"><g transform="translate(0,0)">${bars}</g></svg>`;
 }
 async function viewHome() {
-  let featured = [];
-  try { featured = (await api('/talents')).talents.slice(0,6); } catch {}
+  let featured = [], professionalCount = 0;
+  try { const all=(await api('/talents')).talents||[]; professionalCount=all.length; if(state.user) featured=all.slice(0,6); } catch {}
   let stats = null;
   try { stats = await api('/stats/public'); } catch {}
   const cats = ['Music Production','Graphic Design','Video & Content','Photography','Voice & Audio','Session Musicians','Songwriting','Digital Products'];
@@ -1009,10 +1036,10 @@ async function viewHome() {
 
   <section><div class="wrap">
     <div class="section-head">
-      <div><div class="eyebrow">Featured professionals</div><h2>Verified talent, ready to hire</h2></div>
-      <button class="btn btn-ghost btn-sm" onclick="go('talents')">View all →</button>
+      <div><div class="eyebrow">Creative professionals</div><h2>${state.user?'Verified talent, ready to hire':'A growing creative network'}</h2></div>
+      <button class="btn btn-ghost btn-sm" onclick="go('talents')">${state.user?'View all →':'See how hiring works →'}</button>
     </div>
-    ${featured.length ? `<div class="grid-3">${featured.map(talentCard).join('')}</div>` : `<div class="empty"><div class="n">🎧</div><p>No professionals listed yet — be the first to join.</p></div>`}
+    ${state.user ? (featured.length ? `<div class="grid-3">${featured.map(talentCard).join('')}</div>` : `<div class="empty"><div class="n">🎧</div><p>No professionals listed yet — be the first to join.</p></div>`) : `<div class="panel" style="text-align:center;padding:34px"><div class="mono" style="font-size:42px;color:var(--brass-soft);font-weight:700">${professionalCount}</div><h3 style="margin:7px 0">creative professionals on PRODILIVE</h3><p style="color:var(--text-dim);max-width:620px;margin:0 auto 18px">Visitor privacy mode shows the size of the talent network without exposing individual professional profiles. Create an account to search and view professionals.</p><button class="btn btn-brass" onclick="openAuth('register')">Create Account to Find Talent</button></div>`}
   </div></section>
 
   <section><div class="wrap">
@@ -1201,9 +1228,10 @@ async function viewReviewerApply() {
 async function viewReviewerHub() {
   const u = state.user;
   if (!u || u.role !== 'reviewer') { go('dashboard'); return ''; }
-  let disputes = [], balance = { available: 0, withdrawn: 0 };
+  let disputes = [], balance = { available: 0, withdrawn: 0 }, adminMessages = [];
   try { disputes = (await api('/disputes')).disputes; } catch(e) { toast(e.message, true); }
   try { balance = await api('/reviewer/balance'); } catch {}
+  try { adminMessages = (await api('/reviewer/admin-chat')).messages || []; } catch {}
   const available = disputes.filter(d => d.status === 'OPEN');
   const assigned = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'ASSIGNED');
   const decided = disputes.filter(d => d.assigned_reviewer_id === u.id && d.status === 'DECIDED');
@@ -1223,7 +1251,7 @@ async function viewReviewerHub() {
       <div class="stat-card"><div class="l">Available cases</div><div class="v" style="color:var(--brass-soft)">${available.length}</div></div>
       <div class="stat-card"><div class="l">Assigned to me</div><div class="v" style="color:var(--brass-soft)">${assigned.length}</div></div>
       <div class="stat-card"><div class="l">Resolved</div><div class="v" style="color:var(--signal)">${decided.length}</div></div>
-      <div class="stat-card"><div class="l">Available balance</div><div class="v" style="font-size:18px">${fmt(balance.available)}</div></div>
+      <div class="stat-card"><div class="l">Reviewer status</div><div class="v" style="font-size:16px;color:var(--signal)">${locked?'LOCKED':'ACTIVE'}</div></div>
     </div>
 
     <div class="dash-cols">
@@ -1247,6 +1275,7 @@ async function viewReviewerHub() {
                 <button class="btn btn-ghost btn-sm" onclick="decideDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
                 <button class="btn btn-ghost btn-sm" onclick="splitDispute('${d.id}')">Partial settlement</button>
                 <button class="btn btn-danger btn-sm" onclick="escalateDispute('${d.id}')">Report / Escalate to Admin</button>
+                <button class="btn btn-ghost btn-sm" onclick="openReviewerAdminChat('${d.id}','${esc(d.title).replace(/'/g,"&#39;")}')">Chat with Admin</button>
                 <button class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</button>
               </div>
             </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No cases currently assigned to you.</p>`}
@@ -1263,18 +1292,26 @@ async function viewReviewerHub() {
       </div>
 
       <div class="panel">
-        <h4 style="margin-bottom:10px">Guidelines</h4>
-        <ul style="font-size:12.5px;color:var(--text-dim);line-height:1.7;padding-left:18px;margin-bottom:6px">
-          <li>Read both sides' messages and the delivered files before deciding.</li>
-          <li>You stay anonymous — neither party ever sees your name.</li>
-          <li>Release to the provider, refund the client, or (via the API) split the funds — pick whichever the evidence supports.</li>
-          <li>Partial settlements are allowed when evidence supports compensating work already completed.</li><li>Report or escalate suspected fraud, bribery, stolen work, off-platform dealing, threats, suspicious evidence, conflicts of interest or any high-risk transaction to Admin. Funds stay frozen during escalation.</li>
+        <h4 style="margin-bottom:10px">Reviewer Instructions</h4>
+        <ul style="font-size:12.5px;color:var(--text-dim);line-height:1.72;padding-left:18px;margin-bottom:6px">
+          <li>Review the frozen project brief, deadlines, revision terms, messages, evidence and protected deliveries before deciding.</li>
+          <li>Judge whether the agreed brief was met — not whether the work matches your personal creative taste.</li>
+          <li>Remain independent and anonymous. Never accept gifts, private payments, favors or off-platform contact from either party.</li>
+          <li>Use full release, full refund or a partial settlement only when the evidence supports it, and always record a clear written reason.</li>
+          <li>Use <b>Chat with Admin</b> for questions or case guidance. This channel is private between you and PRODILIVE Admin and tied to the case.</li>
+          <li>Escalate suspected fraud, stolen work, bribery, threats, suspicious evidence, conflicts of interest, identity concerns or high-risk transactions. Funds remain frozen during escalation.</li>
+          <li>Keep all case material confidential and do not download/share evidence outside what is necessary to perform the review.</li>
         </ul>
+        <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
+          <h4 style="margin-bottom:8px">Admin messages</h4>
+          <div class="chat-scroll" id="reviewerDirectInbox" style="height:230px;max-height:34vh">${renderReviewerDirectMessages(adminMessages)}</div>
+          <div class="chat-input-row" style="margin-top:8px"><textarea id="reviewerDirectReply" placeholder="Message PRODILIVE Admin..."></textarea><button class="btn btn-brass btn-sm" onclick="reviewerSendDirectAdminMessage()">Send</button></div>
+          <p style="font-size:11.5px;color:var(--text-faint);margin-top:7px">Use this for general Reviewer/Admin communication. For a specific dispute, use the case chat inside that case.</p>
+        </div>
 
         <div style="border-top:1px solid var(--hair);margin-top:16px;padding-top:16px">
-          <h4 style="margin-bottom:6px">Earnings</h4>
-          <p style="font-size:12.5px;color:var(--text-dim)">Available: <b style="color:var(--text)">${fmt(balance.available)}</b> · Withdrawn to date: ${fmt(balance.withdrawn)}</p>
-          <button class="btn btn-brass btn-sm" style="margin-top:10px" onclick="withdrawReviewerEarnings()">Withdraw available balance</button>
+          <h4 style="margin-bottom:6px">Reviewer compensation</h4>
+          <p style="font-size:12.5px;color:var(--text-dim)">Reviewer compensation is tracked separately from the normal client/talent wallet. Reviewers do not need a deposit wallet to handle cases. Any eligible payout is processed through the Reviewer payout workflow.</p>
         </div>
       </div>
     </div>
@@ -1360,13 +1397,27 @@ function talentCard(t) {
 async function viewTalents() {
   const q = state.params.q || '';
   let talents = [];
-  try { talents = (await api('/talents?search=' + encodeURIComponent(q))).talents; } catch(e) { toast(e.message, true); }
+  try { talents = (await api('/talents?search=' + encodeURIComponent(q))).talents || []; } catch(e) { toast(e.message, true); }
+  if(!state.user){
+    return `
+    <section style="padding-top:36px"><div class="wrap">
+      <a class="back-link" onclick="go('home')">← Back to Home</a>
+      <div class="eyebrow" style="margin-top:18px">Find Talent</div>
+      <h1 style="font-size:28px;margin-bottom:8px">Find the right creative professional</h1>
+      <div class="panel" style="text-align:center;padding:34px;margin-top:20px">
+        <div class="mono" style="font-size:42px;color:var(--brass-soft);font-weight:700">${talents.length}</div>
+        <h3 style="margin:8px 0">professionals ${q?`matching “${esc(q)}”`:'available on PRODILIVE'}</h3>
+        <p style="color:var(--text-dim);max-width:650px;margin:0 auto 18px">Individual professional profiles are available to registered users. Create an account to search names, specialties, portfolios and hire through PRODILIVE's protected project workflow.</p>
+        <button class="btn btn-brass" onclick="openAuth('register')">Create Account</button>
+        <button class="btn btn-ghost" onclick="go('howItWorks')">How Finding Talent Works</button>
+      </div>
+    </div></section>`;
+  }
   return `
   <section style="padding-top:36px"><div class="wrap">
     <div class="eyebrow">Find Talent</div>
     <h1 style="font-size:28px;margin-bottom:8px">Find the right creative professional</h1>
-    <p style="color:var(--text-dim);font-size:13px;line-height:1.65;max-width:760px;margin-bottom:18px">Search by name, specialty or profile. Open a profile to review the person's skills and portfolio. ${state.user?'When you are ready, keep the project, files, communication and payment inside PRODILIVE.':'You can browse now. Create an account or sign in when you are ready to hire, post a project or transact.'}</p>
-    ${!state.user?`<div class="panel" style="margin-bottom:20px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><b>How finding talent works</b><p style="font-size:12.5px;color:var(--text-dim);margin-top:5px">Search → open a talent profile → create your account → agree on the brief → fund and manage the project on PRODILIVE.</p></div><div><button class="btn btn-brass btn-sm" onclick="openAuth('register')">Create Account</button> <button class="btn btn-ghost btn-sm" onclick="go('howItWorks')">How It Works</button></div></div>`:''}
+    <p style="color:var(--text-dim);font-size:13px;line-height:1.65;max-width:760px;margin-bottom:18px">Search by name, specialty or profile. Open a profile to review the person's skills and portfolio. Keep the project, files, communication and payment inside PRODILIVE.</p>
     <div class="searchbar" style="max-width:100%;margin-bottom:26px">
       <input id="talentSearch" value="${esc(q)}" placeholder="Search name, skill or bio..." oninput="debounceSearch(this.value)">
     </div>
@@ -2225,6 +2276,7 @@ function stopSupportPolling() {
 /* ============================ VIEW: WALLET ============================ */
 async function viewWallet() {
   const u = state.user;
+  if(u?.role==='reviewer'){ go('reviewerHub'); return ''; }
   let wallet = { balance:0, heldFunds:0, totalDeposits:0, totalEarnings:0, totalWithdrawals:0 };
   let history = [], withdrawals = [], payout = null;
   try { wallet = await api('/wallet/balance'); } catch(e) { toast(e.message,true); }
@@ -2450,7 +2502,7 @@ async function submitVerificationDoc() {
 async function viewAdmin() {
   if (!state.user || state.user.role !== 'admin') return `<div class="wrap" style="padding:60px 0"><div class="empty"><div class="n">🔒</div><h3>Admins only</h3></div></div>`;
   const tab = state.params.tab || 'overview';
-  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], suggestions = [], apps = [], disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], settings = {}, platformWallet = {};
+  let overview = {}, users = [], jobs = [], products = [], payments = [], withdrawals = [], suggestions = [], apps = [], reviewers = [], reviewerDetail = null, disputes = [], reviewerUsers = [], supportThreads = [], supportThread = null, verifications = [], activityUser = null, activityJobs = [], activityThreads = [], auditLog = [], auditError = '', settings = {}, platformWallet = {};
   try {
     if (tab==='overview') overview = await api('/admin/overview');
     if (tab==='platformWallet') platformWallet = await api('/admin/platform-wallet');
@@ -2461,9 +2513,9 @@ async function viewAdmin() {
     if (tab==='withdrawals') withdrawals = (await api('/admin/withdrawals')).withdrawals;
     if (tab==='verifications') verifications = (await api('/admin/verifications')).verifications;
     if (tab==='suggestions') suggestions = (await api('/admin/suggestions')).suggestions;
-    if (tab==='audit') auditLog = (await api('/admin/audit')).audit;
+    if (tab==='audit') { try { auditLog = (await api('/admin/audit')).audit||[]; } catch(err) { auditError=err.message||'Could not load audit log'; } }
     if (tab==='settings') settings = (await api('/admin/settings')).settings;
-    if (tab==='reviewers') apps = (await api('/admin/reviewer-applications')).applications;
+    if (tab==='reviewers') { apps = (await api('/admin/reviewer-applications')).applications; reviewers = (await api('/admin/reviewers')).reviewers; if (state.params.reviewerId) reviewerDetail = await api('/admin/reviewers/'+state.params.reviewerId+'/history'); }
     if (tab==='disputes') { disputes = (await api('/disputes')).disputes; reviewerUsers = (await api('/admin/users')).users.filter(u=>u.role==='reviewer'); }
     if (tab==='support') {
       supportThreads = (await api('/admin/support')).threads;
@@ -2479,7 +2531,7 @@ async function viewAdmin() {
     }
   } catch(e) { toast(e.message, true); }
 
-  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['platformWallet','Platform Wallet'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewer Apps'],['disputes','Disputes'],['support','Support Chat'],['suggestions','Suggestions'],['audit','Audit Log'],['settings','Settings']];
+  const tabs = [['overview','Overview'],['users','Users'],['jobs','Projects'],['products','Beats & Templates'],['payments','Payments'],['platformWallet','Platform Wallet'],['withdrawals','Withdrawals'],['verifications','ID Verification'],['reviewers','Reviewers'],['disputes','Disputes'],['support','Support Chat'],['suggestions','Suggestions'],['audit','Audit Log'],['settings','Settings']];
   let body = '';
   if (tab==='overview') {
     body = `<div class="dash-stats">
@@ -2554,9 +2606,9 @@ async function viewAdmin() {
         </td></tr>`).join('')}
       </table></div>`;
   } else if (tab==='audit') {
-    body = `<div class="panel">${auditLog.length ? `<table><tr><th>When</th><th>Action</th><th>Actor</th><th>Details</th></tr>
-      ${auditLog.map(a=>`<tr><td class="mono" style="font-size:11px">${new Date(a.at).toLocaleString()}</td><td style="color:var(--text)">${esc(a.action)}</td><td class="mono" style="font-size:11px">${esc(a.actor_id||'—')}</td><td class="mono" style="font-size:11px;max-width:280px;overflow-wrap:anywhere">${esc(JSON.stringify(a.meta||{}))}</td></tr>`).join('')}
-      </table>` : `<p style="color:var(--text-faint);font-size:13px">No audit entries yet.</p>`}</div>`;
+    body = `<div class="panel"><h4 style="margin-bottom:6px">Audit Log</h4><p style="font-size:12.5px;color:var(--text-dim);line-height:1.6;margin-bottom:16px">This is PRODILIVE's internal accountability history. It records important actions such as payments, disputes, verification decisions, account changes and Admin/Reviewer actions so you can trace what happened, who triggered it and when.</p>${auditError?`<div style="padding:12px;border:1px solid var(--danger);border-radius:10px;color:var(--danger);font-size:12.5px">Audit log could not load: ${esc(auditError)}. The rest of Admin remains available.</div>`:(auditLog.length ? `<div style="overflow:auto"><table><tr><th>When</th><th>Action</th><th>Actor</th><th>Details</th></tr>
+      ${auditLog.map(a=>`<tr><td class="mono" style="font-size:11px;white-space:nowrap">${a.at?new Date(a.at).toLocaleString():'—'}</td><td style="color:var(--text)">${esc(a.action||'—')}</td><td class="mono" style="font-size:11px">${esc(a.actor_id||a.actor||'SYSTEM')}</td><td class="mono" style="font-size:11px;max-width:420px;overflow-wrap:anywhere">${esc(typeof a.meta==='string'?a.meta:JSON.stringify(a.meta||{}))}</td></tr>`).join('')}
+      </table></div>` : `<p style="color:var(--text-faint);font-size:13px">No audit entries yet.</p>`)}</div>`;
   } else if (tab==='settings') {
     body = `<div class="panel">
       <div class="field"><label>Platform commission (%)</label><input id="setCommission" type="number" min="0" max="100" value="${settings.commission ?? 12}"></div>
@@ -2581,30 +2633,42 @@ async function viewAdmin() {
       <p id="testEmailResult" style="font-size:12.5px;margin-top:10px"></p>
     </div>`;
   } else if (tab==='reviewers') {
-    body = `<div class="panel">${apps.length ? apps.map(a=>`
-      <div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div><b style="font-size:13.5px">${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}${a.doc_type ? ' · '+esc(a.doc_type) : ''}</div></div>
-        ${a.status==='PENDING' && !a.user_id ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-brass btn-sm" onclick="adminSendReviewerInvite('${a.id}')">Passed my test — send private signup link</button>
-          <button class="btn btn-danger btn-sm" onclick="adminRejectReviewerApp('${a.id}')">Reject</button>
-        </div>` : ''}
-        ${a.status==='INVITED' ? `<span style="font-size:12px;color:var(--text-faint)">Invite sent — waiting for applicant to finish registering</span>` : ''}
-        ${a.status==='PENDING' && a.user_id ? `<div style="display:flex;gap:8px">
-          <button class="btn btn-brass btn-sm" onclick="adminDecideReviewer('${a.id}',true)">Approve → qualification test</button>
-          <button class="btn btn-danger btn-sm" onclick="adminDecideReviewer('${a.id}',false)">Reject</button>
-        </div>` : ''}
-        ${(a.status==='QUALIFICATION' || a.status==='APPROVED') && a.user_id ? `
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="qScore_${a.user_id}" type="number" min="0" max="100" placeholder="Score 0-100" style="width:110px">
-            <button class="btn btn-ghost btn-sm" onclick="adminSetQualification('${a.user_id}')">Set score</button>
-          </div>` : ''}
-      </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No applications.</p>`}</div>`;
+    if (reviewerDetail) {
+      const r=reviewerDetail.reviewer, history=reviewerDetail.history||[];
+      body = `<div class="panel">
+        <button class="btn btn-ghost btn-sm" style="margin-bottom:14px" onclick="go('admin',{tab:'reviewers'})">← All reviewers</button>
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div><h3 style="margin-bottom:4px">${esc(r.name)}</h3><div style="font-size:12px;color:var(--text-faint)">${esc(r.email)} · ${esc(r.status)} · ${esc(r.reviewerStatus||'')}</div></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="openReviewerDirectChat('${r.id}','${esc(r.name).replace(/'/g,"&#39;")}')">Chat</button>
+            ${r.status==='SUSPENDED'?`<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${r.id}')">Reactivate</button>`:`<button class="btn btn-danger btn-sm" onclick="adminSuspend('${r.id}')">Suspend</button>`}
+            <button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${r.id}','${esc(r.name).replace(/'/g,"&#39;")}')">Delete</button>
+          </div>
+        </div>
+        <div class="dash-stats" style="margin-top:18px">
+          <div class="stat-card"><div class="l">Cases assigned</div><div class="v">${reviewerDetail.stats?.assigned||0}</div></div>
+          <div class="stat-card"><div class="l">Cases resolved</div><div class="v">${reviewerDetail.stats?.resolved||0}</div></div>
+          <div class="stat-card"><div class="l">Escalated</div><div class="v">${reviewerDetail.stats?.escalated||0}</div></div>
+          <div class="stat-card"><div class="l">Reviewer level</div><div class="v" style="font-size:15px">${esc(r.reviewerLevel||'—')}</div></div>
+        </div>
+        <h4 style="margin-top:20px">Work history</h4>
+        ${history.length?history.map(h=>`<div style="border-top:1px solid var(--hair);padding:12px 0"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(h.title||'Project')}</b><span class="badge">${esc(h.status)}</span></div><div style="font-size:12px;color:var(--text-faint);margin-top:4px">${fmt(h.budget||0)} · ${h.created_at?new Date(h.created_at).toLocaleString():''}</div><div style="font-size:12px;color:var(--text-dim);margin-top:5px">Decision: ${esc((h.decision||{}).outcome||'—')}</div></div>`).join(''):'<p style="color:var(--text-faint);font-size:13px">No case history yet.</p>'}
+      </div>`;
+    } else {
+      const pending=apps.filter(a=>['PENDING','INVITED','ACCOUNT_CREATED','IDENTITY_PENDING','TERMS_PENDING','QUALIFICATION'].includes(a.status));
+      body = `<div class="panel"><h4 style="margin-bottom:6px">Reviewers</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:16px">Manage active reviewers here. Open a reviewer to see their case history, chat privately, suspend access or delete the account.</p>
+        ${reviewers.length?reviewers.map(r=>`<div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><div><b>${esc(r.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(r.email)} · ${esc(r.status)} · ${esc(r.reviewerStatus||'')} · ${r.resolvedCases||0} resolved</div></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="go('admin',{tab:'reviewers',reviewerId:'${r.id}'})">Work history</button><button class="btn btn-ghost btn-sm" onclick="openReviewerDirectChat('${r.id}','${esc(r.name).replace(/'/g,"&#39;")}')">Chat</button>${r.status==='SUSPENDED'?`<button class="btn btn-ghost btn-sm" onclick="adminReactivate('${r.id}')">Reactivate</button>`:`<button class="btn btn-danger btn-sm" onclick="adminSuspend('${r.id}')">Suspend</button>`}<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${r.id}','${esc(r.name).replace(/'/g,"&#39;")}')">Delete</button></div></div>`).join(''):'<p style="color:var(--text-faint);font-size:13px">No Reviewer accounts yet.</p>'}
+      </div>
+      <div class="panel" style="margin-top:18px"><h4 style="margin-bottom:6px">Pending reviewer applications</h4><p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px">Applications are only requests to be considered. Accepting here sends the private signup link after the applicant passes your test; it does not activate Reviewer access immediately.</p>
+        ${pending.length?pending.map(a=>`<div style="border-top:1px solid var(--hair);padding:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><div><b>${esc(a.name)}</b><div style="font-size:12px;color:var(--text-faint)">${esc(a.email)} · ${esc(a.status)}</div></div><div style="display:flex;gap:7px;flex-wrap:wrap">${a.status==='PENDING'&&!a.user_id?`<button class="btn btn-brass btn-sm" onclick="adminSendReviewerInvite('${a.id}')">Accept / Send signup link</button><button class="btn btn-danger btn-sm" onclick="adminRejectReviewerApp('${a.id}')">Reject</button>`:`<span class="badge">${esc(a.status)}</span>`}</div></div>`).join(''):'<p style="color:var(--text-faint);font-size:13px">No pending applications.</p>'}
+      </div>`;
+    }
   } else if (tab==='disputes') {
     body = `<div class="panel">${disputes.length ? disputes.map(d=>`
       <div style="border-top:1px solid var(--hair);padding:12px 0">
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div><b style="font-size:13.5px">${esc(d.title)}</b><div style="font-size:12px;color:var(--text-faint)">${fmt(d.budget)} · ${esc(d.status)}</div></div>
-          <a class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</a>
+          <div style="display:flex;gap:7px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" onclick="go('jobDetail',{id:'${d.job_id}'})">Open case</a>${d.assigned_reviewer_id?`<button class="btn btn-ghost btn-sm" onclick="openReviewerAdminChat('${d.id}','${esc(d.title).replace(/'/g,"&#39;")}')">Reviewer chat</button>`:''}</div>
         </div>
         <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0">${esc(d.reason||'')}</p>
         ${d.status==='OPEN' ? `
@@ -2764,6 +2828,14 @@ async function adminAssignDispute(id) {
   catch(e) { toast(e.message, true); }
 }
 
+let activeReviewerDirectId=null;
+function renderReviewerDirectMessages(messages){return (messages||[]).map(m=>`<div class="chat-bubble ${m.senderRole==='admin'?'own':'other'}"><span class="who">${m.senderRole==='admin'?'Admin':'Reviewer'} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`).join('')||'<p style="color:var(--text-faint);font-size:13px">No messages yet.</p>'}
+async function openReviewerDirectChat(reviewerId,name='Reviewer'){
+  activeReviewerDirectId=reviewerId;document.getElementById('reviewerDirectChatTitle').textContent='Chat with '+name;openModal('reviewerDirectChatModal');
+  const box=document.getElementById('reviewerDirectChatMessages');box.innerHTML='<p style="color:var(--text-faint)">Loading…</p>';
+  try{const d=await api('/admin/reviewers/'+encodeURIComponent(reviewerId)+'/chat');box.innerHTML=renderReviewerDirectMessages(d.messages);box.scrollTop=box.scrollHeight}catch(e){box.innerHTML='<p style="color:var(--danger)">'+esc(e.message)+'</p>'}
+}
+async function sendReviewerDirectChat(){const body=document.getElementById('reviewerDirectChatBody').value.trim();if(!body||!activeReviewerDirectId)return;try{const d=await api('/admin/reviewers/'+encodeURIComponent(activeReviewerDirectId)+'/chat',{method:'POST',body:JSON.stringify({body})});document.getElementById('reviewerDirectChatBody').value='';const box=document.getElementById('reviewerDirectChatMessages');box.innerHTML=renderReviewerDirectMessages(d.messages);box.scrollTop=box.scrollHeight}catch(e){toast(e.message,true)}}
 /* ============================ FORGOT / RESET PASSWORD ============================ */
 function openForgot() {
   closeModal('authModal');
@@ -2828,16 +2900,84 @@ async function submitSuggestion(ev){
   try{await api('/suggestions',{method:'POST',body:JSON.stringify({name:document.getElementById('suggestName').value.trim(),email:document.getElementById('suggestEmail').value.trim(),body:document.getElementById('suggestBody').value.trim()})});document.getElementById('suggestBody').value='';closeModal('suggestionModal');toast('Thanks — your suggestion was sent to PRODILIVE Admin.')}catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent=orig;}
 }
 
+/* ============================ REVIEWER ↔ ADMIN CASE CHAT ============================ */
+let activeReviewerAdminDisputeId=null;
+function renderReviewerAdminMessages(messages){
+  if(!messages?.length)return '<p style="color:var(--text-faint);font-size:12.5px">No messages yet. Use this private channel for case-specific communication between the assigned Reviewer and Admin.</p>';
+  return messages.map(m=>{const own=String(m.senderId)===String(state.user?.id);return `<div class="chat-bubble ${own?'own':'other'}"><span class="who">${esc(m.senderRole==='admin'?'PRODILIVE ADMIN':'PRODILIVE REVIEWER')} · ${timeAgo(m.createdAt)}</span>${esc(m.body)}</div>`}).join('');
+}
+async function openReviewerAdminChat(disputeId,title='Case'){
+  activeReviewerAdminDisputeId=disputeId;
+  document.getElementById('reviewerAdminChatSub').textContent=`Private Admin/Reviewer channel · ${title}`;
+  openModal('reviewerAdminChatModal');
+  const box=document.getElementById('reviewerAdminChatMessages'); box.innerHTML='<p style="color:var(--text-faint)">Loading…</p>';
+  try{const d=await api('/disputes/'+encodeURIComponent(disputeId)+'/reviewer-admin-chat');box.innerHTML=renderReviewerAdminMessages(d.messages);box.scrollTop=box.scrollHeight}catch(e){box.innerHTML=`<p style="color:var(--danger)">${esc(e.message)}</p>`}
+}
+async function sendReviewerAdminMessage(){
+  const body=document.getElementById('reviewerAdminChatBody').value.trim();if(!body||!activeReviewerAdminDisputeId)return;
+  try{const d=await api('/disputes/'+encodeURIComponent(activeReviewerAdminDisputeId)+'/reviewer-admin-chat',{method:'POST',body:JSON.stringify({body})});document.getElementById('reviewerAdminChatBody').value='';const box=document.getElementById('reviewerAdminChatMessages');box.innerHTML=renderReviewerAdminMessages(d.messages);box.scrollTop=box.scrollHeight}catch(e){toast(e.message,true)}
+}
+
 /* ============================ FREE LIVE CHAT (TAWK.TO) ============================ */
 /* v5.60.1: direct Tawk.to embed. No Render TAWK_* variables are required. */
+function syncLiveChatForRole(){
+  const staff=state.user&&['admin','reviewer'].includes(state.user.role);
+  const authReady=!!window.__authResolved;
+  const launcher=document.getElementById('prodiliveChatLauncher');
+  const fallback=document.getElementById('supportBubbleBtn');
+  const fallbackPanel=document.getElementById('supportPanel');
+  if(staff){
+    if(launcher)launcher.style.display='none'; if(fallback)fallback.style.display='none'; if(fallbackPanel)fallbackPanel.style.display='none';
+    try{window.Tawk_API?.hideWidget?.()}catch{}
+  }else{
+    if(!authReady){if(launcher)launcher.style.display='none';if(fallback)fallback.style.display='none';return;}
+    if(window.__tawkLoaded){ if(launcher)launcher.style.display='grid'; try{window.Tawk_API?.hideWidget?.()}catch{} }
+    else if(fallback)fallback.style.display='grid';
+  }
+}
+function initDraggableChatLauncher(){
+  const el=document.getElementById('prodiliveChatLauncher');if(!el||el.dataset.dragReady)return;el.dataset.dragReady='1';
+  const KEY='prodilive_chat_position';
+  const clamp=(x,y)=>({
+    x:Math.min(Math.max(8,x),Math.max(8,window.innerWidth-el.offsetWidth-8)),
+    y:Math.min(Math.max(68,y),Math.max(68,window.innerHeight-el.offsetHeight-8))
+  });
+  const apply=(x,y)=>{const p=clamp(x,y);el.style.left=p.x+'px';el.style.top=p.y+'px';el.style.right='auto';el.style.bottom='auto';return p};
+  const save=()=>{const r=el.getBoundingClientRect(),p=apply(r.left,r.top);try{localStorage.setItem(KEY,JSON.stringify(p))}catch{}};
+  try{const raw=localStorage.getItem(KEY);if(raw){const p=JSON.parse(raw);if(Number.isFinite(p.x)&&Number.isFinite(p.y))apply(p.x,p.y)}}catch{}
+  let dragging=false,didDrag=false,dx=0,dy=0,pointerId=null;
+  el.addEventListener('pointerdown',ev=>{
+    if(ev.button!==undefined&&ev.button!==0)return;
+    dragging=true;didDrag=false;pointerId=ev.pointerId;
+    const r=el.getBoundingClientRect();dx=ev.clientX-r.left;dy=ev.clientY-r.top;
+    el.setPointerCapture?.(ev.pointerId);el.classList.add('dragging');ev.preventDefault();
+  });
+  el.addEventListener('pointermove',ev=>{
+    if(!dragging||pointerId!==null&&ev.pointerId!==pointerId)return;
+    apply(ev.clientX-dx,ev.clientY-dy);didDrag=true;ev.preventDefault();
+  });
+  const finish=ev=>{
+    if(!dragging)return;dragging=false;pointerId=null;el.classList.remove('dragging');save();
+    if(ev)ev.preventDefault?.();
+    setTimeout(()=>{didDrag=false},120);
+  };
+  el.addEventListener('pointerup',finish);el.addEventListener('pointercancel',finish);
+  el.addEventListener('click',ev=>{if(didDrag){ev.preventDefault();ev.stopPropagation();return}try{window.Tawk_API?.showWidget?.();window.Tawk_API?.maximize?.()}catch{}});
+  window.addEventListener('resize',()=>{const r=el.getBoundingClientRect();apply(r.left,r.top);save()},{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(()=>{const r=el.getBoundingClientRect();apply(r.left,r.top);save()},150),{passive:true});
+}
 function prepareTawkChat(){
   window.Tawk_API=window.Tawk_API||{};
+  const previous=window.Tawk_API.onLoad;
   window.Tawk_API.onLoad=function(){
-    const oldBtn=document.getElementById('supportBubbleBtn');
-    const oldPanel=document.getElementById('supportPanel');
-    if(oldBtn)oldBtn.style.display='none';
-    if(oldPanel)oldPanel.style.display='none';
+    if(typeof previous==='function')try{previous()}catch{}
+    window.__tawkLoaded=true;
+    const oldPanel=document.getElementById('supportPanel');if(oldPanel)oldPanel.style.display='none';
+    initDraggableChatLauncher();
+    try{window.Tawk_API.hideWidget?.()}catch{}
+    syncLiveChatForRole();
   };
+  window.Tawk_API.onChatMinimized=function(){try{window.Tawk_API.hideWidget?.()}catch{};syncLiveChatForRole();};
 }
 prepareTawkChat();
 

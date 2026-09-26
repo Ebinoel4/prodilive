@@ -1,6 +1,6 @@
 {
   "name": "prodilive-marketplace",
-  "version": "5.60.0",
+  "version": "5.60.4",
   "private": true,
   "type": "module",
   "scripts": {
