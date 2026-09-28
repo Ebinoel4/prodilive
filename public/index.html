@@ -277,7 +277,7 @@ footer.site-foot{border-top:1px solid var(--hair);padding:48px 0 24px;margin-top
 /* ===== Mobile bottom nav ===== */
 .mobile-nav{display:none}
 @media(max-width:900px){
-  .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(18,19,25,.96);backdrop-filter:blur(10px);border-top:1px solid var(--hair);justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+  .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:2147483001;background:rgba(18,19,25,.96);backdrop-filter:blur(10px);border-top:1px solid var(--hair);justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
   .mobile-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--text-faint);flex:1;padding:6px 2px}
   .mobile-nav a.active{color:var(--brass-soft)}
   .mobile-nav .ic{font-size:18px}
@@ -328,7 +328,7 @@ section{position:relative}.section-head h2,section> .wrap>h2{letter-spacing:-.02
 @media(max-width:700px){.wallet-filter-grid{grid-template-columns:1fr!important}}
 #prodiliveChatLauncher{position:fixed;right:18px;bottom:22px;z-index:2147483000;width:54px;height:54px;border:0;border-radius:50%;background:var(--brass);color:#111;font-size:23px;cursor:grab;box-shadow:0 12px 30px rgba(0,0,0,.28);touch-action:none;user-select:none;display:none;place-items:center}
 #prodiliveChatLauncher.dragging{cursor:grabbing;transform:scale(1.04)}
-@media(max-width:700px){#visitorHomeBtn{top:70px;left:10px}#prodiliveChatLauncher{width:50px;height:50px}}
+@media(max-width:700px){#visitorHomeBtn{top:70px;left:10px}#prodiliveChatLauncher{width:50px;height:50px;bottom:calc(82px + env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body>
@@ -2829,7 +2829,13 @@ async function viewAdmin() {
           <div style="display:flex;gap:8px;align-items:center">
             <select id="assignSel_${d.id}"><option value="">Assign to reviewer…</option>${reviewerUsers.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select>
             <button class="btn btn-ghost btn-sm" onclick="adminAssignDispute('${d.id}')">Assign</button>
-          </div>` : d.status==='ASSIGNED' ? `<span class="mono" style="font-size:11px;color:var(--text-faint)">Assigned — awaiting reviewer decision</span>` : ''}
+          </div>` : d.status==='ASSIGNED' ? `<span class="mono" style="font-size:11px;color:var(--text-faint)">Assigned — awaiting reviewer decision</span>` : d.status==='ADMIN_REVIEW' ? `
+          <div style="padding:10px 0;font-size:12px;color:var(--text-dim)">Reviewer recommendation: ${esc(d.decision?.outcome||'Admin decision needed')}${d.decision?.outcome==='SPLIT' ? ` · Talent ${Number(d.decision.talentPercent||0)}% / Client ${Number(d.decision.clientPercent||0)}%` : ''}</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-brass btn-sm" onclick="adminFinalizeDispute('${d.id}','RELEASE_TALENT')">Release to talent</button>
+            <button class="btn btn-ghost btn-sm" onclick="adminFinalizeDispute('${d.id}','REFUND_CLIENT')">Refund client</button>
+            <button class="btn btn-ghost btn-sm" onclick="adminFinalizeDispute('${d.id}','SPLIT')">Split payment</button>
+          </div>` : ''}
       </div>`).join('') : `<p style="color:var(--text-faint);font-size:13px">No disputes.</p>`}</div>`;
   } else if (tab==='support') {
     if (supportThread) {
@@ -2975,6 +2981,20 @@ async function adminSetQualification(userId) {
   try { await api('/admin/reviewers/'+userId+'/qualification', { method:'POST', body: JSON.stringify({ score }) }); toast('Qualification recorded.'); reload(); }
   catch(e) { toast(e.message, true); }
 }
+async function adminFinalizeDispute(id,outcome){
+  const reason=prompt('Explain the final decision for the case record:');
+  if(!reason||reason.trim().length<5){toast('A written reason is required.',true);return;}
+  const body={outcome,reason:reason.trim()};
+  if(outcome==='SPLIT'){
+    const input=prompt('Percentage to release to the talent (0–100):');
+    if(input===null)return;
+    const pct=Number(input);
+    if(!Number.isFinite(pct)||pct<0||pct>100){toast('Enter a percentage between 0 and 100.',true);return;}
+    body.talentPercent=pct;body.clientPercent=100-pct;
+  }
+  if(!confirm('Finalize this case and apply the payment decision?'))return;
+  try{await api('/admin/disputes/'+id+'/finalize',{method:'POST',body:JSON.stringify(body)});toast('Admin decision recorded.');reload()}catch(e){toast(e.message,true)}
+}
 async function adminAssignDispute(id) {
   const sel = document.getElementById('assignSel_'+id);
   if (!sel.value) { toast('Choose a reviewer first.', true); return; }
@@ -3087,20 +3107,19 @@ async function sendReviewerAdminMessage(){
 /* ============================ FREE LIVE CHAT (TAWK.TO) ============================ */
 /* v5.60.1: direct Tawk.to embed. No Render TAWK_* variables are required. */
 function syncLiveChatForRole(){
-  const staff=state.user&&['admin','reviewer'].includes(state.user.role);
-  const authReady=!!window.__authResolved;
   const launcher=document.getElementById('prodiliveChatLauncher');
   const fallback=document.getElementById('supportBubbleBtn');
-  const fallbackPanel=document.getElementById('supportPanel');
-  if(staff){
-    if(launcher)launcher.style.display='none'; if(fallback)fallback.style.display='none'; if(fallbackPanel)fallbackPanel.style.display='none';
+  if(!window.__authResolved){if(launcher)launcher.style.display='none';if(fallback)fallback.style.display='none';return;}
+  if(window.__tawkLoaded){
+    if(launcher)launcher.style.display='grid';
+    if(fallback)fallback.style.display='none';
     try{window.Tawk_API?.hideWidget?.()}catch{}
   }else{
-    if(!authReady){if(launcher)launcher.style.display='none';if(fallback)fallback.style.display='none';return;}
-    if(window.__tawkLoaded){ if(launcher)launcher.style.display='grid'; try{window.Tawk_API?.hideWidget?.()}catch{} }
-    else if(fallback)fallback.style.display='grid';
+    if(launcher)launcher.style.display='none';
+    if(fallback)fallback.style.display='grid';
   }
 }
+
 function initDraggableChatLauncher(){
   const el=document.getElementById('prodiliveChatLauncher');if(!el||el.dataset.dragReady)return;el.dataset.dragReady='1';
   const KEY='prodilive_chat_position';
@@ -3111,6 +3130,8 @@ function initDraggableChatLauncher(){
   const apply=(x,y)=>{const p=clamp(x,y);el.style.left=p.x+'px';el.style.top=p.y+'px';el.style.right='auto';el.style.bottom='auto';return p};
   const save=()=>{const r=el.getBoundingClientRect(),p=apply(r.left,r.top);try{localStorage.setItem(KEY,JSON.stringify(p))}catch{}};
   try{const raw=localStorage.getItem(KEY);if(raw){const p=JSON.parse(raw);if(Number.isFinite(p.x)&&Number.isFinite(p.y))apply(p.x,p.y)}}catch{}
+  // A saved launcher position from desktop must not obscure the mobile tabs.
+  if(window.innerWidth<=900){el.style.left='auto';el.style.top='auto';el.style.right='18px';el.style.bottom='calc(82px + env(safe-area-inset-bottom))';}
   let dragging=false,didDrag=false,dx=0,dy=0,pointerId=null;
   el.addEventListener('pointerdown',ev=>{
     if(ev.button!==undefined&&ev.button!==0)return;
@@ -3122,13 +3143,16 @@ function initDraggableChatLauncher(){
     if(!dragging||pointerId!==null&&ev.pointerId!==pointerId)return;
     apply(ev.clientX-dx,ev.clientY-dy);didDrag=true;ev.preventDefault();
   });
+  const openChat=()=>{try{window.Tawk_API?.showWidget?.();window.Tawk_API?.maximize?.()}catch{toggleSupportPanel()}};
   const finish=ev=>{
-    if(!dragging)return;dragging=false;pointerId=null;el.classList.remove('dragging');save();
-    if(ev)ev.preventDefault?.();
-    setTimeout(()=>{didDrag=false},120);
+    if(!dragging)return;
+    const moved=didDrag;dragging=false;pointerId=null;el.classList.remove('dragging');
+    if(moved){save();ev?.preventDefault?.();}
+    else if(ev?.type==='pointerup')openChat();
+    setTimeout(()=>{didDrag=false},200);
   };
   el.addEventListener('pointerup',finish);el.addEventListener('pointercancel',finish);
-  el.addEventListener('click',ev=>{if(didDrag){ev.preventDefault();ev.stopPropagation();return}try{window.Tawk_API?.showWidget?.();window.Tawk_API?.maximize?.()}catch{}});
+  el.addEventListener('click',ev=>{if(ev.detail!==0){ev.preventDefault();return}openChat()});
   window.addEventListener('resize',()=>{const r=el.getBoundingClientRect();apply(r.left,r.top);save()},{passive:true});
   window.addEventListener('orientationchange',()=>setTimeout(()=>{const r=el.getBoundingClientRect();apply(r.left,r.top);save()},150),{passive:true});
 }
