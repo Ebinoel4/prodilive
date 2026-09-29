@@ -854,22 +854,32 @@ async function processOverdueJobs(){
   }catch(e){console.error('Overdue job scan failed:',e.message)}
 }
 function splitSqlStatements(sql){
-  // Split a migration file into individual statements so one bad/duplicate
-  // statement can't silently roll back or block the others — Postgres runs a
-  // multi-statement simple-query string as one implicit transaction, so a
-  // single failure anywhere in the file used to undo every ALTER TABLE that
-  // ran before it in that same batch. Dollar-quoted bodies ($$...$$) are kept
-  // intact for any future PL/pgSQL migration.
-  const stmts=[]; let cur='', inDollar=false, dollarTag='';
+  // Split only at SQL semicolons. Comments may contain semicolons and must not
+  // become executable statements. Preserve quoted strings and dollar bodies.
+  const stmts=[]; let cur='', quote='', dollarTag='', lineComment=false, blockComment=false;
   for(let i=0;i<sql.length;i++){
     const ch=sql[i];
-    if(!inDollar && ch==='$'){
-      const m=sql.slice(i).match(/^\$([a-zA-Z_]*)\$/);
-      if(m){ inDollar=true; dollarTag=m[0]; cur+=m[0]; i+=m[0].length-1; continue; }
-    } else if(inDollar && sql.slice(i,i+dollarTag.length)===dollarTag){
-      inDollar=false; cur+=dollarTag; i+=dollarTag.length-1; continue;
+    const next=sql[i+1];
+    if(lineComment){if(ch==='\n'){lineComment=false;cur+='\n';}continue;}
+    if(blockComment){if(ch==='*'&&next==='/'){blockComment=false;i++;}else if(ch==='\n')cur+='\n';continue;}
+    if(dollarTag){
+      if(sql.startsWith(dollarTag,i)){cur+=dollarTag;i+=dollarTag.length-1;dollarTag='';}
+      else cur+=ch;
+      continue;
     }
-    if(!inDollar && ch===';'){ if(cur.trim())stmts.push(cur.trim()); cur=''; continue; }
+    if(quote){
+      cur+=ch;
+      if(ch===quote){if(next===quote){cur+=next;i++;}else quote='';}
+      continue;
+    }
+    if(ch==='-'&&next==='-'){lineComment=true;i++;continue;}
+    if(ch==='/'&&next==='*'){blockComment=true;i++;continue;}
+    if(ch==='\''||ch==='"'){quote=ch;cur+=ch;continue;}
+    if(ch==='$'){
+      const m=sql.slice(i).match(/^\$([a-zA-Z_]*)\$/);
+      if(m){dollarTag=m[0];cur+=dollarTag;i+=dollarTag.length-1;continue;}
+    }
+    if(ch===';'){if(cur.trim())stmts.push(cur.trim());cur='';continue;}
     cur+=ch;
   }
   if(cur.trim())stmts.push(cur.trim());
