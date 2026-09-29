@@ -3110,14 +3110,6 @@ function syncLiveChatForRole(){
   const launcher=document.getElementById('prodiliveChatLauncher');
   const fallback=document.getElementById('supportBubbleBtn');
   if(!window.__authResolved){if(launcher)launcher.style.display='none';if(fallback)fallback.style.display='none';return;}
-  // The embedded chat frame can cover the mobile viewport and intercept taps.
-  // Open the same Tawk chat in its own tab on phones instead.
-  if(window.matchMedia('(max-width:900px)').matches){
-    if(launcher)launcher.style.display='grid';
-    if(fallback)fallback.style.display='none';
-    initDraggableChatLauncher();
-    return;
-  }
   if(window.__tawkLoaded){
     if(launcher)launcher.style.display='grid';
     if(fallback)fallback.style.display='none';
@@ -3151,14 +3143,7 @@ function initDraggableChatLauncher(){
     if(!dragging||pointerId!==null&&ev.pointerId!==pointerId)return;
     apply(ev.clientX-dx,ev.clientY-dy);didDrag=true;ev.preventDefault();
   });
-  const openChat=()=>{
-    if(window.matchMedia('(max-width:900px)').matches){
-      const tab=window.open('https://tawk.to/chat/6ab6df185a25be34409cfd1a/1k3d5eu8l','_blank');
-      if(tab)tab.opener=null;else toggleSupportPanel();
-      return;
-    }
-    try{window.Tawk_API?.showWidget?.();window.Tawk_API?.maximize?.()}catch{toggleSupportPanel()}
-  };
+  const openChat=()=>{try{window.Tawk_API?.showWidget?.();window.Tawk_API?.maximize?.()}catch{toggleSupportPanel()}};
   const finish=ev=>{
     if(!dragging)return;
     const moved=didDrag;dragging=false;pointerId=null;el.classList.remove('dragging');
@@ -3219,7 +3204,6 @@ bootstrap();
 <script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){
-if(window.matchMedia('(max-width:900px)').matches)return;
 var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
 s1.async=true;
 s1.src='https://embed.tawk.to/6ab6df185a25be34409cfd1a/1k3d5eu8l';

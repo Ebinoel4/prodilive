@@ -179,7 +179,10 @@ app.set('trust proxy', process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY)
 app.disable('x-powered-by');
 app.use((req,res,next)=>{req.requestId=crypto.randomUUID();res.setHeader('X-Request-ID',req.requestId);next()});
 const allowedOrigins=String(process.env.CORS_ORIGINS||APP_ORIGIN).split(',').map(x=>x.trim()).filter(Boolean);
-app.use(cors({origin:(origin,cb)=>{if(!origin||allowedOrigins.length===0||allowedOrigins.includes(origin))return cb(null,true);return cb(new Error('Origin not allowed'))},credentials:false}));
+// A request from the site's own host is always same-origin, so it is allowed even if APP_URL/CORS_ORIGINS
+// names a different address (e.g. testing on *.up.railway.app while APP_URL is the custom domain).
+app.use(cors((req,cb)=>{const origin=req.headers.origin;let sameHost=false;try{sameHost=!!origin&&new URL(origin).host===req.headers.host}catch{}
+  cb(null,{origin:!origin||allowedOrigins.length===0||allowedOrigins.includes(origin)||sameHost,credentials:false})}));
 // CSP note: the frontend uses inline onclick/onchange handlers and inline
 // style attributes throughout (a single-file SPA), so 'unsafe-inline' is
 // still required for script-src/style-src for now — removing it would need a
@@ -192,6 +195,7 @@ app.use(cors({origin:(origin,cb)=>{if(!origin||allowedOrigins.length===0||allowe
 const cspDirectives={
   defaultSrc:["'self'"],
   scriptSrc:["'self'","'unsafe-inline'","https://*.tawk.to","https://cdn.jsdelivr.net"],
+  scriptSrcAttr:["'unsafe-inline'"],
   styleSrc:["'self'","'unsafe-inline'","https://fonts.googleapis.com","https://*.tawk.to","https://cdn.jsdelivr.net"],
   fontSrc:["'self'","https://fonts.gstatic.com","https://*.tawk.to"],
   imgSrc:["'self'","data:","blob:","https://*.tawk.to","https://cdn.jsdelivr.net","https://tawk.link","https://s3.amazonaws.com"],
@@ -854,32 +858,22 @@ async function processOverdueJobs(){
   }catch(e){console.error('Overdue job scan failed:',e.message)}
 }
 function splitSqlStatements(sql){
-  // Split only at SQL semicolons. Comments may contain semicolons and must not
-  // become executable statements. Preserve quoted strings and dollar bodies.
-  const stmts=[]; let cur='', quote='', dollarTag='', lineComment=false, blockComment=false;
+  // Split a migration file into individual statements so one bad/duplicate
+  // statement can't silently roll back or block the others — Postgres runs a
+  // multi-statement simple-query string as one implicit transaction, so a
+  // single failure anywhere in the file used to undo every ALTER TABLE that
+  // ran before it in that same batch. Dollar-quoted bodies ($$...$$) are kept
+  // intact for any future PL/pgSQL migration.
+  const stmts=[]; let cur='', inDollar=false, dollarTag='';
   for(let i=0;i<sql.length;i++){
     const ch=sql[i];
-    const next=sql[i+1];
-    if(lineComment){if(ch==='\n'){lineComment=false;cur+='\n';}continue;}
-    if(blockComment){if(ch==='*'&&next==='/'){blockComment=false;i++;}else if(ch==='\n')cur+='\n';continue;}
-    if(dollarTag){
-      if(sql.startsWith(dollarTag,i)){cur+=dollarTag;i+=dollarTag.length-1;dollarTag='';}
-      else cur+=ch;
-      continue;
-    }
-    if(quote){
-      cur+=ch;
-      if(ch===quote){if(next===quote){cur+=next;i++;}else quote='';}
-      continue;
-    }
-    if(ch==='-'&&next==='-'){lineComment=true;i++;continue;}
-    if(ch==='/'&&next==='*'){blockComment=true;i++;continue;}
-    if(ch==='\''||ch==='"'){quote=ch;cur+=ch;continue;}
-    if(ch==='$'){
+    if(!inDollar && ch==='$'){
       const m=sql.slice(i).match(/^\$([a-zA-Z_]*)\$/);
-      if(m){dollarTag=m[0];cur+=dollarTag;i+=dollarTag.length-1;continue;}
+      if(m){ inDollar=true; dollarTag=m[0]; cur+=m[0]; i+=m[0].length-1; continue; }
+    } else if(inDollar && sql.slice(i,i+dollarTag.length)===dollarTag){
+      inDollar=false; cur+=dollarTag; i+=dollarTag.length-1; continue;
     }
-    if(ch===';'){if(cur.trim())stmts.push(cur.trim());cur='';continue;}
+    if(!inDollar && ch===';'){ if(cur.trim())stmts.push(cur.trim()); cur=''; continue; }
     cur+=ch;
   }
   if(cur.trim())stmts.push(cur.trim());
