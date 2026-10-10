@@ -1069,7 +1069,7 @@ async function viewHome() {
         ['Songwriters','Lyrics, toplines & composition','Songwriting','https://images.pexels.com/photos/8133324/pexels-photo-8133324.jpeg?auto=compress&cs=tinysrgb&w=900'],
         ['Beat Makers','Original beats & instrumentals','Beat Production','https://images.pexels.com/photos/8132964/pexels-photo-8132964.jpeg?auto=compress&cs=tinysrgb&w=900'],
         ['Creative Audio','Sound design & specialist work','Sound Design','https://images.pexels.com/photos/7173393/pexels-photo-7173393.jpeg?auto=compress&cs=tinysrgb&w=900']
-      ].map(([label,sub,q,img])=>`<article class="visual-cat reveal" role="button" tabindex="0" onclick="go('talents',{q:'${esc(q)}'})" onkeydown="if(event.key==='Enter'||event.key===' ')go('talents',{q:'${esc(q)}'})"><img loading="lazy" src="${img}" alt="${esc(label)}"><span class="vc-arrow">↗</span><div class="vc-copy"><b>${esc(label)}</b><span>${esc(sub)}</span></div></article>`).join('')}
+      ].map(([label,sub,q,img])=>`<article class="visual-cat reveal" role="button" tabindex="0" onclick="go('talents',{q:'${esc(q)}'})" onkeydown="if(event.key==='Enter'||event.key===' ')go('talents',{q:'${esc(q)}'})"><img loading="lazy" src="${img}" alt="${esc(label)}"><span class="vc-arrow">↗&#xFE0E;</span><div class="vc-copy"><b>${esc(label)}</b><span>${esc(sub)}</span></div></article>`).join('')}
     </div>
   </div></section>
 

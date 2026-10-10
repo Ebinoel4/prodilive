@@ -198,7 +198,7 @@ const cspDirectives={
   scriptSrcAttr:["'unsafe-inline'"],
   styleSrc:["'self'","'unsafe-inline'","https://fonts.googleapis.com","https://*.tawk.to","https://cdn.jsdelivr.net"],
   fontSrc:["'self'","https://fonts.gstatic.com","https://*.tawk.to"],
-  imgSrc:["'self'","data:","blob:","https://*.tawk.to","https://cdn.jsdelivr.net","https://tawk.link","https://s3.amazonaws.com"],
+  imgSrc:["'self'","data:","blob:","https://*.tawk.to","https://cdn.jsdelivr.net","https://tawk.link","https://s3.amazonaws.com","https://images.pexels.com"],
   mediaSrc:["'self'","blob:"],
   connectSrc:["'self'","https://*.tawk.to","wss://*.tawk.to"],
   frameSrc:["'self'","https://*.tawk.to"],
